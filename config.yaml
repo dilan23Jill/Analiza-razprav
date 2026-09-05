@@ -1,0 +1,190 @@
+# ──────────────────────────────────────────────────────────
+# Debate Analyzer Pipeline — Configuration
+# ──────────────────────────────────────────────────────────
+
+pipeline:
+  # Načini analize (vsako analizo prepiše zahtevek iz vmesnika):
+  #   "solo"   — en primarni govorec (govor, intervju, reakcijski video)
+  #   "debate" — debata ena na ena: natanko dva debaterja (moderator se ne šteje)
+  # Stari vrednosti še zmeraj sprejeti (backward compat):
+  #   "reaction"   → "solo"
+  #   "debate_1v1" → "debate"
+  mode: "solo"
+  language: "sl"    # "sl" | "en"
+
+  # ── Najdaljši posnetek, ki ga sistem sprejme ─────────────────────────────
+  # Mejo postavlja model za prepis: gpt-4o-transcribe-diarize v enem klicu
+  # sprejme največ 1400 sekund zvoka in daljšega zavrne s HTTP 400, ne glede na
+  # velikost datoteke. Vzamemo 23 minut, torej 1380 sekund, da ostane rezerva
+  # za nenatančno branje trajanja iz metapodatkov.
+  #
+  # Preostali dve meji sta pri tej vrednosti daleč od kritične:
+  #   prepis   23 min × ~1180 znakov/min ≈ 27 000 znakov od 80 000
+  #   zvok     23 min pri 32 kbit/s mono ≈ 5,4 MB od 25 MB
+  # Trajanje je torej edina meja, ki dejansko veže.
+  #
+  # Daljši posnetek se zavrne pred plačilom. Uporabnik z drsnikom izbere odsek.
+  # Tiho krajšanje bi odrezalo sklepne nastope, rezanje na kose pa bi zahtevalo
+  # klic modela, ki bi ugotavljal, katera oznaka govorca v katerem kosu je isti
+  # človek, in prav to je bil največji vir napak pri govorcih.
+  max_recording_minutes: 23
+
+transcription:
+  model: "gpt-4o-transcribe-diarize"
+  output_format: "diarized_json"
+  # Govorci ostanejo Speaker 1, Speaker 2 ... Imena vpiše uporabnik pred analizo
+  # ali jih popravi v vmesniku po njej. Samodejno ugibanje imen iz prepisa je
+  # bilo najmanj zanesljiv korak cevovoda in je odstranjeno.
+
+
+fact_checking:
+  claim_decomposition: true   # razstavi kompleksne trditve na atomarne pod-trditve
+  parallel_workers: 5
+
+  # ── Zgornja meja virov na trditev ────────────────────────────────────────
+  # Zbiralci skupaj vrnejo več gradiva, kot ga razsojevalni korak potrebuje,
+  # in več, kot ga bralec poročila prebere. Mesta se polnijo izmenično: po en
+  # vir od vsakega zbiralca, ki je kaj našel, dokler jih ni deset. Tako se
+  # ohrani pestrost domen, ki jo varovalke štejejo, en zbiralec z dolgim
+  # seznamom pa ne zasede vseh mest.
+  max_sources_per_claim: 10
+
+  # ── Modeli za pod-korake preverjanja dejstev ──────────────────────────
+  # OPOMBA: gpt-4o ima na nižjih OpenAI tierih TPM limit ~30k tokens/min,
+  # kar je za daljše transkripte premalo. Privzeto uporabljamo gpt-4o-mini,
+  # ki ima 200k+ TPM in z izboljšanim promptom še vedno dobro loči
+  # "branjenje pozicije" od "verifiableno dejstvo".
+  # AVG 2026: gpt-5.6-luna je nadomestil gpt-4.1-mini kot priporočeni
+  # poceni model ($0.20/$1.20 vs $0.40/$1.60 — cenejši IN novejša generacija).
+  # gpt-4.1-nano ($0.10/$0.40) ostaja najcenejša opcija za decompose/topic.
+  claim_extraction_model: "gpt-5.6-luna"
+  decompose_model:        "gpt-4.1-nano"  # razstavljanje je preprosto — nano je dovolj
+
+  # ── Usmerjanje zbiralcev ────────────────────────────────────────────────
+  # engine_routing: Grok (splet + X) teče samo za tipe trditev, kjer sprotni
+  # splet in razprava na X kaj dodata (politika, ekonomija, citati, statistika).
+  # Pri znanstvenih, zgodovinskih in geografskih so PubMed, Scholar, Wikidata in
+  # Perplexity boljši in cenejši.
+  engine_routing: true
+
+  # ── Razsojevalni korak ──────────────────────────────────────────────────
+  # Zbiralci vrnejo gradivo in ne razsodb. Razsodbo izreče en sam klic, ki vidi
+  # vse zbrano gradivo naenkrat in sam po spletu ne išče. Zato je tu smiseln
+  # model za presojo, ne model z iskanjem.
+  judge_provider: "anthropic"       # openai | anthropic | grok
+  judge_model:    "claude-sonnet-5"
+
+  # ── Proračun izhoda razsodnika ───────────────────────────────────────────
+  # Razsodnik vrne razsodbo, obrazložitev in oznako za vsakega od desetih virov.
+  # Pri 1200 žetonih se je odgovor redno odrezal sredi JSON in trditev je padla
+  # v ERROR, s tem pa izpadla iz vseh nadaljnjih štetij. Odrezan odgovor ni
+  # napačen, ampak nedokončan, zato ga koda vpraša znova z dvojnim proračunom,
+  # največ judge_max_attempts krat in največ do judge_max_tokens_cap.
+  judge_max_tokens:      4096
+  judge_max_tokens_cap:  16384
+  judge_max_attempts:    3
+
+  engines:
+    # OpenAI web_search_preview (gpt-4o, $2.50/$10 na 1M) — najdražji zbiralec.
+    # Teče pri visoki in srednji prednosti, pri nizki se preskoči.
+    # false = splet pokrivata samo Perplexity in Grok, razsodba pa nastane iz
+    #         gradiva, ki ga vrneta onadva in brezplačne zbirke
+    web_search: true
+    pubmed: true
+    semantic_scholar: true
+    openalex: true
+    crossref: true
+    wikidata: true
+    google_factcheck: true
+    perplexity: true
+    grok: true              # xAI Grok — iskanje po spletu in po omrežju X
+
+  # OPOMBA (jun 2026): grok-4-1-fast-* slugi so bili 15. 5. 2026 upokojeni in se
+  # preusmerjajo na grok-4.3 (po višji ceni). Eksplicitno uporabljamo grok-4.3
+  # in nadziramo reasoning_effort sami.
+  grok_model: "grok-4.3"                    # za fact-check (web + X search)
+  grok_reasoning_effort: "low"              # none | low | medium | high — verifikacija ima korist od reasoninga
+
+  cache:
+    # POZOR — med meritvami za diplomsko mora biti false!
+    # Predpomnilnik hrani odgovore po zgoščeni vrednosti vhoda. Pri ponovljenem
+    # zagonu istega posnetka so vhodi identični, zato bi drugi in nadaljnji
+    # zagoni vrnili SHRANJENE odgovore — izmerili bi predpomnilnik in ne modela.
+    # Velja za preverjanje dejstev IN za analizne prehode (isti get_cache()).
+    # Po zaključku meritev vrni na true (prihrani denar pri ponovnih analizah).
+    enabled: false
+    directory: ".cache/fact_check"
+    ttl_hours: 168            # 7 dni — ponovni transkript/URL ne plača znova (prej 24)
+
+analysis:
+  provider: "anthropic"               # openai | anthropic
+  model: "claude-sonnet-5"            # glavni model — synthesis; $2/$10 (ceneje in boljše kot sonnet-4-6: $3/$15)
+  temperature: 0.1
+
+  # Passe se izberejo SAMODEJNO glede na pipeline.mode:
+  #   mode: "debate" → claim_extraction, argument_structure, rebuttal_mapping, synthesis
+  #   mode: "solo"   → claim_extraction, argument_structure, synthesis
+  # Med prvim in drugim passom teče še claim_consolidation (model vrne načrt,
+  # izvede ga koda), med drugim in četrtim pa preverjanje dejstev iz premis.
+  # Če želiš ročno nastaviti, odkomentiraj spodnje:
+  # passes:
+  #   - claim_extraction
+  #   - argument_structure
+  #   - rebuttal_mapping   # samo za debate mode
+  #   - synthesis
+
+  # ── Stopnjevani modeli ───────────────────────────────────────────────────
+  # Izluščanje in združevanje dobita ZMOGLJIVEJŠI model. Od njiju je odvisno
+  # vse ostalo — drugi pass presoja njune argumente, preverjanje dejstev dela
+  # na njunih premisah, zavrnitve se pripenjajo na njune oznake — zato se
+  # napaka od tod razširi povsod. Hkrati je razmejitev argumentov najtežja
+  # presoja v cevovodu in največji vir nihanja med zagoni.
+  # Drugi pass zaznava zmote, kar zahteva nianso → Sonnet.
+  # Na cenejšem modelu ostane le preslikava zavrnitev, ki je bolj mehanska:
+  # kdo je komu odgovoril, s prepisom pred sabo.
+  # Synthesis (zadnji pass) vedno uporabi glavni model zgoraj.
+  pass_models:
+    claim_extraction:    "claude-sonnet-5"
+    claim_consolidation: "claude-sonnet-5"
+    argument_structure:  "claude-sonnet-5"
+    rebuttal_mapping:    "claude-haiku-4-5-20251001"
+
+  # ── Najmanjše število premis na argument ─────────────────────────────────
+  # Argument je sklep skupaj z razlogi zanj. Vnos z manj premisami se pri
+  # združevanju pripne poziciji, ki jo njegov razlog podpira, ali pa odpade.
+  # Uveljavljeno v kodi in NE kot kvota v pozivu — kvota bi model prisilila,
+  # da manjkajočo premiso izmisli.
+  min_premises_per_argument: 2
+
+  # ── Prompt caching (Anthropic) ───────────────────────────────────────────
+  # Transkript in system prompt se cachirata — vsak naslednji pass plača
+  # samo ~10% cene za input tokene transkripta.
+  prompt_caching: true
+
+  # ── Transkript budget za analizo ─────────────────────────────────────────
+  # Vsi passe dobijo ISTI transkript-prefix (nujno za prompt caching).
+  # Če je transkript daljši od tega, se enkrat prireže. 80_000 znakov ≈ 20k tokenov (prej 120_000).
+  transcript_token_budget_chars: 80000
+
+  # ── Per-pass max output tokenov ──────────────────────────────────────────
+  # Ti cap-i so začetni — če se output odreže (TruncatedJSONError), se dvigne
+  # do max_output_tokens_cap. Z bogatejšo strukturo (responding_to, evolution,
+  # per_speaker, stimulus_engagement, moderator) so synthesis in claim_extraction
+  # outputi občutno daljši kot prej.
+  pass_max_tokens:
+    claim_extraction:   8192    # bil 6144 — z evolution + responding_to + raises_own_objections daljši
+    claim_consolidation: 8192   # načrt je majhen, a proračun mora pokriti tudi notranje sklepanje modela
+    argument_structure: 8192    # veljavnost za vsak argument + zaznane zmote
+    rebuttal_mapping:   4096
+    synthesis:          12288   # per_speaker + moderator_influence + stimulus_engagement
+
+  # Privzeti max_tokens za _call_llm klice (synthesis, ...).
+  # Sluti za ad-hoc klice, ki ne specificirajo lastnega cap-a.
+  default_max_tokens: 12288
+
+  # Globalni varnostni max_tokens (če se output odreže, retry dvigne do te meje)
+  max_output_tokens_cap: 24576
+
+
+retry:
+  max_attempts: 3

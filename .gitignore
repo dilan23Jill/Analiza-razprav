@@ -1,0 +1,66 @@
+# API Keys & Environment
+.env
+*.env
+
+# Data files
+data/
+output/
+*.m4a
+*.wav
+*.mp3
+transcript.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local caches (LLM responses, embeddings, fact-check results — all
+# regeneratable derivative data; should never be in the repo).
+.cache/
+jobs/
+debates/
+
+# SQLite databases (should not be committed; production data lives elsewhere)
+*.db
+*.sqlite
+*.sqlite3
+data.db
+# Persistent transcripts (rerun feature) — user content, do not commit
+transcripts/
+
+# Izidi preizkus_virov.py
+vzorci/
+
+# Diplomsko delo — pisano v Overleafu, ne sodi v repozitorij sistema
+diploma.tex
+literatura.bib
+slike/
+*.aux
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
+texput.log
+
+# Interne delovne opombe
+PROFESOR_POPRAVKI.md
+FINAL_CHECK.md

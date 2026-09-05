@@ -1,0 +1,246 @@
+{
+  "_readme": [
+    "EDINI vir človeku berljivih oznak za kategorične vrednosti, ki jih vrne model.",
+    "Bereta ga oba dela sistema: zaledje prek translations.label(), vmesnik prek",
+    "LanguageContext.tv(). Zato se poročilo, PDF in vmesnik ne morejo razhajati.",
+    "",
+    "Vrednosti (ključi) OSTANEJO angleške — koda jih primerja dobesedno in tako je",
+    "tudi zapisano v navodilu modelu (translations.py, llm.language_instruction).",
+    "Prevaja se izključno prikaz.",
+    "",
+    "Datoteka živi v frontend/src/, da jo Vite uvozi brez dodatne nastavitve;",
+    "Python jo prebere po poti. Test test_enum_labels_cover_all_schema_values",
+    "zahteva oznako za vsako vrednost iz zaprtih množic v llm_schemas.py, zato",
+    "nova vrednost brez prevoda podre teste in ne pride tiho v prikaz."
+  ],
+  "fallacy": {
+    "affirming_a_disjunct": {
+      "sl": "potrditev enega člena disjunkcije",
+      "en": "affirming a disjunct"
+    },
+    "affirming_the_consequent": {
+      "sl": "potrditev posledice",
+      "en": "affirming the consequent"
+    },
+    "denying_the_antecedent": {
+      "sl": "zanikanje predpostavke",
+      "en": "denying the antecedent"
+    },
+    "illicit_transposition": {
+      "sl": "nedovoljena obrnitev implikacije",
+      "en": "illicit transposition"
+    },
+    "modal_scope_confusion": {
+      "sl": "zamenjava modalnega obsega",
+      "en": "modal scope confusion"
+    },
+    "undistributed_middle": {
+      "sl": "nerazdeljeni srednji člen",
+      "en": "undistributed middle"
+    },
+    "ad_hominem": {
+      "sl": "napad na osebo",
+      "en": "ad hominem"
+    },
+    "appeal_to_authority": {
+      "sl": "sklicevanje na avtoriteto",
+      "en": "appeal to authority"
+    },
+    "appeal_to_emotion": {
+      "sl": "sklicevanje na čustva",
+      "en": "appeal to emotion"
+    },
+    "appeal_to_ignorance": {
+      "sl": "sklicevanje na nevednost",
+      "en": "appeal to ignorance"
+    },
+    "appeal_to_nature": {
+      "sl": "sklicevanje na naravnost",
+      "en": "appeal to nature"
+    },
+    "appeal_to_popularity": {
+      "sl": "sklicevanje na razširjenost",
+      "en": "appeal to popularity"
+    },
+    "appeal_to_tradition": {
+      "sl": "sklicevanje na tradicijo",
+      "en": "appeal to tradition"
+    },
+    "burden_of_proof_shift": {
+      "sl": "prevalitev dokaznega bremena",
+      "en": "shifting the burden of proof"
+    },
+    "cherry_picking": {
+      "sl": "izbiranje ugodnih podatkov",
+      "en": "cherry picking"
+    },
+    "circular_reasoning": {
+      "sl": "krožno sklepanje",
+      "en": "circular reasoning"
+    },
+    "equivocation": {
+      "sl": "dvoumna raba izraza",
+      "en": "equivocation"
+    },
+    "false_attribution": {
+      "sl": "napačno pripisovanje vira",
+      "en": "false attribution"
+    },
+    "false_dilemma": {
+      "sl": "napačna dvojica",
+      "en": "false dilemma"
+    },
+    "loaded_question": {
+      "sl": "vprašanje s podtaknjeno predpostavko",
+      "en": "loaded question"
+    },
+    "moving_goalposts": {
+      "sl": "premikanje meril",
+      "en": "moving the goalposts"
+    },
+    "no_true_scotsman": {
+      "sl": "izločitev neprijetnega primera",
+      "en": "no true Scotsman"
+    },
+    "red_herring": {
+      "sl": "preusmeritev na nebistveno",
+      "en": "red herring"
+    },
+    "slippery_slope": {
+      "sl": "spolzka strmina",
+      "en": "slippery slope"
+    },
+    "straw_man": {
+      "sl": "slamnati mož",
+      "en": "straw man"
+    },
+    "whataboutism": {
+      "sl": "protiobtoževanje",
+      "en": "whataboutism"
+    },
+    "anecdotal_evidence": {
+      "sl": "posamezen primer kot dokaz",
+      "en": "anecdotal evidence"
+    },
+    "composition_division": {
+      "sl": "zamenjava celote in delov",
+      "en": "composition or division"
+    },
+    "false_equivalence": {
+      "sl": "napačno enačenje",
+      "en": "false equivalence"
+    },
+    "hasty_generalization": {
+      "sl": "prenagla posplošitev",
+      "en": "hasty generalization"
+    },
+    "non_sequitur": {
+      "sl": "sklep, ki ne sledi",
+      "en": "non sequitur"
+    },
+    "post_hoc": {
+      "sl": "zaporedje kot vzrok",
+      "en": "post hoc"
+    }
+  },
+  "fallacy_category": {
+    "formal": {
+      "sl": "formalna",
+      "en": "formal"
+    },
+    "informal": {
+      "sl": "neformalna",
+      "en": "informal"
+    },
+    "weak_reasoning": {
+      "sl": "šibko sklepanje",
+      "en": "weak reasoning"
+    }
+  },
+  "argument_type": {
+    "factual": {
+      "sl": "dejstveni",
+      "en": "factual"
+    },
+    "normative": {
+      "sl": "normativni",
+      "en": "normative"
+    },
+    "causal": {
+      "sl": "vzročni",
+      "en": "causal"
+    },
+    "definitional": {
+      "sl": "definicijski",
+      "en": "definitional"
+    },
+    "debatable": {
+      "sl": "spor",
+      "en": "debatable"
+    }
+  },
+  "rebuttal_type": {
+    "direct_contradiction": {
+      "sl": "neposredno nasprotovanje",
+      "en": "direct contradiction"
+    },
+    "undermining_premise": {
+      "sl": "rušenje premise",
+      "en": "undermining a premise"
+    },
+    "alternative_explanation": {
+      "sl": "druga razlaga",
+      "en": "alternative explanation"
+    },
+    "questioning_warrant": {
+      "sl": "izpodbijanje sklepanja",
+      "en": "questioning the warrant"
+    }
+  },
+  "evasion_type": {
+    "deflection": {
+      "sl": "preusmeritev",
+      "en": "deflection"
+    },
+    "topic_change": {
+      "sl": "menjava teme",
+      "en": "topic change"
+    },
+    "non_answer": {
+      "sl": "odgovor brez vsebine",
+      "en": "non-answer"
+    },
+    "partial_answer": {
+      "sl": "delni odgovor",
+      "en": "partial answer"
+    },
+    "talked_over": {
+      "sl": "preglasitev",
+      "en": "talking over"
+    }
+  },
+  "role": {
+    "primary_speaker": {
+      "sl": "glavni govorec",
+      "en": "primary speaker"
+    },
+    "debater": {
+      "sl": "debater",
+      "en": "debater"
+    },
+    "moderator": {
+      "sl": "moderator",
+      "en": "moderator"
+    }
+  },
+  "pressed_more": {
+    "balanced": {
+      "sl": "enakomerno na oba",
+      "en": "balanced"
+    },
+    "n/a": {
+      "sl": "ni podatka",
+      "en": "n/a"
+    }
+  }
+}

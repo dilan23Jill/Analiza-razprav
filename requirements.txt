@@ -1,0 +1,33 @@
+# ── Core ─────────────────────────────────────
+openai>=1.30.0
+python-dotenv>=1.0.0
+pyyaml>=6.0
+
+# ── API Server ──────────────────────────────
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+pydantic>=2.0.0
+starlette>=0.36.0
+
+# ── Optional: Claude cross-check ─────────────
+anthropic>=0.30.0
+
+# ── Optional: Perplexity ─────────────────────
+# (uses openai client, no extra dep)
+
+# ── Download ─────────────────────────────────
+yt-dlp>=2024.0.0
+
+# ── PDF export (debate analysis → PDF) ───────
+reportlab>=4.0.0
+
+# ── HTTP requests (fact-checking) ────────────
+aiohttp>=3.9.0
+requests>=2.31.0
+
+# ── Dev / tests ──────────────────────────────
+# pytest>=8.0.0   # zaženi teste: pip install pytest && pytest -q
+
+# ── System (usually pre-installed) ───────────
+# ffmpeg (via apt/brew, not pip)
