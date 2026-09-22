@@ -459,84 +459,71 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
 
   if (!hasAnything) return null
 
-  // Izmenjava prihaja iz koraka, ki bere prepis. Starejše analize nosijo ista
-  // polja na kritiki, zato se ta bere kot rezerva.
-  const firstRebuttal = rebuttals[0] || null
-  const wasRebutted = rebuttals.length > 0 || critique?.was_rebutted
-  const rebuttalSummary = firstRebuttal?.rebuttal_content || critique?.rebuttal_summary || ''
-  const defence = firstRebuttal?.response || critique?.counter_rebuttal || ''
+  // Izmenjava prihaja iz koraka, ki bere prepis. Starejše analize nosijo isto
+  // vsebino na kritiki, zato se ta bere kot rezerva, kadar zavrnitve ni.
 
   return (
     <div className="px-5 py-3 border-b border-white/5 bg-gradient-to-b from-red-500/5 to-orange-500/5">
 
-      {/* Debate exchange flow — only in debate/reaction modes */}
-      {isDebateMode && (wasRebutted || critique?.counter) && (
+      {/* Exchange on this argument — one block, one place.
+          The rebuttal pass returns `rebuttal_content` (what the opponent said)
+          and `response` (how the original speaker reacted). Both used to be
+          printed twice: once split into two boxes from rebuttals[0], and again
+          in the list below. Every argument in practice carries exactly one
+          rebuttal, so the reader saw the same two sentences four times. */}
+      {isDebateMode && rebuttals.length > 0 && (
         <div className="mb-3">
           <h5 className="text-accent-blue text-xs font-semibold uppercase tracking-wider mb-2">
             {t.argExchangeFlow}
           </h5>
           <div className="space-y-2">
-            {/* Step 1: Opponent's rebuttal */}
-            {wasRebutted ? (
-              <div className="p-2.5 bg-dark-800/60 rounded-lg border border-accent-blue/20">
-                <div className="text-[10px] text-accent-blue/60 mb-1 font-semibold uppercase tracking-wider">
-                  {t.argOpponentRebuttal}
+            {rebuttals.map((rebuttal, rebuttalIndex) => (
+              <div
+                key={rebuttalIndex}
+                className="p-2.5 bg-dark-800/60 rounded-lg border border-accent-blue/20"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] text-accent-blue/60 font-semibold uppercase tracking-wider">
+                    {t.argRebuttalBy} ({rebuttal.by})
+                  </span>
+                  {rebuttal.user_added && (
+                    <span className="text-[10px] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
+                      {t.argUserAdded}
+                    </span>
+                  )}
                 </div>
                 <p className="text-white/70 text-xs leading-relaxed">
-                  {rebuttalSummary || critique?.counter || ''}
+                  {rebuttal.rebuttal_content}
                 </p>
+                {rebuttal.response && (
+                  <div className="mt-2 pt-2 border-t border-white/5">
+                    <div className="text-[10px] text-orange-400/70 mb-1 font-semibold uppercase tracking-wider">
+                      {t.argDefense}
+                    </div>
+                    <p className="text-white/70 text-xs leading-relaxed">
+                      {rebuttal.response}
+                    </p>
+                  </div>
+                )}
               </div>
-            ) : critique?.counter ? (
-              <div className="p-2.5 bg-dark-800/60 rounded-lg border border-white/5">
-                <div className="text-[10px] text-white/30 mb-1">
-                  {critique.counter.includes('Not addressed') ? t.argNotAddressed : t.argOpponentResponse}
-                </div>
-                <p className="text-white/60 text-xs leading-relaxed">{critique.counter}</p>
-              </div>
-            ) : null}
-
-            {/* Step 2: Counter-rebuttal (speaker's defense) */}
-            {defence && (
-              <div className="p-2.5 bg-dark-800/60 rounded-lg border border-orange-500/20">
-                <div className="text-[10px] text-orange-400/70 mb-1 font-semibold uppercase tracking-wider">
-                  {t.argDefense}
-                </div>
-                <p className="text-white/70 text-xs leading-relaxed">
-                  {defence}
-                </p>
-              </div>
-            )}
-
+            ))}
           </div>
         </div>
       )}
 
-      {/* Rebuttals from rebuttal_mapping pass — only in debate/reaction modes */}
-      {isDebateMode && rebuttals.length > 0 && (
+      {/* Legacy path: older analyses carry the exchange on `critique` instead
+          of as its own rebuttal entry. Shown only when no rebuttal exists. */}
+      {isDebateMode && rebuttals.length === 0 && critique?.counter && (
         <div className="mb-3">
-          {rebuttals.map((rebuttal, rebuttalIndex) => (
-            <div
-              key={rebuttalIndex}
-              className="p-2.5 bg-dark-800/60 rounded-lg border border-white/5 mb-2 last:mb-0"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] text-white/30 uppercase tracking-wider">
-                  {t.argRebuttalBy} ({rebuttal.by})
-                </span>
-                {rebuttal.user_added && (
-                  <span className="text-[10px] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
-                    {t.argUserAdded}
-                  </span>
-                )}
-              </div>
-              <p className="text-white/60 text-xs leading-relaxed">{rebuttal.rebuttal_content}</p>
-              {rebuttal.response && (
-                <p className="text-white/40 text-[11px] mt-1.5 italic">
-                  {t.argResponse}: {rebuttal.response}
-                </p>
-              )}
+          <h5 className="text-accent-blue text-xs font-semibold uppercase tracking-wider mb-2">
+            {t.argExchangeFlow}
+          </h5>
+          <div className="p-2.5 bg-dark-800/60 rounded-lg border border-white/5">
+            <div className="text-[10px] text-white/30 mb-1">
+              {critique.counter.includes('Not addressed') ? t.argNotAddressed : t.argOpponentResponse}
             </div>
-          ))}
+            <p className="text-white/60 text-xs leading-relaxed">{critique.counter}</p>
+          </div>
         </div>
       )}
 

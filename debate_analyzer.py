@@ -738,89 +738,7 @@ Return JSON:
 }
 """,
 
-    # ── Pass 1b: chain consolidation — JSON in, JSON out, MERGE ONLY ────────
-    # Vrne samo načrt združevanja, ne celotnega dokumenta. Združevanje izvede koda.
-    "claim_consolidation": """You are reviewing an argument extraction for over-splitting.
-
-Extraction reads the transcript in order and splits too eagerly: it emits a new entry
-every time the speaker changes topic, even when they are still supporting the SAME
-conclusion. Your job is to say WHICH entries belong together. You do not rewrite
-anything — you only return a plan; the merging itself is done mechanically.
-
-Find FOUR patterns. Check every entry against all four.
-
-PATTERN 1 — CHAIN: the conclusion of one entry is a stepping stone for the next,
-building toward one final thesis ("everything with parts has potency" -> "whatever has
-potency needs an external cause" -> ... -> "therefore God exists"). The tell: an
-intermediate conclusion is asserted only so the NEXT entry can use it.
-
-PATTERN 2 — RESTATEMENT: the same conclusion stated twice, usually once near the start
-and once near the end ("Monarchy is better than democracy" / "Monarchy is far better
-than democracy or republicanism"). One argument, however far apart the entries sit.
-
-PATTERN 3 — PARALLEL SUPPORT: several entries are examples, historical cases or
-statistics supporting ONE underlying claim ("Germany after the Kaiser...", "Russia
-after the Tsar...", "then China and Cambodia..."). One argument whose premises are
-those cases. The tell: they all answer the same question.
-
-PATTERN 4 — THIN ENTRY: an entry carrying 0 or 1 premises is rarely a position of
-its own. One reason is usually a reason FOR something else the speaker is arguing.
-Look for the entry whose conclusion that lone reason actually supports and absorb the
-thin entry there. Watch especially for a single premise that merely restates the
-entry's own conclusion in other words — that entry has no support at all and belongs
-with its neighbour. EVERY thin entry must end up somewhere: absorb it into the entry
-its reason actually supports, or, when no entry fits, put it in `drop`. Never leave a
-thin entry standing on its own — an entry the speaker backed with fewer than two
-reasons is not reported as an argument. Do NOT invent a second premise to save it;
-you return a plan, not text.
-
-DROP these entirely — they are not arguments about the topic:
-  • META-COMMENTARY about the argument itself ("this argument is undefeatable",
-    "it has convinced thousands", the speaker's track record with it)
-  • BARE ASSERTIONS with no reasoning: an empty premise list that nothing supports
-  • INSULTS, mockery, interpersonal jabs
-
-RULES:
-  • Use arg_id values EXACTLY as they appear in the input.
-  • Each arg_id may appear at most ONCE in the whole plan.
-  • `keep` is the entry whose conclusion is the fullest statement of the merged point;
-    the others are absorbed into it as premises.
-  • A group needs at least two entries. Never invent arg_ids.
-  • If nothing needs merging or dropping, return empty lists.
-
-SELF-CHECK: a speech that yields 20 or more entries almost always contains several
-groups. If your plan is empty for such a list, re-read it and ask for each pair:
-"do these two answer the same question?"
-
-SECOND SELF-CHECK: scan the input for entries with 0 or 1 premises. Each one is either
-a thin entry to absorb (pattern 4) or a drop. It is a real result only when its
-conclusion is clearly a claim of its own that nothing else covers. NEVER invent
-support to make a thin entry look better — you return a plan, not text.
-
-INPUT FORMAT: a JSON array of entries, each with `id` (use these verbatim),
-`speaker`, `conclusion` (the argument's conclusion) and `premises` (how many
-premises it has — an entry with 0 premises and no support anywhere is a candidate
-for `drop`).
-
-Return ONLY this JSON:
-{{
-  "merges": [
-    {{
-      "keep": "arg_id of the entry to keep",
-      "absorb": ["arg_id", "arg_id"],
-      "pattern": "chain|restatement|parallel_support|thin_entry",
-      "reason": "one short sentence"
-    }}
-  ],
-  "drop": [
-    {{"arg_id": "arg_id", "reason": "meta_commentary|bare_assertion|insult"}}
-  ]
-}}
-
-ARGUMENTS:
-{claims}""",
-
-    "argument_structure": """Assess each extracted argument below: does its conclusion follow from its premises,
+"argument_structure": """Assess each extracted argument below: does its conclusion follow from its premises,
 and does its reasoning contain a named logical fallacy?
 
 {prev_pass}
@@ -1537,7 +1455,6 @@ class DebateAnalyzer:
             # that reasoning consumed the whole allowance and the answer came back
             # empty with stop_reason=max_tokens. 8192 leaves ample room and still
             # stays at the streaming threshold, so the call remains a plain one.
-            "claim_consolidation": 8192,
             "argument_structure": 8192,
             "rebuttal_mapping":   4096,
             "synthesis":          8192,
@@ -1552,7 +1469,7 @@ class DebateAnalyzer:
         # passes run at the provider's own setting. The request stays because
         # it costs nothing and does apply the moment a model that accepts it
         # is configured.
-        pass_temp = (0.0 if pass_name in ("claim_extraction", "claim_consolidation")
+        pass_temp = (0.0 if pass_name == "claim_extraction"
                      else None)
         result = self._call_provider_json(
             provider,
@@ -1689,44 +1606,8 @@ class DebateAnalyzer:
         # later pass can reference an argument by its id rather than by copied text.
         _assign_argument_ids(claims_result)
 
-        # ── Pass 1b: consolidation ───────────────────────────────────
-        # Extraction over-splits: a chained derivation, a thesis restated at the
-        # end, or a series of examples for one claim all come back as separate
-        # entries. The model returns only a MERGE PLAN (a few hundred tokens);
-        # the merge itself is executed by code, so it is deterministic, cannot
-        # truncate and cannot lose content. Non-fatal: on any failure the
-        # analysis continues with the unmerged extraction.
-        consolidation_info: Dict[str, Any] = {}
-        if claims_result and cfg("analysis.consolidate_arguments", True):
-            n_args = sum(
-                len(d.get("arguments") or [])
-                for d in (claims_result.get("speakers") or {}).values()
-                if isinstance(d, dict)
-            )
-            if n_args > 1:
-                logger.info("   Pass 1b: Consolidation plan (%d arguments)...", n_args)
-                try:
-                    plan = self._call_llm_pass(
-                        "claim_consolidation", _CONSOLIDATION_SYSTEM,
-                        PASS_PROMPTS["claim_consolidation"].format(
-                            claims=_consolidation_input(claims_result)),
-                        cache_key=f"p1b:{ptag}:{mtag}:{transcript_hash}",
-                    )
-                    if not (plan.get("merges") or plan.get("drop")):
-                        logger.info("   Consolidation: nothing to merge")
-                    consolidation_info = _apply_consolidation_plan(claims_result, plan)
-                    if consolidation_info.get("applied"):
-                        logger.info("   Consolidated %d → %d arguments (%d group(s), %d dropped)",
-                                    consolidation_info.get("arguments_before", n_args),
-                                    consolidation_info.get("arguments_after", n_args),
-                                    consolidation_info.get("merged_groups", 0),
-                                    consolidation_info.get("dropped", 0))
-                except Exception as e:
-                    logger.warning("   Pass 1b failed (non-critical): %s — keeping original extraction", e)
-                    consolidation_info = {"applied": False, "reason": str(e)[:200],
-                                          "arguments_before": n_args}
-                    failed_passes.append("claim_consolidation")
-                    failure_reasons["claim_consolidation"] = str(e)[:300]
+        # ── Invariant: a reported argument carries at least two premises ──
+        _drop_thin_arguments(claims_result)
 
         # ── Pass 2: Fallacies, from the arguments alone ──────────────
         # These used to be two passes over the same input, asking the same
@@ -1877,8 +1758,6 @@ class DebateAnalyzer:
         # under-report the pipeline (it listed 3 of 4 passes even on a fully
         # successful run). Report every pass that ran and did not fail.
         completed = [p for p in passes_to_run if p not in failed_passes]
-        if consolidation_info:
-            final["consolidation"] = consolidation_info
         final["analysis_method"]    = "multi_pass"
         final["analysis_mode"]      = mode_label
         final["analysis_provider"]  = self.provider.provider_name()
@@ -2005,152 +1884,21 @@ def _assert_one_on_one(claims_result: Dict) -> None:
         )
 
 
-# Načrtovalec združevanja dobi SAMO to, kar potrebuje za odločitev: identifikator,
-# sklep in število premis. Poln izluščeni JSON je pri 16 argumentih obsegal ~13 000
-# tokenov, večinoma premis, ki za odločitev "sodita ta dva skupaj?" ne povedo nič.
-_PLANNER_ARG_CHARS = 220
-
-
-def _consolidation_input(claims_result: Dict) -> str:
-    rows = []
-    for speaker, data in (claims_result.get("speakers") or {}).items():
-        if not isinstance(data, dict):
-            continue
-        for arg in (data.get("arguments") or []):
-            if not isinstance(arg, dict) or not arg.get("arg_id"):
-                continue
-            text = (arg.get("argument") or "").strip()
-            if len(text) > _PLANNER_ARG_CHARS:
-                text = text[:_PLANNER_ARG_CHARS - 1] + "…"
-            rows.append({"id": arg["arg_id"], "speaker": speaker,
-                         "conclusion": text,
-                         "premises": len(arg.get("premises") or [])})
-    return _compact_json(rows)
-
-
-# Svoj poziv: pove, da gre za nevtralno razvrščanje že izluščenega gradiva.
-# Brez tega pojasnila je model ob seznamu političnih sklepov večkrat vrnil prazen odgovor.
-_CONSOLIDATION_SYSTEM = (
-    "You are a text-structuring assistant working on the output of an academic "
-    "argumentation analysis. You are given a list of argument summaries that a "
-    "previous step already extracted from a recorded debate. Your only task is to "
-    "say which entries restate or support the same point, so they can be merged.\n\n"
-    "The entries describe what a speaker argued. They are not your views and not "
-    "claims you are asked to endorse, assess or fact-check — you are organising "
-    "them, exactly as an editor groups repeated points in a transcript. Their "
-    "subject matter is irrelevant to the task; treat political, historical and "
-    "religious content the same as any other.\n\n"
-    "Never rewrite, never invent, never split. Return only the grouping plan as "
-    "JSON, with no commentary before or after it."
-)
-
-
 # An argument is a conclusion plus the reasons given for it. A single reason is
-# almost always a reason FOR something else the speaker argues, so an entry left
-# with fewer than this many premises is folded into the position it supports or
-# dropped. Enforced in code (see _apply_consolidation_plan), never as a prompt
-# quota — a quota would make the model invent the missing premise.
+# almost always a reason FOR something else the speaker argues, so an entry with
+# fewer than this many premises does not reach the report. Enforced in code and
+# never as a prompt quota, which would make the model invent the missing one.
 MIN_PREMISES = int(cfg("analysis.min_premises_per_argument", 2))
 
 
-def _apply_consolidation_plan(claims_result: Dict, plan: Dict) -> Dict:
-    """Izvede načrt združevanja. Deterministično.
-
-    Model pove le, kateri argumenti sodijo skupaj. Zlivanje opravi koda, zato je
-    ponovljivo in ne more ničesar izgubiti. Neveljavna navodila se preskočijo.
-    """
+def _drop_thin_arguments(claims_result: Dict) -> Dict:
+    """Odstrani argumente z manj kot MIN_PREMISES premisami. Deterministično."""
     speakers = claims_result.get("speakers") or {}
     if not isinstance(speakers, dict):
         return {"applied": False, "reason": "no speakers"}
 
-    # arg_id → (speaker, argument dict)
-    index: Dict[str, tuple] = {}
-    for name, data in speakers.items():
-        if not isinstance(data, dict):
-            continue
-        for arg in (data.get("arguments") or []):
-            if isinstance(arg, dict) and arg.get("arg_id"):
-                index[str(arg["arg_id"])] = (name, arg)
-
-    used: set = set()
-    merged_groups = 0
-    absorbed_ids: set = set()
-
-    def _as_premise(arg: Dict) -> List[str]:
-        """Zlije en vsrkani argument v natanko eno premiso.
-
-        En vsrkani argument je en razlog, zato postane ena premisa: njegov sklep,
-        za njim pa njegove lastne premise v istem nizu. Nič se ne izgubi.
-        """
-        text = (arg.get("argument") or "").strip()
-        own = []
-        for prem in (arg.get("premises") or []):
-            val = prem.get("premise", "") if isinstance(prem, dict) else str(prem)
-            val = (val or "").strip()
-            if val:
-                own.append(val.rstrip(" .;") )
-        if not text:
-            # No conclusion of its own: fall back to its premises as one string.
-            return ["; ".join(own)] if own else []
-        if not own:
-            return [text]
-        return [f"{text.rstrip(' .')} — {'; '.join(own)}."]
-
-    for group in (plan.get("merges") or []):
-        if not isinstance(group, dict):
-            continue
-        keep_id = str(group.get("keep") or "")
-        absorb = [str(a) for a in (group.get("absorb") or []) if a]
-        ids = [keep_id] + absorb
-        # Every id must exist, be unused and belong to the same speaker. Ids must
-        # also be distinct within the group: a plan that names the same argument
-        # as both `keep` and `absorb` would otherwise delete it.
-        if keep_id not in index or len(absorb) < 1:
-            continue
-        if len(set(ids)) != len(ids):
-            continue
-        if any(i not in index or i in used for i in ids):
-            continue
-        if len({index[i][0] for i in ids}) != 1:
-            continue
-
-        keeper = index[keep_id][1]
-        extra: List[str] = []
-        for aid in absorb:
-            extra.extend(_as_premise(index[aid][1]))
-        existing = [p if isinstance(p, str) else p.get("premise", "")
-                    for p in (keeper.get("premises") or [])]
-        seen = {e.strip().lower() for e in existing if e}
-        keeper["premises"] = list(keeper.get("premises") or []) + [
-            e for e in extra if e.strip().lower() not in seen and not seen.add(e.strip().lower())
-        ]
-        keeper["consolidated_from"] = absorb
-        keeper["consolidation_pattern"] = str(group.get("pattern") or "")
-        used.update(ids)
-        absorbed_ids.update(absorb)
-        merged_groups += 1
-
-    dropped_ids: set = set()
-    for item in (plan.get("drop") or []):
-        aid = str(item.get("arg_id") or "") if isinstance(item, dict) else str(item)
-        if aid in index and aid not in used:
-            dropped_ids.add(aid)
-            used.add(aid)
-
-    remove = absorbed_ids | dropped_ids
-    if remove:
-        for name, data in speakers.items():
-            if not isinstance(data, dict):
-                continue
-            kept = [a for a in (data.get("arguments") or [])
-                    if not (isinstance(a, dict) and str(a.get("arg_id")) in remove)]
-            # never empty a speaker that had arguments — that would be a data loss bug
-            if kept or not (data.get("arguments") or []):
-                data["arguments"] = kept
-
-    # ── Invariant: a reported argument carries at least MIN_PREMISES premises ──
-    # Model pove, kam sodi vnos z eno premiso, koda pa jamči, da noben tak ne
-    # ostane. Kvota v pozivu bi model prisilila, da manjkajočo premiso izmisli.
+    before = sum(len(d.get("arguments") or [])
+                 for d in speakers.values() if isinstance(d, dict))
     thin_dropped = 0
     for name, data in speakers.items():
         if not isinstance(data, dict):
@@ -2160,8 +1908,7 @@ def _apply_consolidation_plan(claims_result: Dict, plan: Dict) -> Dict:
             continue
         kept = [a for a in args if len(a.get("premises") or []) >= MIN_PREMISES]
         # Never empty a speaker: if EVERY entry is thin, the extraction itself
-        # failed and dropping all of them would leave a blank report. Keep them
-        # and let the count show what happened.
+        # failed and dropping all of them would leave a blank report.
         if not kept:
             logger.warning("   All %d argument(s) of %s carry fewer than %d premises "
                            "— keeping them so the speaker is not left empty",
@@ -2170,11 +1917,14 @@ def _apply_consolidation_plan(claims_result: Dict, plan: Dict) -> Dict:
         thin_dropped += len(args) - len(kept)
         data["arguments"] = kept
 
-    after = sum(len(d.get("arguments") or []) for d in speakers.values() if isinstance(d, dict))
-    return {"applied": True, "merged_groups": merged_groups,
-            "dropped": len(dropped_ids), "thin_dropped": thin_dropped,
+    after = sum(len(d.get("arguments") or [])
+                for d in speakers.values() if isinstance(d, dict))
+    if thin_dropped:
+        logger.info("   Dropped %d argument(s) with fewer than %d premises",
+                    thin_dropped, MIN_PREMISES)
+    return {"applied": True, "thin_dropped": thin_dropped,
             "min_premises": MIN_PREMISES,
-            "arguments_before": len(index), "arguments_after": after}
+            "arguments_before": before, "arguments_after": after}
 
 
 def _merge_moderator_info(pass1: Optional[Dict], synthesis: Optional[Dict]) -> Dict:

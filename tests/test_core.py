@@ -2,7 +2,7 @@
 Unit tests for the pure-logic modules.
 
 These cover the parts most likely to break silently in the large pipeline files
-(schema validation + clamps, consolidation, PDF build)
+(schema validation + clamps, thin arguments, PDF build)
 without needing any API keys or network.
 
 Run from the repo root:
@@ -119,49 +119,6 @@ def test_empty_answer_at_token_limit_counts_as_truncation():
     with pytest.raises(Exception) as exc:
         _loads_llm_json("", stop_reason="end_turn")
     assert not isinstance(exc.value, TruncatedJSONError)
-
-
-def test_consolidation_plan_is_executed_by_code():
-    """The model only says WHICH arguments belong together; the merge itself is
-    deterministic code, so nothing can truncate and no content can be lost."""
-    from debate_analyzer import _apply_consolidation_plan
-
-    def fresh():
-        return {"speakers": {"Ana": {"arguments": [
-            {"arg_id": "Ana#0", "argument": "Monarchy beats democracy",
-             "premises": ["kings answer to God",
-                          "a monarch has no election to win"]},
-            {"arg_id": "Ana#1", "argument": "Germany fell to the Nazis after the Kaiser",
-             "premises": ["1918 abdication"]},
-            {"arg_id": "Ana#2", "argument": "Russia fell to the Soviets after the Tsar",
-             "premises": []},
-            {"arg_id": "Ana#3", "argument": "This argument has convinced thousands",
-             "premises": []},
-        ]}}}
-
-    data = fresh()
-    info = _apply_consolidation_plan(data, {
-        "merges": [{"keep": "Ana#1", "absorb": ["Ana#2"], "pattern": "parallel_support"}],
-        "drop": [{"arg_id": "Ana#3", "reason": "meta_commentary"}],
-    })
-    args = data["speakers"]["Ana"]["arguments"]
-    assert info["applied"] and info["merged_groups"] == 1 and info["dropped"] == 1
-    assert [a["arg_id"] for a in args] == ["Ana#0", "Ana#1"]
-    # The absorbed argument survives inside the keeper's premises — nothing is lost.
-    joined = " ".join(args[1]["premises"])
-    assert "Russia fell to the Soviets" in joined and "1918 abdication" in joined
-    assert args[1]["consolidated_from"] == ["Ana#2"]
-
-    # A plan referencing unknown ids, or reusing one twice, is skipped — never fatal.
-    data = fresh()
-    info = _apply_consolidation_plan(data, {
-        "merges": [{"keep": "Ana#0", "absorb": ["Ana#99"]},
-                   {"keep": "Ana#1", "absorb": ["Ana#1"]}],
-        "drop": [],
-    })
-    assert info["merged_groups"] == 0
-    assert all("consolidated_from" not in a
-               for a in data["speakers"]["Ana"]["arguments"])
 
 
 def test_fallacies_name_the_argument_they_were_found_in():
@@ -321,7 +278,7 @@ def test_thin_arguments_are_dropped_by_code():
     """An argument is a conclusion plus the reasons for it, so an entry left with
     fewer than two premises is not reported. The rule lives in code, not in the
     prompt: a prompt quota would make the model invent the missing premise."""
-    from debate_analyzer import _apply_consolidation_plan, MIN_PREMISES
+    from debate_analyzer import _drop_thin_arguments, MIN_PREMISES
 
     assert MIN_PREMISES == 2
 
@@ -330,7 +287,7 @@ def test_thin_arguments_are_dropped_by_code():
         {"arg_id": "Ana#1", "argument": "one reason only", "premises": ["r1"]},
         {"arg_id": "Ana#2", "argument": "no reason at all", "premises": []},
     ]}}}
-    info = _apply_consolidation_plan(data, {"merges": [], "drop": []})
+    info = _drop_thin_arguments(data)
     kept = data["speakers"]["Ana"]["arguments"]
     assert [a["arg_id"] for a in kept] == ["Ana#0"]
     assert info["thin_dropped"] == 2 and info["min_premises"] == 2
@@ -341,7 +298,7 @@ def test_thin_arguments_are_dropped_by_code():
     data = {"speakers": {"Bor": {"arguments": [
         {"arg_id": "Bor#0", "argument": "thin", "premises": ["r1"]},
     ]}}}
-    info = _apply_consolidation_plan(data, {"merges": [], "drop": []})
+    info = _drop_thin_arguments(data)
     assert len(data["speakers"]["Bor"]["arguments"]) == 1
     assert info["thin_dropped"] == 0
 
@@ -350,7 +307,7 @@ def test_thin_arguments_are_dropped_by_code():
         {"arg_id": "Cene#0", "argument": "a", "premises": ["r1", "r2"]},
         {"arg_id": "Cene#1", "argument": "b", "premises": ["r1", "r2", "r3"]},
     ]}}}
-    info = _apply_consolidation_plan(data, {"merges": [], "drop": []})
+    info = _drop_thin_arguments(data)
     assert len(data["speakers"]["Cene"]["arguments"]) == 2
     assert info["arguments_before"] == info["arguments_after"] == 2
     assert info["thin_dropped"] == 0

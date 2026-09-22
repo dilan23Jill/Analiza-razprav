@@ -79,7 +79,9 @@ L = {
         "argument_label": "Argument", "derived": "Izpeljan argument (sklep)",
         "premises": "Premise", "premise_verdicts": "Preverjanje premis",
         "type": "Vrsta",
-                "counter": "protiargument", "fallacies": "Logične napake", "rebuttals": "Izpodbijanja",
+        "counter": "protiargument", "fallacies": "Logične napake",
+        "rebuttals": "Zavrnitve tega argumenta", "evasions": "Izogibanja odgovoru",
+        "question": "Vprašanje", "times_asked": "vprašano",
         "factcheck": "Preverjanje dejstev", "claim": "Trditev", "explanation": "Obrazložitev",
         "sources": "Viri", "speaker": "Govorec", "no_data": "Ni podatkov za prikaz.",
         "generated": "Ustvarjeno z Debate Analyzer",
@@ -91,7 +93,9 @@ L = {
         "argument_label": "Argument", "derived": "Derived argument (conclusion)",
         "premises": "Premises", "premise_verdicts": "Fact-check of premises",
         "type": "Type",
-                "counter": "counter", "fallacies": "Fallacies", "rebuttals": "Rebuttals",
+        "counter": "counter", "fallacies": "Fallacies",
+        "rebuttals": "Rebuttals of this argument", "evasions": "Evasions and non-answers",
+        "question": "Question", "times_asked": "asked",
         "factcheck": "Fact-check", "claim": "Claim", "explanation": "Explanation",
         "sources": "Sources", "speaker": "Speaker", "no_data": "No data to display.",
         "generated": "Generated with Debate Analyzer",
@@ -213,6 +217,8 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
     # ── Per-speaker arguments ──────────────────────────────────────────────────
     speakers = analysis.get("speakers") if isinstance(analysis.get("speakers"), dict) else {}
     all_fallacies = analysis.get("fallacies") if isinstance(analysis.get("fallacies"), list) else []
+    all_rebuttals = analysis.get("rebuttals") if isinstance(analysis.get("rebuttals"), list) else []
+    all_evasions = analysis.get("evasions") if isinstance(analysis.get("evasions"), list) else []
 
     for name, data in speakers.items():
         if not isinstance(data, dict):
@@ -277,6 +283,19 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                             f'</b></font>&nbsp;{_p(c.get("exact_claim"))}',
                             st["premise"]))
 
+                # ── Rebuttals aimed at this argument ──
+                # The stable id links a rebuttal to the argument it attacks, so
+                # it is printed where the reader meets that argument.
+                aimed = [r for r in all_rebuttals
+                         if _s(r.get("target_arg_id")) == _s(arg.get("arg_id"))
+                         and _s(arg.get("arg_id"))]
+                if aimed:
+                    block.append(_para(f'<i>{_p(t["rebuttals"])}</i>', st["small"]))
+                    for r in aimed:
+                        block.append(_para(
+                            f'<b>{_p(r.get("by"))}</b>&nbsp;{_p(r.get("rebuttal_content"))}',
+                            st["premise"]))
+
                 story.append(KeepTogether(block))
                 story.append(Spacer(1, 6))
 
@@ -290,6 +309,27 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                     line += f" — {_p(f['explanation'])}"
                 fitems.append(ListItem(_para(line, st["li"])))
             story.append(ListFlowable(fitems, bulletType="bullet", leftIndent=14))
+
+        # ── Evasions by this speaker ──
+        # The evasion carries no argument id: it answers to a question, not to
+        # an argument, so it is printed once per speaker rather than per block.
+        spk_evasions = [e for e in all_evasions
+                        if isinstance(e, dict) and _s(e.get("evading_speaker")) == _s(name)]
+        if spk_evasions:
+            story.append(_para(t["evasions"], st["h3"]))
+            eitems = []
+            for e in spk_evasions:
+                times = e.get("times_asked") or 1
+                head = f'<b>{_p(label("evasion_type", e.get("evasion_type"), lang))}</b>'
+                if isinstance(times, int) and times > 1:
+                    head += f' ({_p(t["times_asked"])} {times}&times;)'
+                line = head
+                if e.get("question_asked"):
+                    line += f'<br/><i>{_p(t["question"])}: {_p(e["question_asked"])}</i>'
+                if e.get("explanation"):
+                    line += f'<br/>{_p(e["explanation"])}'
+                eitems.append(ListItem(_para(line, st["li"])))
+            story.append(ListFlowable(eitems, bulletType="bullet", leftIndent=14))
 
     # ── Fact-check with sources ────────────────────────────────────────────────
     claims = fact_check.get("fact_checks") or fact_check.get("claims") or []

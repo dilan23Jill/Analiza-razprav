@@ -131,9 +131,17 @@ export default function SpeakerTimeline({
             {t.stEvasions} ({evasions.length})
           </h4>
           {evasions.map((evasion, evasionIndex) => (
-            <div key={evasionIndex} className="text-sm text-white/60 mb-2">
+            <div key={evasionIndex} className="text-sm text-white/60 mb-3">
               <span className="text-yellow-300 font-medium">{tv('evasion_type', evasion.evasion_type)}</span>
-              : <span>{evasion.explanation}</span>
+              {evasion.times_asked > 1 && (
+                <span className="text-white/40"> ×{evasion.times_asked}</span>
+              )}
+              {evasion.question_asked && (
+                <div className="italic text-white/50 mt-0.5">
+                  {t.stQuestionAsked}: {evasion.question_asked}
+                </div>
+              )}
+              {evasion.explanation && <div className="mt-0.5">{evasion.explanation}</div>}
             </div>
           ))}
         </div>

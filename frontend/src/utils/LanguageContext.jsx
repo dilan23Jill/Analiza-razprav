@@ -268,13 +268,11 @@ const translations = {
     rerunStartBtn: 'Poženi',
     rerunCancelBtn: 'Prekliči',
     argExchangeFlow: 'Potek izmenjave',
-    argOpponentRebuttal: 'Odbitev nasprotnika',
     argNotAddressed: 'Nasprotnik ni odgovoril na ta argument',
     argOpponentResponse: 'Odziv nasprotnika',
     argDefense: 'Obramba argumenta',
     argRebuttalBy: 'Odbitev',
     argUserAdded: 'ročno dodano',
-    argResponse: 'Odziv',
     argDebatablePoints: 'Sporne točke',
     fallacyAdd: 'Dodaj spregledano zmoto',
     fallacyPickType: 'Izberi vrsto zmote…',
@@ -295,6 +293,7 @@ const translations = {
     stPosition: 'Pozicija',
     stConclusions: 'Zaključki',
     stEvasions: 'Izogibanja',
+    stQuestionAsked: 'Vprašanje',
     stUnsupportedClaims: 'Nepodprte trditve',
 
     // Tooltip opisi (kratki)
@@ -565,13 +564,11 @@ const translations = {
     rerunStartBtn: 'Run',
     rerunCancelBtn: 'Cancel',
     argExchangeFlow: 'Exchange flow',
-    argOpponentRebuttal: 'Opponent rebuttal',
     argNotAddressed: 'Opponent did not address this argument',
     argOpponentResponse: 'Opponent response',
     argDefense: 'Argument defense',
     argRebuttalBy: 'Rebuttal',
     argUserAdded: 'manually added',
-    argResponse: 'Response',
     argDebatablePoints: 'Debatable points',
     fallacyAdd: 'Add a missed fallacy',
     fallacyPickType: 'Pick a fallacy type…',
@@ -592,6 +589,7 @@ const translations = {
     stPosition: 'Position',
     stConclusions: 'Conclusions',
     stEvasions: 'Evasions',
+    stQuestionAsked: 'Question',
     stUnsupportedClaims: 'Unsupported claims',
 
     // Tooltip descriptions (short)

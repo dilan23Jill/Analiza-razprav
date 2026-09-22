@@ -999,7 +999,7 @@ def _run_pipeline(job_id: str, youtube_url: str, mode: str, language: str,
         # transcript. That spent money on claims the argument extraction then
         # discarded, and left the verdicts sitting beside the arguments rather
         # than attached to them. It now runs INSIDE the analysis, right after
-        # the arguments have been extracted and consolidated, so it works on the
+        # the arguments have been extracted, so it works on the
         # premises that will actually appear in the report and every verdict
         # carries the arg_id it belongs to.
         #

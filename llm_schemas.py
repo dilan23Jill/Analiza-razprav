@@ -268,7 +268,6 @@ class SingleSpeakerSynthesisSchema(BaseModel):
 
 _SCHEMAS = {
     "claim_extraction": ClaimExtractionSchema,
-    "claim_consolidation": ClaimExtractionSchema,  # same shape in, same shape out
     "argument_structure": ArgumentStructureSchema,
     "rebuttal_mapping": RebuttalMappingSchema,
     "synthesis": SynthesisSchema,

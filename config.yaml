@@ -124,8 +124,7 @@ analysis:
   # Passe se izberejo SAMODEJNO glede na pipeline.mode:
   #   mode: "debate" → claim_extraction, argument_structure, rebuttal_mapping, synthesis
   #   mode: "solo"   → claim_extraction, argument_structure, synthesis
-  # Med prvim in drugim passom teče še claim_consolidation (model vrne načrt,
-  # izvede ga koda), med drugim in četrtim pa preverjanje dejstev iz premis.
+  # Med drugim in četrtim korakom teče še preverjanje dejstev iz premis.
   # Če želiš ročno nastaviti, odkomentiraj spodnje:
   # passes:
   #   - claim_extraction
@@ -134,24 +133,23 @@ analysis:
   #   - synthesis
 
   # ── Stopnjevani modeli ───────────────────────────────────────────────────
-  # Izluščanje in združevanje dobita ZMOGLJIVEJŠI model. Od njiju je odvisno
-  # vse ostalo — drugi pass presoja njune argumente, preverjanje dejstev dela
-  # na njunih premisah, zavrnitve se pripenjajo na njune oznake — zato se
-  # napaka od tod razširi povsod. Hkrati je razmejitev argumentov najtežja
-  # presoja v cevovodu in največji vir nihanja med zagoni.
+  # Izluščanje dobi ZMOGLJIVEJŠI model. Od njega je odvisno vse ostalo — drugi
+  # pass presoja njegove argumente, preverjanje dejstev dela na njegovih
+  # premisah, zavrnitve se pripenjajo na njegove oznake — zato se napaka od tod
+  # razširi povsod. Hkrati je razmejitev argumentov najtežja presoja v cevovodu
+  # in največji vir nihanja med zagoni.
   # Drugi pass zaznava zmote, kar zahteva nianso → Sonnet.
   # Na cenejšem modelu ostane le preslikava zavrnitev, ki je bolj mehanska:
   # kdo je komu odgovoril, s prepisom pred sabo.
   # Synthesis (zadnji pass) vedno uporabi glavni model zgoraj.
   pass_models:
     claim_extraction:    "claude-sonnet-5"
-    claim_consolidation: "claude-sonnet-5"
     argument_structure:  "claude-sonnet-5"
     rebuttal_mapping:    "claude-haiku-4-5-20251001"
 
   # ── Najmanjše število premis na argument ─────────────────────────────────
-  # Argument je sklep skupaj z razlogi zanj. Vnos z manj premisami se pri
-  # združevanju pripne poziciji, ki jo njegov razlog podpira, ali pa odpade.
+  # Argument je sklep skupaj z razlogi zanj. Vnos z manj premisami v poročilo
+  # ne pride, saj je en sam razlog skoraj vedno razlog za nekaj širšega.
   # Uveljavljeno v kodi in NE kot kvota v pozivu — kvota bi model prisilila,
   # da manjkajočo premiso izmisli.
   min_premises_per_argument: 2
@@ -173,7 +171,6 @@ analysis:
   # outputi občutno daljši kot prej.
   pass_max_tokens:
     claim_extraction:   8192    # bil 6144 — z evolution + responding_to + raises_own_objections daljši
-    claim_consolidation: 8192   # načrt je majhen, a proračun mora pokriti tudi notranje sklepanje modela
     argument_structure: 8192    # veljavnost za vsak argument + zaznane zmote
     rebuttal_mapping:   4096
     synthesis:          12288   # per_speaker + moderator_influence + stimulus_engagement
