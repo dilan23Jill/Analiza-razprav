@@ -1,13 +1,4 @@
-"""
-SQLite database for persisting debate analyses and user accounts.
-
-Tables:
-  users    — registered users (email + hashed password)
-  sessions — auth tokens (one per login, 30-day expiry)
-  debates  — one row per completed analysis (metadata + full JSON results)
-
-Thread-safe: uses a lock around writes and creates connections per-call.
-"""
+"""SQLite database for persisting debate analyses and user accounts."""
 
 import hashlib
 import json
@@ -28,8 +19,9 @@ SESSION_TTL_DAYS = 30
 
 
 def _utcnow() -> datetime:
-    """Naive UTC timestamp — same isoformat shape as the old datetime.utcnow(),
-    so stored timestamps and fromisoformat comparisons remain consistent."""
+    """Naive UTC timestamp — same isoformat shape as the old datetime.utcnow(), so stored
+    timestamps and fromisoformat comparisons remain consistent.
+    """
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
@@ -43,13 +35,10 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
-# ── SCHEMA ───────────────────────────────────────────────────────────────────
+# SCHEMA
 
 def init_db() -> None:
-    """Create tables (with current full schema) and run migrations on existing DBs.
-
-    Both fresh and pre-existing databases end up in the same final shape.
-    """
+    """Create tables (with current full schema) and run migrations on existing DBs."""
     with _write_lock:
         conn = _connect()
         try:
@@ -110,10 +99,7 @@ def init_db() -> None:
 
 
 def _run_migrations(conn) -> None:
-    """Bring older databases up to current schema. Idempotent — safe to call always.
-
-    Each ALTER is gated on PRAGMA table_info so it only runs once.
-    """
+    """Bring older databases up to current schema."""
     debate_cols = {row[1] for row in conn.execute("PRAGMA table_info(debates)").fetchall()}
     if "user_id" not in debate_cols:
         conn.execute("ALTER TABLE debates ADD COLUMN user_id INTEGER REFERENCES users(id)")
@@ -128,8 +114,6 @@ def _run_migrations(conn) -> None:
         conn.execute("ALTER TABLE debates ADD COLUMN transcript_text TEXT DEFAULT ''")
         logger.info("Migration: added transcript_text column to debates")
 
-    # The genre label was a free model guess that nothing depended on and that
-    # was shown untranslated; it is gone. Drop it from older databases too.
     if "format" in debate_cols:
         try:
             conn.execute("ALTER TABLE debates DROP COLUMN format")
@@ -137,9 +121,6 @@ def _run_migrations(conn) -> None:
         except Exception as e:
             logger.info("Migration: could not drop format column (%s) — leaving it unused", e)
 
-    # The app no longer declares a winner; drop the leftover column from older
-    # databases. DROP COLUMN needs SQLite 3.35+ — on older builds the column is
-    # simply left in place, unused and never written to again.
     if "winner" in debate_cols:
         try:
             conn.execute("ALTER TABLE debates DROP COLUMN winner")
@@ -147,10 +128,6 @@ def _run_migrations(conn) -> None:
         except Exception as e:
             logger.info("Migration: could not drop winner column (%s) — leaving it unused", e)
 
-    # Leftover from an abandoned semantic-search idea: a chunk table with an
-    # `embedding` column that nothing ever wrote to and nothing ever read. A
-    # table no code touches is the schema equivalent of dead code — anyone
-    # inspecting the database has to work out that it means nothing.
     if conn.execute(
         "SELECT 1 FROM sqlite_master WHERE type='table' AND name='debate_chunks'"
     ).fetchone():
@@ -160,7 +137,6 @@ def _run_migrations(conn) -> None:
         except Exception as e:
             logger.info("Migration: could not drop debate_chunks (%s) — leaving it", e)
 
-    # Privacy migration: scrub any previously stored transcript payloads.
     purged = conn.execute(
         "UPDATE debates SET transcript_text = '' "
         "WHERE transcript_text IS NOT NULL AND trim(transcript_text) != ''"
@@ -178,8 +154,7 @@ def _run_migrations(conn) -> None:
 
 
 def ensure_admin_user() -> None:
-    """Ob zagonu aplikacije zagotovi, da ima user_id=1 admin pravice in 100 kreditov.
-    (Migracije so v init_db / _run_migrations — TUKAJ NE.)"""
+    """Ob zagonu aplikacije zagotovi, da ima user_id=1 admin pravice in 100 kreditov."""
     try:
         with _write_lock:
             conn = _connect()
@@ -201,7 +176,7 @@ def ensure_admin_user() -> None:
         logger.error("Failed to run ensure_admin_user: %s", e)
 
 
-# ── PASSWORD HASHING ─────────────────────────────────────────────────────────
+# PASSWORD HASHING
 
 def _hash_password(password: str, salt: str = "") -> str:
     if not salt:
@@ -217,10 +192,10 @@ def _verify_password(password: str, stored_hash: str) -> bool:
     return _hash_password(password, salt) == stored_hash
 
 
-# ── USER CRUD ────────────────────────────────────────────────────────────────
+# USER CRUD
 
 def create_user(username: str, email: str, password: str) -> Optional[Dict]:
-    """Register a new user. Returns user dict or None if username/email taken."""
+    """Register a new user."""
     pw_hash = _hash_password(password)
     now = _utcnow().isoformat()
 
@@ -244,7 +219,7 @@ def create_user(username: str, email: str, password: str) -> Optional[Dict]:
 
 
 def authenticate_user(login: str, password: str) -> Optional[Dict]:
-    """Check username-or-email + password. Returns user dict or None."""
+    """Check username-or-email + password."""
     conn = _connect()
     try:
         row = conn.execute(
@@ -262,7 +237,7 @@ def authenticate_user(login: str, password: str) -> Optional[Dict]:
             "credits": row["credits"], "is_admin": bool(row["is_admin"])}
 
 
-# ── CREDITS ──────────────────────────────────────────────────────────────────
+# CREDITS
 
 def get_credits(user_id: int) -> int:
     conn = _connect()
@@ -274,7 +249,7 @@ def get_credits(user_id: int) -> int:
 
 
 def set_credits(user_id: int, credits: int) -> bool:
-    """Set exact credit amount. Returns True if user exists."""
+    """Set exact credit amount."""
     with _write_lock:
         conn = _connect()
         try:
@@ -288,14 +263,7 @@ def set_credits(user_id: int, credits: int) -> bool:
 
 
 def use_credit(user_id: int) -> bool:
-    """Atomically deduct 1 credit. Returns True if successful, False if none left.
-
-    Uses a conditional UPDATE — the deduction only happens when credits > 0,
-    and `rowcount` tells us whether anything actually changed. Safe under
-    concurrent calls thanks to _write_lock + the SQL guard.
-
-    Admins bypass the deduction (effectively unlimited credits) and get True.
-    """
+    """Atomically deduct 1 credit."""
     with _write_lock:
         conn = _connect()
         try:
@@ -306,7 +274,6 @@ def use_credit(user_id: int) -> bool:
                 return False
             if row["is_admin"]:
                 return True
-            # Conditional decrement — only succeeds if credits > 0
             cur = conn.execute(
                 "UPDATE users SET credits = credits - 1 WHERE id = ? AND credits > 0",
                 (user_id,),
@@ -318,8 +285,7 @@ def use_credit(user_id: int) -> bool:
 
 
 def refund_credit(user_id: int) -> bool:
-    """Return 1 credit to a user. Used when a job fails AFTER its credit was
-    reserved — we don't want to charge for analyses that never completed."""
+    """Return 1 credit to a user."""
     with _write_lock:
         conn = _connect()
         try:
@@ -329,7 +295,7 @@ def refund_credit(user_id: int) -> bool:
             if not row:
                 return False
             if row["is_admin"]:
-                return True   # admin has unlimited; no-op
+                return True
             conn.execute(
                 "UPDATE users SET credits = credits + 1 WHERE id = ?", (user_id,)
             )
@@ -340,7 +306,7 @@ def refund_credit(user_id: int) -> bool:
 
 
 def set_admin(user_id: int, is_admin: bool = True) -> bool:
-    """Set or remove admin flag. Returns True if user exists."""
+    """Set or remove admin flag."""
     with _write_lock:
         conn = _connect()
         try:
@@ -380,10 +346,10 @@ def get_user_by_id(user_id: int) -> Optional[Dict]:
     return d
 
 
-# ── SESSION TOKENS ───────────────────────────────────────────────────────────
+# SESSION TOKENS
 
 def create_session(user_id: int) -> str:
-    """Create a new auth token. Returns the token string."""
+    """Create a new auth token."""
     token = secrets.token_urlsafe(48)
     now = _utcnow()
     expires = now + timedelta(days=SESSION_TTL_DAYS)
@@ -402,7 +368,7 @@ def create_session(user_id: int) -> str:
 
 
 def validate_session(token: str) -> Optional[int]:
-    """Check token validity. Returns user_id or None."""
+    """Check token validity."""
     if not token:
         return None
     conn = _connect()
@@ -431,7 +397,7 @@ def delete_session(token: str) -> None:
             conn.close()
 
 
-# ── DEBATE CRUD ──────────────────────────────────────────────────────────────
+# DEBATE CRUD
 
 def save_debate(
     job_id: str,
@@ -490,13 +456,7 @@ def save_debate(
 
 def update_debate_fact_check(debate_id: str, fact_check_json: str,
                              report_text: Optional[str] = None) -> bool:
-    """Replace only the fact-check of a saved debate.
-
-    The arguments stay as they were, so re-checking the facts does not touch
-    them. Used by the re-check endpoint, which re-runs the sources over an
-    analysis that is already on disk instead of paying for the whole pipeline
-    again.
-    """
+    """Replace only the fact-check of a saved debate."""
     with _write_lock:
         conn = _connect()
         try:
@@ -529,11 +489,7 @@ def update_debate_analysis(debate_id: str, analysis_json: str,
                            summary: Optional[str] = None,
                            speakers: Optional[str] = None,
                            title: Optional[str] = None) -> bool:
-    """Replace the analysis_json (and optionally derived fields) for a debate.
-
-    Used by the user-facing edit endpoints — when the user renames a speaker,
-    deletes/edits an argument, edits the title, etc. Returns True on success.
-    """
+    """Replace the analysis_json (and optionally derived fields) for a debate."""
     with _write_lock:
         conn = _connect()
         try:
@@ -568,13 +524,12 @@ def _mode_clause(mode):
         return None, []
     if isinstance(mode, str):
         return "mode = ?", [mode]
-    # list / tuple of allowed mode values (e.g. ["debate", "debate_1v1"])
     placeholders = ",".join("?" for _ in mode)
     return f"mode IN ({placeholders})", list(mode)
 
 
 def list_debates(limit: int = 50, offset: int = 0, user_id: Optional[int] = None, mode=None) -> List[Dict]:
-    """List debates. `mode` accepts a str OR a list of strs (for legacy-aware filtering)."""
+    """List debates."""
     conn = _connect()
     cols = """id, user_id, youtube_url, mode, language, title, topic, speakers,
               speaker_names, status, summary, created_at, duration_sec"""
@@ -618,7 +573,7 @@ def count_debates(user_id: Optional[int] = None, mode=None) -> int:
 
 
 def delete_debate(debate_id: str) -> bool:
-    """Delete a debate by ID. Returns True if deleted."""
+    """Delete a debate by ID."""
     with _write_lock:
         conn = _connect()
         try:
@@ -670,7 +625,6 @@ def _row_to_dict(row: sqlite3.Row, include_full: bool = False) -> Dict:
         d.pop("fact_check_json", None)
         d.pop("report_text", None)
 
-    # Transcript is kept private even in full detail responses.
     d.pop("transcript_text", None)
 
     return d

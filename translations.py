@@ -1,37 +1,17 @@
-"""
-Internationalization (i18n) module for the Debate Analysis Pipeline.
-Supports English (en) and Slovenian (sl).
-
-Usage:
-    from translations import t, get_language
-    print(t("pipeline.title"))           # Uses language from config.yaml
-    print(t("pipeline.title", "sl"))     # Forces Slovenian
-
-Two separate things live here:
-
-  t(key)              — UI/report chrome (labels, headings, messages).
-  label(group, value) — human-readable names for the CATEGORICAL VALUES the model
-                        returns ("straw_man" → "slamnati mož").
-
-The values themselves stay English everywhere: the code matches on them verbatim
-and the model is explicitly told to keep them (see llm.language_instruction).
-Only the presentation is translated — and it is translated from ONE file,
-frontend/src/enumLabels.json, which the React front end imports directly. That is
-why the report, the PDF and the interface cannot drift apart.
-"""
+"""Internationalization (i18n) module for the Debate Analysis Pipeline."""
 
 import json
 from pathlib import Path
 
 from config_loader import get as cfg
 
-# ── TRANSLATION DICTIONARY ─────────────────────────────────────────────────
+# TRANSLATION DICTIONARY
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
 
-    # ── Pipeline (main.py) ──────────────────────────────────────────────
+    # Pipeline (main.py)
 
-    # ── Debate Analyzer (debate_analyzer.py) ────────────────────────────
+    # Debate Analyzer (debate_analyzer.py)
     "report.title":                     {"en": "DEBATE ANALYSIS REPORT",
                                          "sl": "POROČILO O ANALIZI DEBATE"},
     "report.provider":                  {"en": "Provider",
@@ -75,7 +55,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "report.arguments_assessed":        {"en": "arguments assessed",
                                          "sl": "ocenjenih argumentov"},
 
-    # Argument-per-block labels
     "report.argument_label":            {"en": "Argument",
                                          "sl": "Argument"},
     "report.premises_label":            {"en": "Premises:",
@@ -87,17 +66,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "report.rebuttals_on_this":         {"en": "Rebuttals:",
                                          "sl": "Ovrženja:"},
 
-    # Solo mode labels
     "report.unsupported_claims":        {"en": "Unsupported Claims",
                                          "sl": "Nepodprte trditve"},
 
-    # Comparative keys
     "report.rhetorical_style":          {"en": "Rhetorical Style",
                                          "sl": "Retorični slog"},
 
-    # ── Fact Checker (fact_checker.py) ──────────────────────────────────
+    # Fact Checker (fact_checker.py)
 
-    # Verdict labels
     "verdict.TRUE":                     {"en": "TRUE",
                                          "sl": "RESNIČNO"},
     "verdict.TRUE.short":               {"en": "Verified as accurate",
@@ -108,8 +84,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
                                          "sl": "DELNO RESNIČNO"},
     "verdict.PARTIALLY_TRUE.short":     {"en": "Contains accurate and inaccurate elements",
                                          "sl": "Vsebuje točne in netočne elemente"},
-    "verdict.PARTIALLY_TRUE.desc":      {"en": "Some factual basis but includes inaccuracies or misleading framing.",
-                                         "sl": "Ima določeno dejansko osnovo, vendar vključuje netočnosti ali zavajujoče uokvirjanje."},
+    "verdict.PARTIALLY_TRUE.desc":      {"en": "Right direction, but a figure is off by more than rounding or important context is missing.",
+                                         "sl": "Smer je pravilna, a število odstopa več kot za zaokrožitev ali manjka pomemben kontekst."},
     "verdict.MISLEADING":               {"en": "MISLEADING",
                                          "sl": "ZAVAJAJOČE"},
     "verdict.MISLEADING.short":         {"en": "Creates a false impression",
@@ -135,7 +111,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "verdict.ERROR.desc":               {"en": "Technical error prevented fact-checking.",
                                          "sl": "Tehnična napaka je preprečila preverjanje dejstev."},
 
-    # ── LLM Language instruction ────────────────────────────────────────
+    # LLM Language instruction
     "llm.language_instruction":         {"en": "",
                                          "sl": "\n\nIMPORTANT: Write ALL human-readable prose in your output in SLOVENIAN (slovenščina). "
                                                "Even when the source transcript is in another language (e.g. English), you MUST translate/paraphrase the content into Slovenian. "
@@ -147,24 +123,18 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
                                                "(3) verbatim quotation fields (key_quotes, exact_claim) must stay in the speaker's ORIGINAL words — a translated quote is no longer a quote."},
 }
 
-# ── PUBLIC API ──────────────────────────────────────────────────────────────
+# PUBLIC API
 
 def get_language() -> str:
     """Return current language from config (default: 'en')."""
     return cfg("pipeline.language", "en").lower()
 
 def t(key: str, lang: str | None = None, **kwargs) -> str:
-    """
-    Get translated string.
-    Args:
-        key:    dot-separated translation key
-        lang:   override language (default: from config)
-        kwargs: format placeholders, e.g. t("summary.critical_warning", n=3)
-    """
+    """Get translated string."""
     lang = lang or get_language()
     entry = TRANSLATIONS.get(key)
     if entry is None:
-        return key  # fallback: return key itself
+        return key
 
     text = entry.get(lang) or entry.get("en", key)
     if kwargs:
@@ -182,16 +152,13 @@ def get_verdict_label(verdict: str, lang: str | None = None) -> dict:
     }
 
 
-# ── CATEGORICAL VALUE LABELS ────────────────────────────────────────────────
-# Shared with the front end: the same JSON file is imported by
-# frontend/src/utils/LanguageContext.jsx. One source, three outputs.
+# CATEGORICAL VALUE LABELS
 
 _LABELS_PATH = Path(__file__).resolve().parent / "frontend" / "src" / "enumLabels.json"
 
 
 def _load_labels() -> dict:
-    """Read the shared label file. Never raises: a missing or malformed file
-    degrades to raw values rather than breaking a finished analysis."""
+    """Read the shared label file."""
     try:
         data = json.loads(_LABELS_PATH.read_text(encoding="utf-8"))
         return {k: v for k, v in data.items() if not k.startswith("_")}
@@ -203,16 +170,7 @@ ENUM_LABELS: dict[str, dict[str, dict[str, str]]] = _load_labels()
 
 
 def label(group: str, value, lang: str | None = None) -> str:
-    """Human-readable name for a categorical value the model returned.
-
-        label("fallacy", "straw_man")   → "slamnati mož"   (sl)
-        label("argument_type", "causal") → "vzročni"         (sl)
-
-    Unknown values fall back to the value itself with underscores turned into
-    spaces, so an unexpected value is still readable instead of raw. That
-    fallback is deliberately silent in production; the unit test is what
-    guarantees every value in the closed vocabularies has a real label.
-    """
+    """Human-readable name for a categorical value the model returned."""
     if value is None:
         return ""
     raw = str(value).strip()
@@ -221,8 +179,6 @@ def label(group: str, value, lang: str | None = None) -> str:
     lang = lang or get_language()
     entry = (ENUM_LABELS.get(group) or {}).get(raw)
     if entry is None:
-        # Case-insensitive second try: schemas store HIGH/MEDIUM upper-cased,
-        # some scales lower-cased, and the two overlap ("high").
         for key, val in (ENUM_LABELS.get(group) or {}).items():
             if key.lower() == raw.lower():
                 entry = val

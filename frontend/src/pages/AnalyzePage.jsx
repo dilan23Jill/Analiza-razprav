@@ -6,7 +6,6 @@ import TimeRangeSlider from '../components/TimeRangeSlider'
 import { useAuth } from '../services/auth'
 import { useActiveJobs } from '../hooks/ActiveJobsContext'
 
-// YouTube URL regex (matches the same patterns the backend accepts)
 const YT_URL_RE = /^https?:\/\/((www\.)?youtube\.com\/watch\?v=[\w-]{11}|youtu\.be\/[\w-]{11}|(www\.)?youtube\.com\/shorts\/[\w-]{11})/
 
 export default function AnalyzePage() {
@@ -16,7 +15,7 @@ export default function AnalyzePage() {
   const { user } = useAuth()
   const { primaryActiveJob: runningJob, initialLoading: checkingJobs } = useActiveJobs()
 
-  const [inputType, setInputType] = useState('youtube')  // 'youtube' or 'upload'
+  const [inputType, setInputType] = useState('youtube')
   const [url, setUrl] = useState('')
   const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
@@ -27,13 +26,12 @@ export default function AnalyzePage() {
   const [endTime, setEndTime] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // ── Auto-detected media duration & metadata (powers the trim slider) ──
-  const [videoDuration, setVideoDuration] = useState(null)   // seconds or null
+  const [videoDuration, setVideoDuration] = useState(null)
   const [videoTitle, setVideoTitle]       = useState('')
   const [probing, setProbing]             = useState(false)
   const [probeError, setProbeError]       = useState('')
 
-  // ── Auto-probe YouTube URL (debounced) ────────────────────────────
+  // Auto-probe YouTube URL (debounced)
   useEffect(() => {
     if (inputType !== 'youtube') return
     setProbeError('')
@@ -55,7 +53,6 @@ export default function AnalyzePage() {
         }
       } catch (err) {
         if (cancelled) return
-        // Probe failures are non-fatal — user can still submit, just without auto-sized slider
         setVideoDuration(null)
         setProbeError(err.message || 'Probe failed')
       } finally {
@@ -66,7 +63,6 @@ export default function AnalyzePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, inputType])
 
-  // ── Read uploaded file duration via HTML5 audio (no upload needed) ─
   useEffect(() => {
     if (inputType !== 'upload' || !file) {
       if (inputType === 'upload') {
@@ -93,7 +89,6 @@ export default function AnalyzePage() {
       cleanup()
     }
     audio.onerror = () => {
-      // Some video containers can't be probed by <audio>. Try <video> instead.
       const video = document.createElement('video')
       video.preload = 'metadata'
       video.src = objectUrl
@@ -107,7 +102,6 @@ export default function AnalyzePage() {
     return cleanup
   }, [file, inputType])
 
-  // Reset probed metadata when switching input type
   useEffect(() => {
     setVideoDuration(null)
     setVideoTitle('')
@@ -189,10 +183,6 @@ export default function AnalyzePage() {
       )}
 
       {runningJob ? (
-        /* ── BLOCKING STATE — analysis in progress, form is hidden ──
-             User must wait for current analysis to finish (or click "Open"
-             to view it). Form returns automatically when poll detects the
-             job is no longer in queued/processing state. */
         <div className="rounded-2xl bg-gradient-to-br from-accent-red/15 to-orange-500/10 border border-accent-red/40 p-6 sm:p-8">
           <div className="flex items-start gap-4">
             <span className="relative flex shrink-0 w-10 h-10 items-center justify-center mt-0.5">
@@ -229,7 +219,6 @@ export default function AnalyzePage() {
         </div>
       ) : (
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Debate title (optional) */}
         <div>
           <label className="block text-sm text-white/60 mb-2">
             {t.debateTitle} <span className="text-white/30">({t.optional})</span>
@@ -248,7 +237,6 @@ export default function AnalyzePage() {
           </p>
         </div>
 
-        {/* Input type selector */}
         <div>
           <label className="block text-sm text-white/60 mb-2">{t.source}</label>
           <div className="grid grid-cols-2 gap-3">
@@ -267,7 +255,6 @@ export default function AnalyzePage() {
           </div>
         </div>
 
-        {/* YouTube URL or File Upload */}
         {inputType === 'youtube' ? (
           <div>
             <label className="block text-sm text-white/60 mb-2">{t.youtubeUrl}</label>
@@ -281,7 +268,6 @@ export default function AnalyzePage() {
                          text-white placeholder-white/30 focus:outline-none
                          focus:border-accent-red/50 transition-colors"
             />
-            {/* Probe status */}
             {probing && (
               <p className="text-white/30 text-xs mt-1.5">
                 {t.probingVideo}
@@ -342,8 +328,6 @@ export default function AnalyzePage() {
           </div>
         )}
 
-        {/* Time range — show ONLY after a YouTube URL is pasted (and validated)
-            or a file is selected. Avoids confusing empty slider on page load. */}
         {((inputType === 'youtube' && url && YT_URL_RE.test(url.trim())) ||
           (inputType === 'upload' && file)) && (
           <TimeRangeSlider
@@ -356,7 +340,6 @@ export default function AnalyzePage() {
           />
         )}
 
-        {/* Mode — solo (covers solo + reaction) or debate (strictly 1v1) */}
         <div>
           <label className="block text-sm text-white/60 mb-2">{t.analysisMode}</label>
           <div className="grid grid-cols-2 gap-3">
@@ -375,7 +358,6 @@ export default function AnalyzePage() {
           </div>
         </div>
 
-        {/* Speaker names (optional) */}
         <div>
           <label className="block text-sm text-white/60 mb-2">
             {t.speakerNames} <span className="text-white/30">({t.optional})</span>
@@ -394,7 +376,6 @@ export default function AnalyzePage() {
           </p>
         </div>
 
-        {/* Language */}
         <div>
           <label className="block text-sm text-white/60 mb-2">{t.analysisLanguage}</label>
           <div className="grid grid-cols-2 gap-3">

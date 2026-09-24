@@ -1,15 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useLanguage } from '../utils/LanguageContext'
 
-/**
- * Dual-handle range slider for trimming video.
- *
- * If `videoDuration` (seconds) is provided (from a YouTube probe or a
- * client-side audio element), the slider auto-sizes to it and the manual
- * "10m / 25m / 1h / 2h" picker is hidden — the user sees the real timeline.
- *
- * If duration is unknown, we fall back to a manual max-duration picker.
- */
 
 function secondsToHMS(totalSec) {
   const h = Math.floor(totalSec / 3600)
@@ -19,7 +10,7 @@ function secondsToHMS(totalSec) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-const DEFAULT_MAX = 25 * 60 // 25 min — only used when duration is unknown
+const DEFAULT_MAX = 25 * 60
 
 export default function TimeRangeSlider({
   startTime, endTime, onStartChange, onEndChange,
@@ -33,7 +24,6 @@ export default function TimeRangeSlider({
   const [startPct, setStartPct] = useState(0)
   const [endPct, setEndPct] = useState(100)
 
-  // If we know the real duration, use it; otherwise the user-picked manual max.
   const knownDuration = Number.isFinite(videoDuration) && videoDuration > 0
   const maxSec = knownDuration ? Math.round(videoDuration) : manualMax
 
@@ -41,8 +31,6 @@ export default function TimeRangeSlider({
   const endSec = Math.round((endPct / 100) * maxSec)
   const isFullRange = startPct === 0 && endPct === 100
 
-  // When we learn the real duration, reset the slider so the user doesn't
-  // have a stale percentage from the manual-max world.
   useEffect(() => {
     if (knownDuration) {
       setStartPct(0)
@@ -51,7 +39,6 @@ export default function TimeRangeSlider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoDuration])
 
-  // Sync outward
   useEffect(() => {
     onStartChange(startPct <= 0 ? '' : secondsToHMS(startSec))
   }, [startPct, maxSec])  // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,7 +83,6 @@ export default function TimeRangeSlider({
     }
   }, [dragging, handlePointerMove, handlePointerUp])
 
-  // Click on track → move nearest handle
   const handleTrackClick = (e) => {
     if (dragging) return
     const pct = getPctFromX(e.clientX)
@@ -114,7 +100,6 @@ export default function TimeRangeSlider({
     setEndPct(100)
   }
 
-  // Markers: 5 evenly spaced
   const markers = [0, 25, 50, 75, 100]
 
   const totalLabel = knownDuration
@@ -141,7 +126,6 @@ export default function TimeRangeSlider({
         </div>
       </div>
 
-      {/* Time display */}
       <div className="flex items-center justify-center gap-3 mb-3">
         <div className="bg-dark-600 border border-white/10 rounded-lg px-3 py-1.5 min-w-[64px] text-center">
           <span className="text-white text-sm font-mono">{secondsToHMS(startSec)}</span>
@@ -157,16 +141,13 @@ export default function TimeRangeSlider({
         )}
       </div>
 
-      {/* Slider */}
       <div
         ref={trackRef}
         className="relative h-10 flex items-center cursor-pointer touch-none"
         onPointerDown={handleTrackClick}
       >
-        {/* Background */}
         <div className="absolute left-0 right-0 h-1.5 bg-white/10 rounded-full" />
 
-        {/* Active range */}
         <div
           className="absolute h-1.5 rounded-full transition-colors"
           style={{
@@ -176,7 +157,6 @@ export default function TimeRangeSlider({
           }}
         />
 
-        {/* Markers */}
         <div className="absolute left-0 right-0 top-7">
           {markers.map(pct => (
             <span key={pct} className="absolute text-[10px] text-white/15 -translate-x-1/2"
@@ -186,7 +166,6 @@ export default function TimeRangeSlider({
           ))}
         </div>
 
-        {/* Start handle */}
         <div
           className={`absolute w-5 h-5 rounded-full border-2 -translate-x-1/2 z-10 transition-all
             ${dragging === 'start'
@@ -196,7 +175,6 @@ export default function TimeRangeSlider({
           onPointerDown={handlePointerDown('start')}
         />
 
-        {/* End handle */}
         <div
           className={`absolute w-5 h-5 rounded-full border-2 -translate-x-1/2 z-10 transition-all
             ${dragging === 'end'
@@ -207,7 +185,6 @@ export default function TimeRangeSlider({
         />
       </div>
 
-      {/* Manual max-duration selector — only when duration is unknown */}
       {!knownDuration && (
         <div className="flex items-center justify-end mt-4 gap-1">
           <span className="text-[10px] text-white/20 mr-1">

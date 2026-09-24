@@ -3,16 +3,10 @@ import { useLanguage } from '../utils/LanguageContext'
 import { getFactCheckClaims } from '../utils/factCheck'
 import InfoTooltip from './InfoTooltip'
 
-/**
- * Zberi vire v en seznam, brez podvojenih povezav.
- * Novejše analize imajo vse vire že v claim.sources; perplexity_data se prebere
- * zato, da starejše shranjene analize prikažejo enak seznam kot prej.
- */
 function getAllSources(claim) {
   const seen = new Set()
   const result = []
 
-  // Glavni seznam virov
   for (const src of claim.sources || []) {
     const url = src.url || src
     if (url && !seen.has(url)) {
@@ -21,7 +15,6 @@ function getAllSources(claim) {
     }
   }
 
-  // Perplexityjevi navedki iz starejših analiz (gole povezave)
   const citations = (claim.perplexity_data || {}).citations || []
   for (const url of citations) {
     if (url && !seen.has(url)) {
@@ -34,9 +27,6 @@ function getAllSources(claim) {
 }
 
 
-// Vsak vir dobi od razsojevalnega koraka eno od istih petih razsodb: kar ta
-// vir sam po sebi pove o trditvi. Vir brez oznake je tisti, ki ga razsodnik ni
-// omenil, in ostane siv, namesto da bi ga šteli za pritrdilnega.
 const SOURCE_DOT = {
   TRUE: 'bg-green-400',
   PARTIALLY_TRUE: 'bg-yellow-400',
@@ -55,7 +45,6 @@ const SOURCE_TEXT = {
 
 const VERDICT_ORDER = ['TRUE', 'PARTIALLY_TRUE', 'MISLEADING', 'FALSE', 'UNVERIFIABLE']
 
-/** Koliko virov pove kaj. Seštevek, ne glasovanje: razsodba se od večine lahko razlikuje. */
 function SourceTally({ tally, t }) {
   if (!tally) return null
   const shown = VERDICT_ORDER.filter(v => (tally[v] || 0) > 0)
@@ -83,26 +72,15 @@ export default function FactCheckPanel({ factCheck }) {
   const claims = getFactCheckClaims(factCheck)
   const summary = factCheck.summary || {}
   const verdictBreakdown = summary.verdict_breakdown || {}
-  // Razsodbe po govorcih. Prej je tu stal delež točnosti, torej ena številka
-  // iz utežene vsote razsodb. Uteži so bile izbrane in ne izmerjene, iz
-  // imenovalca pa so izpadle nepreverljive trditve, zato je odstotek lahko
-  // stal na peščici trditev in bil videti enako kot tisti, ki stoji na vseh.
-  // Zdaj so prikazane same razsodbe, preštete.
   const VERDICTS = ['TRUE', 'PARTIALLY_TRUE', 'MISLEADING', 'FALSE', 'UNVERIFIABLE']
   const bySpeaker = Object.entries(summary.verdicts_by_speaker || {})
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── Summary bar ──────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-2 sm:gap-3">
         <StatCard label={t.checked} value={summary.total_checked || 0} />
       </div>
 
-      {/* ── Vseh pet razsodb ─────────────────────────────────
-          Prej sta bili prikazani samo skrajni vrednosti, zaradi česar je
-          pri tridesetih preverjenih trditvah ostalo triindvajset nevidnih.
-          Vmesne razsodbe so pri govorjenih trditvah najpogostejše, zato
-          morajo biti v pregledu vidne. */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
         <StatCard label={t.true_}            value={verdictBreakdown.TRUE || 0}           color="text-green-400" />
         <StatCard label={t.partiallyTrue}    value={verdictBreakdown.PARTIALLY_TRUE || 0} color="text-yellow-400" />
@@ -111,7 +89,6 @@ export default function FactCheckPanel({ factCheck }) {
         <StatCard label={t.unverifiableShort} value={verdictBreakdown.UNVERIFIABLE || 0}  color="text-white/50" />
       </div>
 
-      {/* ── Razsodbe po govorcih ── */}
       {bySpeaker.length > 1 && (
         <div className="rounded-lg border border-white/10 bg-dark-600/30 p-3">
           <p className="text-xs text-white/40 mb-2">{t.verdictsBySpeaker}</p>
@@ -130,10 +107,7 @@ export default function FactCheckPanel({ factCheck }) {
         </div>
       )}
 
-      {/* ── Verdict distribution bar ─────────────────────── */}
       {Object.keys(verdictBreakdown).length > 0 && (() => {
-        // Vrstni red je vsebinski (od drži do ne drži, nepreverljivo na koncu)
-        // in ne vrstni red ključev, ki ga vrne strežnik.
         const VRSTNI_RED = ['TRUE', 'PARTIALLY_TRUE', 'MISLEADING', 'FALSE', 'UNVERIFIABLE']
         const BARVA = {
           TRUE: 'bg-green-500',
@@ -162,8 +136,6 @@ export default function FactCheckPanel({ factCheck }) {
               })}
             </div>
 
-            {/* Legenda: brez nje barv v pasu ni mogoče brati brez miške,
-                na dotičnih napravah pa sploh ne. */}
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {prisotne.map((verdict) => (
                 <span key={verdict} className="flex items-center gap-1.5 text-xs text-white/60">
@@ -179,7 +151,6 @@ export default function FactCheckPanel({ factCheck }) {
         )
       })()}
 
-      {/* ── Claims list ──────────────────────────────────── */}
       <div className="space-y-2">
         {claims.map((claim, i) => {
           const isExpanded = expandedIdx === i
@@ -193,7 +164,6 @@ export default function FactCheckPanel({ factCheck }) {
                 isExpanded ? 'border-white/15 bg-dark-600/80' : 'border-white/5 bg-dark-600/30'
               }`}
             >
-              {/* Claim header */}
               <button
                 onClick={() => setExpandedIdx(isExpanded ? null : i)}
                 className="w-full px-3 sm:px-5 py-3 flex items-center gap-2 sm:gap-3 text-left
@@ -209,10 +179,8 @@ export default function FactCheckPanel({ factCheck }) {
                 <VerdictBadge verdict={verdict} t={t} />
               </button>
 
-              {/* Expanded details */}
               {isExpanded && (
                 <div className="px-3 sm:px-5 pb-4 pt-1 border-t border-white/5 animate-fade-in">
-                  {/* Explanation */}
                   {claim.explanation && (
                     <div className="mb-3">
                       <p className="text-xs text-white/40 font-semibold mb-1">{t.explanation}</p>
@@ -220,7 +188,6 @@ export default function FactCheckPanel({ factCheck }) {
                     </div>
                   )}
 
-                  {/* Context */}
                   {claim.context && (
                     <div className="mb-3">
                       <p className="text-xs text-white/40 font-semibold mb-1">{t.context}</p>
@@ -228,10 +195,8 @@ export default function FactCheckPanel({ factCheck }) {
                     </div>
                   )}
 
-                  {/* Kaj pove posamezen vir, po istih petih razsodbah */}
                   <SourceTally tally={claim.source_verdicts} t={t} />
 
-                  {/* Sources (merged from sources + perplexity citations) */}
                   {allSources.length > 0 && (
                     <div className="mb-3">
                       <p className="text-xs text-white/40 font-semibold mb-1">{t.sources} ({allSources.length})</p>
@@ -266,7 +231,6 @@ export default function FactCheckPanel({ factCheck }) {
                     </div>
                   )}
 
-                  {/* Evidence metrics */}
                   {claim.evidence_metrics && (
                     <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-white/40">
                       {claim.evidence_metrics.source_count != null && (
@@ -287,7 +251,6 @@ export default function FactCheckPanel({ factCheck }) {
   )
 }
 
-/** Extract domain from URL for display fallback */
 function _domainFromUrl(url) {
   try {
     return new URL(url).hostname.replace('www.', '')

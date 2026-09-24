@@ -63,8 +63,9 @@ export default function JobStatusPage() {
       intervalRef.current = BASE_INTERVAL
 
       if (data.status === 'completed') {
-        chimeOnceFor(id)   // zvočni signal — analiza je končana
-        setTimeout(() => navigate(`/debate/${id}`), 1500)
+        chimeOnceFor(id)
+        const target = data.result?.debate_id || id
+        setTimeout(() => navigate(`/debate/${target}`), 1500)
         return
       }
       if (data.status === 'failed') {

@@ -5,11 +5,6 @@ import { useDebateEdit } from '../utils/DebateEditContext'
 import { editDebate } from '../services/api'
 import enumLabels from '../enumLabels.json'
 
-// Fallacy names offered in the manual-entry dropdown, sorted by their
-// translated label. Reading the shared label file means the dropdown can only
-// produce names the closed vocabulary already knows, so a hand-added fallacy is
-// shaped exactly like a detected one. The CATEGORY is not offered: the server
-// derives it from the name, the same rule it applies to the model's output.
 function fallacyOptions(tv) {
   return Object.keys(enumLabels.fallacy || {})
     .map(name => ({ name, label: tv('fallacy', name) }))
@@ -17,10 +12,7 @@ function fallacyOptions(tv) {
 }
 
 
-// ── Preverjene trditve ob premisi ──────────────────────────────────────────
-// Vsaka preverjena trditev nosi številko premise, iz katere je nastala, zato
-// jo je mogoče prikazati tam, kjer je bila izrečena, in ne šele v ločenem
-// seznamu pod argumentom. Trditev brez te številke ostane v spodnjem bloku.
+// Preverjene trditve ob premisi
 
 const VERDICT_DOT = {
   TRUE: 'bg-green-400',
@@ -50,7 +42,6 @@ function claimsForPremise(claims, premiseIndex) {
   return (claims || []).filter(c => premiseIndexOf(c) === premiseIndex)
 }
 
-/** Pika v barvi razsodbe. Klik odpre okno z viri te trditve. */
 function PremiseVerdictDots({ claims }) {
   const [openIdx, setOpenIdx] = useState(null)
   const { t } = useLanguage()
@@ -81,7 +72,6 @@ function PremiseVerdictDots({ claims }) {
   )
 }
 
-/** Okno s trditvijo, razsodbo, seštevkom po petih kategorijah in viri. */
 function ClaimSourcesModal({ claim, onClose }) {
   const { t } = useLanguage()
   const verdict = claim.verdict || 'UNVERIFIABLE'
@@ -183,7 +173,6 @@ export default function ArgumentNode({
   onClose,
 }) {
   const premises = argument.premises || []
-  const type = argument.type || 'factual'
 
   const falseClaims = relatedClaims.filter(claim =>
     ['FALSE', 'MISLEADING'].includes(claim.verdict)
@@ -229,7 +218,6 @@ export default function ArgumentNode({
 
   return (
     <div className="relative w-full my-3 md:my-6 group">
-      {/* Mobile layout: always node-left, text-right */}
       <div className="flex items-center gap-3 md:hidden">
         {nodeButton}
         <div className="flex-1 min-w-0">
@@ -237,7 +225,6 @@ export default function ArgumentNode({
         </div>
       </div>
 
-      {/* Desktop layout: alternating left/right */}
       <div className="hidden md:flex items-center w-full">
         {side === 'left' && (
           <div className="w-[47%] pr-6 text-right">
@@ -322,7 +309,6 @@ function ArgumentModal({
           </div>
         </div>
 
-        {/* Premises first — the argument is DERIVED from them below */}
         {premises.length > 0 && (
           <div className="px-5 py-4 border-b border-white/5">
             <h5 className="text-accent-blue text-xs font-semibold uppercase tracking-wider mb-3">
@@ -344,7 +330,6 @@ function ArgumentModal({
           </div>
         )}
 
-        {/* Derived argument (conclusion) below the premises */}
         <div className="px-5 py-4 border-b border-white/5 bg-white/[0.02]">
           <h5 className="text-accent-blue text-xs font-semibold uppercase tracking-wider mb-2">
             {t.argDerived}
@@ -400,11 +385,7 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
   const [addingFallacy, setAddingFallacy] = useState(false)
   const [newFallacyType, setNewFallacyType] = useState('')
   const [newFallacyQuote, setNewFallacyQuote] = useState('')
-  // ── Manual correction of fallacies ────────────────────────────────────
-  // Fallacy detection errs in BOTH directions, so the reader must be able to
-  // correct it in both: delete an invented one, add a missed one, fix a wrong
-  // name. Without this the reference annotation for the evaluation would have
-  // to be kept outside the application.
+  // Manual correction of fallacies
   async function runFallacyOp(op, payload) {
     if (!canEdit || !debateId || busyFallacy) return
     setBusyFallacy(true)
@@ -430,12 +411,9 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
     setAddingFallacy(false)
   }
 
-  // Reviewing a DETECTED fallacy does not delete it: detection and the verdict
-  // on detection must survive as two separate records, otherwise there is
-  // nothing left to compute precision from.
   async function reviewFallacy(fallacyIndex, verdict, current) {
     if (!canEdit || !debateId || savingReview !== null) return
-    const next = current === verdict ? null : verdict // klik na isto oznako = razveljavi
+    const next = current === verdict ? null : verdict
     setSavingReview('f' + fallacyIndex)
     try {
       await editDebate(debateId, [{
@@ -459,18 +437,10 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
 
   if (!hasAnything) return null
 
-  // Izmenjava prihaja iz koraka, ki bere prepis. Starejše analize nosijo isto
-  // vsebino na kritiki, zato se ta bere kot rezerva, kadar zavrnitve ni.
 
   return (
     <div className="px-5 py-3 border-b border-white/5 bg-gradient-to-b from-red-500/5 to-orange-500/5">
 
-      {/* Exchange on this argument — one block, one place.
-          The rebuttal pass returns `rebuttal_content` (what the opponent said)
-          and `response` (how the original speaker reacted). Both used to be
-          printed twice: once split into two boxes from rebuttals[0], and again
-          in the list below. Every argument in practice carries exactly one
-          rebuttal, so the reader saw the same two sentences four times. */}
       {isDebateMode && rebuttals.length > 0 && (
         <div className="mb-3">
           <h5 className="text-accent-blue text-xs font-semibold uppercase tracking-wider mb-2">
@@ -511,8 +481,6 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
         </div>
       )}
 
-      {/* Legacy path: older analyses carry the exchange on `critique` instead
-          of as its own rebuttal entry. Shown only when no rebuttal exists. */}
       {isDebateMode && rebuttals.length === 0 && critique?.counter && (
         <div className="mb-3">
           <h5 className="text-accent-blue text-xs font-semibold uppercase tracking-wider mb-2">
@@ -527,10 +495,6 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
         </div>
       )}
 
-      {/* Legacy path: analyses stored before validity and fallacies were merged
-          into one pass carry a free-text `issues` list. New analyses do not —
-          what is wrong with an argument is now said once, as a named fallacy.
-          Shown read-only so old analyses still render as they were saved. */}
       {critique?.issues?.length > 0 && (
         <div className="mb-3">
           <h5 className="text-xs font-semibold uppercase tracking-wider mb-2 text-orange-400">
@@ -545,8 +509,6 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
         </div>
       )}
 
-      {/* Zmote. Sistem jih samo poimenuje, ne stopnjuje. Bralec jih lahko
-          potrdi, zavrne, popravi ime ali odstrani. */}
       {(() => {
         const v = { box: 'bg-purple-500/10', name: 'text-purple-300',
                     btn: 'border-purple-400/40 text-purple-300 hover:bg-purple-500/10' }
@@ -605,7 +567,7 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
               )}
             </div>
             {fallacy.evidence && (
-              <p className="text-white/40 text-[11px] mt-1 italic">„{fallacy.evidence}”</p>
+              <p className="text-white/40 text-[11px] mt-1">{fallacy.evidence}</p>
             )}
             <p className="text-white/50 text-xs mt-1">{fallacy.explanation}</p>
             {canEdit && (
@@ -641,8 +603,6 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
               </div>
             )}
 
-            {/* Add a fallacy the system missed. Detection errs in both
-                directions, so the reader needs both corrections. */}
             {canEdit && (
               <div className="mb-3">
                 {!addingFallacy ? (
@@ -695,8 +655,6 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
         )
       })()}
 
-      {/* Preverjene trditve, ki jih ni bilo mogoče pripeti na premiso.
-          Tiste s premiso so vidne kot pika ob premisi sami. */}
       {(() => {
         const orphans = relatedClaims.filter(c => !Number.isInteger(premiseIndexOf(c)))
         if (orphans.length === 0) return null

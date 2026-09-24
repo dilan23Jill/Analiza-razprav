@@ -1,16 +1,4 @@
-"""
-Pydantic schemas for validating LLM pass outputs.
-
-Each pass in the multi-pass analysis pipeline returns JSON that must conform
-to a specific structure.  These schemas validate + repair outputs:
-  - Missing keys get sensible defaults
-  - Wrong types are coerced where possible
-  - Extra keys are preserved (forward-compat)
-
-Usage:
-    from llm_schemas import validate_pass
-    validated = validate_pass("claim_extraction", raw_dict)
-"""
+"""Pydantic schemas for validating LLM pass outputs."""
 
 import logging
 from typing import Any, Dict, List, Optional
@@ -20,21 +8,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 logger = logging.getLogger(__name__)
 
 
-# ── Pass 1: Claim Extraction ─────────────────────────────────────────────────
+# Pass 1: Claim Extraction
 
 class ArgumentSchema(BaseModel):
     argument: str = ""
-    arg_id: str = ""   # stable cross-pass id (speaker#index), assigned in code after pass 1
-    type: str = "factual"
+    arg_id: str = ""
     premises: List[str] = Field(default_factory=list)
 
     model_config = {"extra": "allow"}
-
-    @field_validator("type")
-    @classmethod
-    def clamp_type(cls, v: str) -> str:
-        valid = {"factual", "normative", "causal", "definitional", "debatable"}
-        return v if v in valid else "factual"
 
 
 class SpeakerClaimsSchema(BaseModel):
@@ -59,7 +40,7 @@ class ClaimExtractionSchema(BaseModel):
     model_config = {"extra": "allow"}
 
 
-# ── Pass 2: Argument Structure ────────────────────────────────────────────────
+# Pass 2: Argument Structure
 
 class ArgumentStructureSchema(BaseModel):
     """Zmote, poimenovane iz zaprtega slovarja, vsaka vezana na svoj argument."""
@@ -69,18 +50,51 @@ class ArgumentStructureSchema(BaseModel):
     model_config = {"extra": "allow"}
 
 
-# ── Pass 4: Rebuttal Mapping ──────────────────────────────────────────────────
+# Pass 4: Rebuttal Mapping
+
+REBUTTAL_TYPES = ("direct_contradiction", "undermining_premise",
+                  "alternative_explanation", "questioning_warrant")
+EVASION_TYPES = ("deflection", "topic_change", "non_answer",
+                 "partial_answer", "talked_over")
+_REBUTTAL_SYNONYMS = {
+    "contradiction": "direct_contradiction", "counterclaim": "direct_contradiction",
+    "premise": "undermining_premise", "undermine": "undermining_premise",
+    "alternative": "alternative_explanation", "warrant": "questioning_warrant",
+    "reasoning": "questioning_warrant", "inference": "questioning_warrant",
+}
+_EVASION_SYNONYMS = {
+    "deflect": "deflection", "pivot": "deflection", "topic": "topic_change",
+    "subject_change": "topic_change", "non_answer": "non_answer",
+    "no_answer": "non_answer", "partial": "partial_answer",
+    "talk": "talked_over", "interrupt": "talked_over",
+}
+
+
+def _clamp_enum(raw: str, allowed: tuple, synonyms: dict, fallback: str) -> str:
+    v = (raw or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if v in allowed:
+        return v
+    for needle, canonical in synonyms.items():
+        if needle in v:
+            return canonical
+    return fallback
+
 
 class RebuttalSchema(BaseModel):
     by: str = ""
     to: str = ""
-    target_arg_id: str = ""   # cross-pass link to the targeted argument (resolved in code)
+    target_arg_id: str = ""
     target_claim: str = ""
     rebuttal_type: str = "direct_contradiction"
     rebuttal_content: str = ""
     response: str = ""
 
     model_config = {"extra": "allow"}
+
+    @field_validator("rebuttal_type")
+    @classmethod
+    def clamp_rebuttal_type(cls, v: str) -> str:
+        return _clamp_enum(v, REBUTTAL_TYPES, _REBUTTAL_SYNONYMS, "direct_contradiction")
 
 
 class EvasionSchema(BaseModel):
@@ -92,6 +106,11 @@ class EvasionSchema(BaseModel):
 
     model_config = {"extra": "allow"}
 
+    @field_validator("evasion_type")
+    @classmethod
+    def clamp_evasion_type(cls, v: str) -> str:
+        return _clamp_enum(v, EVASION_TYPES, _EVASION_SYNONYMS, "non_answer")
+
 
 class RebuttalMappingSchema(BaseModel):
     rebuttals: List[RebuttalSchema] = Field(default_factory=list)
@@ -100,11 +119,9 @@ class RebuttalMappingSchema(BaseModel):
     model_config = {"extra": "allow"}
 
 
-# ── Fallacy vocabulary (returned by pass 2) ─────────────────────────────────────────────────────────
+# Fallacy vocabulary (returned by pass 2)
 
-# ── Kanonična imena logičnih zmot ────────────────────────────────────────────
-# Model občasno vrne različico imena, zato ga normaliziramo. Imena so razvrščena
-# po kategoriji, kar je hkrati podlaga za samodejni popravek kategorije.
+# Kanonična imena logičnih zmot
 _FORMAL_NAMES = {
     "affirming_the_consequent", "denying_the_antecedent", "undistributed_middle",
     "affirming_a_disjunct", "illicit_transposition", "modal_scope_confusion",
@@ -124,17 +141,13 @@ _WEAK_NAMES = {
 
 _FALLACY_NAMES = _FORMAL_NAMES | _INFORMAL_NAMES | _WEAK_NAMES | {"other"}
 
-# ime → kategorija, ki ji ime po definiciji pripada
 _NAME_TO_CATEGORY = {
     **{n: "formal" for n in _FORMAL_NAMES},
     **{n: "informal" for n in _INFORMAL_NAMES},
     **{n: "weak_reasoning" for n in _WEAK_NAMES},
 }
 
-# Delne oblike → kanonično ime. Preverja se z vsebovanostjo, zato ujame tudi
-# daljše opisne variante ("appeal to nature / naturalistic fallacy").
 _FALLACY_ALIASES = (
-    # formalne
     ("affirming_the_consequent", "affirming_the_consequent"),
     ("affirming_consequent", "affirming_the_consequent"),
     ("converse_error", "affirming_the_consequent"),
@@ -146,7 +159,6 @@ _FALLACY_ALIASES = (
     ("illicit_transposition", "illicit_transposition"),
     ("modal_scope", "modal_scope_confusion"),
     ("formal_fallacy", "non_sequitur"),
-    # ostale
     ("post_hoc", "post_hoc"), ("false_cause", "post_hoc"), ("causal_fallacy", "post_hoc"),
     ("straw", "straw_man"), ("ad_hominem", "ad_hominem"), ("personal_attack", "ad_hominem"),
     ("false_dilemma", "false_dilemma"), ("false_dichotomy", "false_dilemma"),
@@ -179,10 +191,7 @@ _FALLACY_ALIASES = (
 
 
 def canonical_fallacy_type(raw: str) -> str:
-    """Normalize a free-form fallacy name to the closed vocabulary.
-
-    Unrecognised names are kept verbatim (never discarded) so nothing is lost —
-    they simply do not benefit from the normalization."""
+    """Normalize a free-form fallacy name to the closed vocabulary."""
     v = (raw or "").strip().lower()
     v = v.replace("-", "_").replace("/", "_").replace(" ", "_")
     while "__" in v:
@@ -201,17 +210,12 @@ class FallacySchema(BaseModel):
     category: str = "informal"
     evidence: str = ""
     explanation: str = ""
-    # The pass reads the extracted arguments, so the model names the argument the
-    # fallacy sits in. `arg_id` is what it returns; `target_arg_id` is the field
-    # the report and the UI have always read, and code copies one into the other
-    # after checking it belongs to the right speaker.
     arg_id: str = ""
     premise_index: Optional[int] = None
     target_arg_id: str = ""
 
     model_config = {"extra": "allow"}
 
-    # Ime in kategorijo normaliziramo, ker model vrača različice.
     @field_validator("type")
     @classmethod
     def clamp_fallacy_type(cls, v: str) -> str:
@@ -231,22 +235,14 @@ class FallacySchema(BaseModel):
 
     @model_validator(mode="after")
     def align_category_with_type(self):
-        """Derive the category from the fallacy name when the two disagree.
-
-        The name already determines the kind of failure: affirming the consequent
-        is formal, ad hominem is informal, hasty generalization is weak reasoning.
-        Leaving the two fields independent produced a silent bias — the category
-        validator defaults to `informal` on anything unexpected, so in 96 detections
-        `formal` never appeared even though the names sometimes implied it. The name
-        is the more reliable of the two, so it wins.
-        """
+        """Derive the category from the fallacy name when the two disagree."""
         derived = _NAME_TO_CATEGORY.get(self.type)
         if derived and derived != self.category:
             self.category = derived
         return self
 
 
-# ── Pass 5: Synthesis ─────────────────────────────────────────────────────────
+# Pass 5: Synthesis
 
 class SynthesisSchema(BaseModel):
     comparative_evaluation: Dict[str, Any] = Field(default_factory=dict)
@@ -256,15 +252,16 @@ class SynthesisSchema(BaseModel):
 
 
 class SingleSpeakerSynthesisSchema(BaseModel):
-    """Synthesis for single-speaker analyses — solo speech, lecture, interview
-    or reaction video. They share one analytical frame: one person reasoning."""
+    """Synthesis for single-speaker analyses — solo speech, lecture, interview or reaction
+    video.
+    """
     single_speaker_evaluation: Dict[str, Any] = Field(default_factory=dict)
     summary: str = ""
 
     model_config = {"extra": "allow"}
 
 
-# ── VALIDATION DISPATCH ──────────────────────────────────────────────────────
+# VALIDATION DISPATCH
 
 _SCHEMAS = {
     "claim_extraction": ClaimExtractionSchema,
@@ -276,14 +273,10 @@ _SCHEMAS = {
 
 
 def validate_pass(pass_name: str, data: Dict, retry_fn=None) -> Dict:
-    """Validate LLM output against schema. Returns validated dict.
-
-    If validation fails critically and retry_fn is provided, calls retry_fn()
-    to get a fresh response and validates again (once).
-    """
+    """Validate LLM output against schema."""
     schema_cls = _SCHEMAS.get(pass_name)
     if not schema_cls:
-        return data   # no schema for this pass — pass through
+        return data
 
     try:
         validated = schema_cls.model_validate(data)
@@ -291,7 +284,6 @@ def validate_pass(pass_name: str, data: Dict, retry_fn=None) -> Dict:
     except Exception as e:
         logger.warning("Pass '%s' validation failed: %s — attempting repair", pass_name, e)
 
-        # Try retry if provided
         if retry_fn:
             try:
                 fresh = retry_fn()
@@ -301,9 +293,7 @@ def validate_pass(pass_name: str, data: Dict, retry_fn=None) -> Dict:
             except Exception as e2:
                 logger.warning("Pass '%s' retry also failed: %s — using defaults", pass_name, e2)
 
-        # Last resort: create with defaults and merge what we can
         try:
-            # Try partial validation — fill missing keys with defaults
             safe_data = {}
             for key in schema_cls.model_fields:
                 if key in data:
@@ -311,6 +301,5 @@ def validate_pass(pass_name: str, data: Dict, retry_fn=None) -> Dict:
             validated = schema_cls.model_validate(safe_data)
             return validated.model_dump()
         except Exception:
-            # Complete failure — return empty defaults
             logger.error("Pass '%s' could not be validated at all, using empty defaults", pass_name)
             return schema_cls().model_dump()

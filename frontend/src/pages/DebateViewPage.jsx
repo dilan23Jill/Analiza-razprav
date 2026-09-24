@@ -29,9 +29,6 @@ export default function DebateViewPage() {
   const [rerunLang, setRerunLang] = useState('sl')
   const navigate = useNavigate()
 
-  // Ponovno preverjanje dejstev nad ISTO analizo. Argumenti, zmote in
-  // zavrnitve ostanejo, osvežijo se samo viri in razsodbe, zato ni novega
-  // vnosa in ni ponovnega izluščanja.
   async function handleRecheck() {
     if (recheckLoading || rerunLoading || !debate) return
     if (!window.confirm(t.recheckConfirm)) return
@@ -60,8 +57,6 @@ export default function DebateViewPage() {
       const job = await rerunDebate(debate.id, '', rerunLang)
       navigate(`/job/${job.job_id}`)
     } catch (e) {
-      // 409 = transcript no longer on disk → offer a FULL analysis from the
-      // saved YouTube URL instead (download + transcription + analysis).
       if (e.status === 409 && debate.youtube_url) {
         if (window.confirm(t.rerunFullFallbackConfirm)) {
           try {
@@ -146,10 +141,6 @@ export default function DebateViewPage() {
   const speakers = analysis.speakers || {}
   const meta = analysis.metadata || {}
   const participantRoles = meta.participants || {}
-  // Solo shows exactly 1 primary speaker; debate shows exactly 2 debaters
-  // (the app supports one-on-one debates only). A moderator is never a speaker
-  // — they are reported separately by ModeratorPanel.
-  // Legacy stored modes: 'debate_1v1' → debate, 'reaction' → solo.
   const isDebate = debate.mode === 'debate' || debate.mode === 'debate_1v1'
   const isSolo = !isDebate
 
@@ -400,7 +391,6 @@ export default function DebateViewPage() {
   )
 }
 
-/* ── Report Panel ─────────────────────────────────────── */
 function ReportPanel({ claims, factCheck, t }) {
   const summary = factCheck.summary || {}
   const verdictBreakdown = summary.verdict_breakdown || {}
@@ -431,7 +421,6 @@ function ReportPanel({ claims, factCheck, t }) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Overview stats */}
       <div className="bg-dark-600/50 border border-white/5 rounded-xl p-5">
         <h3 className="text-sm font-semibold text-white/60 mb-4 uppercase tracking-wider">{t.reportOverview}</h3>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
@@ -443,7 +432,6 @@ function ReportPanel({ claims, factCheck, t }) {
         </div>
       </div>
 
-      {/* Claims list */}
       <div className="space-y-3">
         {claims.map((claim, i) => {
           const verdict = claim.verdict || claim.verdict_label || 'UNVERIFIABLE'
@@ -458,18 +446,15 @@ function ReportPanel({ claims, factCheck, t }) {
               className={`border rounded-xl p-4 ${colors.split(' ').find(c => c.startsWith('border-'))} bg-dark-600/40`}
             >
               <div className="flex items-start gap-3">
-                {/* Verdict icon */}
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${colors}`}>
                   {icon}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  {/* Claim text */}
                   <p className="text-white/90 text-sm font-medium leading-relaxed">
                     {claim.exact_claim || claim.claim}
                   </p>
 
-                  {/* Speaker and verdict */}
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                     {claim.speaker && (
                       <span className="text-white/40 text-xs">
@@ -481,12 +466,10 @@ function ReportPanel({ claims, factCheck, t }) {
                     </span>
                   </div>
 
-                  {/* Explanation */}
                   {claim.explanation && (
                     <p className="text-white/50 text-xs mt-2 leading-relaxed">{claim.explanation}</p>
                   )}
 
-                  {/* Sources (merged from sources + perplexity citations) */}
                   {allSources.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {allSources.map((src, j) => (
@@ -521,8 +504,6 @@ function MiniStat({ label, value, color = 'text-white' }) {
   )
 }
 
-/** Zberi vire brez podvojenih povezav. perplexity_data je tu zaradi analiz,
- *  shranjenih pred prehodom na en razsojevalni korak. */
 function _getAllSources(claim) {
   const seen = new Set()
   const result = []
@@ -547,21 +528,11 @@ function _domainFromUrl(url) {
   catch { return url }
 }
 
-/**
- * Moderator panel — descriptive only.
- *
- * A moderator is never one of the two debaters: they are not scored and their
- * questions are not rebuttals. This panel exists
- * so the reader can still see how much the moderator shaped the exchange —
- * how many questions they asked, which ones, and whether they pressed one
- * debater harder than the other.
- */
 function ModeratorPanel({ moderator, t, tv }) {
   if (!moderator || !moderator.present) return null
 
   const questions = Array.isArray(moderator.questions) ? moderator.questions : []
   const count = moderator.question_count || questions.length
-  // pressed_more is either a speaker name (leave it) or a special value.
   const pressed = ['balanced', 'n/a'].includes(moderator.pressed_more)
     ? tv('pressed_more', moderator.pressed_more)
     : moderator.pressed_more

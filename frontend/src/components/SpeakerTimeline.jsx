@@ -21,8 +21,6 @@ export default function SpeakerTimeline({
   const factCheckClaims = speakerProfile?.factCheckClaims || []
   const argCritiques = speakerData.argument_critiques || []
 
-  // Solo: instead of a separate "unsupported claims" box, attach each unsupported
-  // claim to the argument it best matches (it then shows inside that argument).
   const unsupportedClaims = (!isDebateMode && Array.isArray(soloEvaluation.unsupported_claims))
     ? soloEvaluation.unsupported_claims : []
   const _tok = (s) => new Set(String(s || '').toLowerCase().split(/\s+/).filter(w => w.length > 4))
@@ -31,7 +29,7 @@ export default function SpeakerTimeline({
   unsupportedClaims.forEach((claim) => {
     const ct = _tok(claim)
     let best = -1
-    let bestScore = 1 // require >= 2 shared words to attach
+    let bestScore = 1
     _argTok.forEach((at, idx) => {
       let overlap = 0
       at.forEach(w => { if (ct.has(w)) overlap++ })
@@ -69,30 +67,21 @@ export default function SpeakerTimeline({
       </div>
 
       <div className="relative flex flex-col items-stretch md:items-center">
-        {/* Timeline center line — only on md+ */}
         <div className="hidden md:block absolute left-1/2 -translate-x-px top-0 bottom-0 w-0.5 bg-accent-red/60" />
-        {/* Timeline left line — only on mobile */}
         <div className="md:hidden absolute left-5 top-0 bottom-0 w-0.5 bg-accent-red/60" />
 
         {args.map((arg, index) => {
           const argumentId = `${speakerName}:${index}`
-          // Stable cross-pass link id (resolved server-side). Falls back to the
-          // same speaker#index scheme the backend uses, for older analyses.
           const linkId = arg.arg_id || `${speakerName}#${index}`
           const relatedClaims = findRelatedClaims(arg, factCheckClaims)
 
-          // Prefer the stable arg_id link; fall back to text matching only when
-          // no id-linked items exist (older data or an unresolved link).
           const fallaciesById = fallacies.filter(f => f.target_arg_id && f.target_arg_id === linkId)
-          // Text fallback ONLY for fallacies with no id link — never steal one
-          // that is already linked to a different argument.
           const relatedFallacies = fallaciesById.length ? fallaciesById : fallacies.filter(fallacy =>
             !fallacy.target_arg_id && arg.argument && fallacy.evidence &&
             fallacy.evidence.toLowerCase().includes(arg.argument.toLowerCase().slice(0, 30))
           )
 
           const critiqueById = argCritiques.find(c => c.arg_id && c.arg_id === linkId)
-          // Text fallback only among critiques that have no id link.
           const critique = critiqueById || findCritique(arg, argCritiques.filter(c => !c.arg_id))
 
           const rebuttalsById = rebuttals.filter(r => r.target_arg_id && r.target_arg_id === linkId)
@@ -154,22 +143,17 @@ export default function SpeakerTimeline({
 function findRelatedClaims(argument, allClaims) {
   if (!allClaims.length) return []
 
-  // Claims are now extracted from the arguments themselves, so each one names
-  // the argument it belongs to. Use that: it is exact, and a claim that says
-  // nothing about this argument is not shown under it by accident.
   if (argument.arg_id) {
     const byId = allClaims.filter(claim => claim.arg_id === argument.arg_id)
     if (byId.length) return byId
   }
 
-  // Analyses stored before that change have no arg_id on their claims, so fall
-  // back to the old word-overlap guess rather than showing them nothing.
   if (!argument.argument) return []
   const argWords = new Set(
     argument.argument.toLowerCase().split(/\s+/).filter(word => word.length > 4)
   )
   return allClaims.filter(claim => {
-    if (claim.arg_id) return false      // belongs to some other argument
+    if (claim.arg_id) return false
     const claimText = (claim.exact_claim || claim.claim || '').toLowerCase()
     const overlap = [...argWords].filter(word => claimText.includes(word))
     return overlap.length >= 3

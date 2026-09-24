@@ -16,7 +16,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || null)
   const [loading, setLoading] = useState(true)
 
-  // Verify token on mount / token changes
   useEffect(() => {
     if (token) {
       verifyToken(token)
@@ -35,11 +34,9 @@ export function AuthProvider({ children }) {
         setUser(data.user)
         localStorage.setItem(USER_KEY, JSON.stringify(data.user))
       } else {
-        // Token expired
         logout()
       }
     } catch {
-      // Network error — keep user for offline
     } finally {
       setLoading(false)
     }

@@ -19,10 +19,8 @@ export function ActiveJobsProvider({ children }) {
   const timerRef = useRef(null)
   const cancelledRef = useRef(false)
   const activeCountRef = useRef(0)
-  const prevStatusRef = useRef({})   // job_id -> zadnji znani status (za zvok ob prehodu v completed)
+  const prevStatusRef = useRef({})
 
-  // Zapiska, ko prej aktivna naloga preide v 'completed' — tudi če uporabnik
-  // ni na strani naloge. chimeOnceFor poskrbi, da vsak job zapiska samo enkrat.
   const _detectCompletions = useCallback((list) => {
     const prev = prevStatusRef.current
     for (const j of list) {
@@ -72,7 +70,6 @@ export function ActiveJobsProvider({ children }) {
         activeCountRef.current = list.filter(j => isActiveJobStatus(j.status)).length
         _detectCompletions(list)
       } catch {
-        // non-critical
       } finally {
         if (!cancelledRef.current) setInitialLoading(false)
       }

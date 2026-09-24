@@ -1,13 +1,6 @@
 import { useEffect } from 'react'
 import { useLanguage } from '../utils/LanguageContext'
 
-/**
- * "How to read this analysis" — onboarding / help modal.
- *
- * In-app guide explaining what each part of the analysis means.
- * with content that matches what the app actually surfaces today: argument cards,
- * fact-check verdicts, balanced source perspectives, edit capability, and modes.
- */
 
 export default function AppGuideModal({ open, onClose }) {
   const { t } = useLanguage()
@@ -31,7 +24,6 @@ export default function AppGuideModal({ open, onClose }) {
       />
 
       <div className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl border border-white/10 bg-dark-700 shadow-2xl shadow-black/60 animate-fade-in">
-        {/* ── Sticky header ───────────────────────────────────────── */}
         <div className="sticky top-0 z-10 border-b border-white/10 bg-dark-700/95 px-5 sm:px-7 py-4 backdrop-blur-md">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -54,12 +46,10 @@ export default function AppGuideModal({ open, onClose }) {
 
         <div className="px-5 sm:px-7 py-6 space-y-5 text-sm text-white/75">
 
-          {/* ── 1. What the app does ────────────────────────────── */}
           <Step n={1} accent="red" title={t.guideWhatAppDoes}>
             <p className="leading-relaxed">{t.guideWhatAppDoesText}</p>
           </Step>
 
-          {/* ── 2. How to read arguments ────────────────────────── */}
           <Step n={2} accent="blue" title={t.guideHowToReadNodes}>
             <ul className="space-y-2 leading-relaxed">
               <BulletItem>{t.guideNodeLine1}</BulletItem>
@@ -68,7 +58,6 @@ export default function AppGuideModal({ open, onClose }) {
             </ul>
           </Step>
 
-          {/* ── 3. Fact-check verdicts ──────────────────────────── */}
           <Step n={3} accent="emerald" title={t.guideVerdictsTitle}>
             <div className="space-y-2">
               <VerdictRow color="emerald" label={t.guideVerdictTrue}        desc={t.guideVerdictTrueDesc} />
@@ -79,7 +68,6 @@ export default function AppGuideModal({ open, onClose }) {
             </div>
           </Step>
 
-          {/* ── 4. Source perspectives ──────────────────────────── */}
           <Step n={4} accent="violet" title={t.guideSourcesTitle}>
             <p className="leading-relaxed mb-3">{t.guideSourcesDesc}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -89,7 +77,6 @@ export default function AppGuideModal({ open, onClose }) {
             </div>
           </Step>
 
-          {/* ── 5. Modes ────────────────────────────────────────── */}
           <Step n={5} accent="cyan" title={t.guideModesTitle}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <ModeCard color="cyan"   title={t.guideModeSoloTitle}   desc={t.guideModeSoloDesc} />
@@ -97,12 +84,10 @@ export default function AppGuideModal({ open, onClose }) {
             </div>
           </Step>
 
-          {/* ── 6. Edit ─────────────────────────────────────────── */}
           <Step n={6} accent="rose" title={t.guideEditTitle}>
             <p className="leading-relaxed">{t.guideEditDesc}</p>
           </Step>
 
-          {/* ── Footer disclaimer ───────────────────────────────── */}
           <div className="mt-2 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-4">
             <div className="flex items-start gap-3">
               <span className="shrink-0 text-base">⚠️</span>
@@ -121,7 +106,6 @@ export default function AppGuideModal({ open, onClose }) {
   )
 }
 
-/* ── Components ─────────────────────────────────────────────── */
 
 const ACCENTS = {
   red:     { ring: 'ring-accent-red/40',     bg: 'bg-accent-red/10',     text: 'text-accent-red'     },

@@ -1,15 +1,5 @@
-"""
-PDF export of a debate analysis — a clean, printable overview with the summary,
-per-speaker arguments, and fact-checked claims WITH their sources.
-
-Pure-Python (reportlab), so it works on Windows without system libraries. If a
-Unicode TTF is found on the machine it is used (so Slovenian č/š/ž render
-correctly); otherwise it falls back to Helvetica.
-
-Public API:
-    build_pdf(debate: dict, language: str = "sl") -> bytes
-where `debate` is the dict returned by database.get_debate (with analysis_json
-and fact_check_json already parsed).
+"""PDF export of a debate analysis — a clean, printable overview with the summary, per-
+speaker arguments, and fact-checked claims WITH their sources.
 """
 
 from __future__ import annotations
@@ -31,7 +21,7 @@ from reportlab.platypus import (HRFlowable, KeepTogether, ListFlowable, ListItem
 
 from translations import label, get_verdict_label
 
-# ── Fonts (Unicode if available, else Helvetica) ──────────────────────────────
+# Fonts (Unicode if available, else Helvetica)
 
 FONT = "Helvetica"
 FONT_BOLD = "Helvetica-Bold"
@@ -69,7 +59,7 @@ def _register_font() -> None:
 
 _register_font()
 
-# ── Labels ────────────────────────────────────────────────────────────────────
+# Labels
 
 L = {
     "sl": {
@@ -124,9 +114,7 @@ def _p(text: str) -> str:
 
 
 def _u(url: str) -> str:
-    """Escape a URL for use inside a DOUBLE-QUOTED attribute. xml.sax's
-    escape() does not touch quotes by default — a quote inside the URL would
-    break out of the attribute and kill the whole paragraph parse."""
+    """Escape a URL for use inside a DOUBLE-QUOTED attribute."""
     return escape(_s(url), {'"': "&quot;", "'": "&#39;"})
 
 
@@ -134,9 +122,10 @@ import re as _re
 
 
 def _para(text: str, style) -> Paragraph:
-    """Build a Paragraph defensively: if reportlab rejects the inline markup
-    (odd character in a URL, malformed tag...), fall back to plain escaped
-    text so ONE bad line degrades gracefully instead of failing the export."""
+    """Build a Paragraph defensively: if reportlab rejects the inline markup (odd character
+    in a URL, malformed tag...), fall back to plain escaped text so ONE bad line
+    degrades gracefully instead of failing the export.
+    """
     try:
         return Paragraph(text, style)
     except Exception:
@@ -162,7 +151,7 @@ def _styles():
         "small": ParagraphStyle("sm", **{**base, "fontSize": 8.5, "leading": 11,
                                          "textColor": colors.HexColor("#57606a")}),
         "li": ParagraphStyle("li", **{**base, "leading": 13}),
-        # ── argument block styles ──
+        # argument block styles
         "arglabel": ParagraphStyle("al", **{**base, "fontName": FONT_BOLD, "fontSize": 9,
                                             "leading": 12, "textColor": colors.HexColor("#0a3069"),
                                             "spaceBefore": 10, "spaceAfter": 4}),
@@ -191,7 +180,7 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
     participants = meta.get("participants") if isinstance(meta.get("participants"), dict) else {}
     title = _s(debate.get("title")) or _s(meta.get("topic")) or t["analysis"]
 
-    # ── Header ────────────────────────────────────────────────────────────────
+    # Header
     story.append(_para(_p(title), st["title"]))
     sub_bits = []
     if meta.get("topic") and _s(meta.get("topic")) != title:
@@ -208,13 +197,13 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
     story.append(Spacer(1, 6))
     story.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#d0d7de")))
 
-    # ── Summary ────────────────────────────────────────────────────────────────
+    # Summary
     summary = _s(analysis.get("summary"))
     if summary:
         story.append(_para(t["summary"], st["h2"]))
         story.append(_para(_p(summary), st["body"]))
 
-    # ── Per-speaker arguments ──────────────────────────────────────────────────
+    # Per-speaker arguments
     speakers = analysis.get("speakers") if isinstance(analysis.get("speakers"), dict) else {}
     all_fallacies = analysis.get("fallacies") if isinstance(analysis.get("fallacies"), list) else []
     all_rebuttals = analysis.get("rebuttals") if isinstance(analysis.get("rebuttals"), list) else []
@@ -230,7 +219,6 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
         if data.get("position"):
             story.append(_para(f"<b>{t['position']}:</b> {_p(data['position'])}", st["body"]))
 
-        # Verdicts grouped by the argument whose premise they check.
         fact_checks_by_arg: Dict[str, List[Any]] = {}
         for c in (fact_check.get("fact_checks") or []):
             if isinstance(c, dict) and c.get("arg_id"):
@@ -243,14 +231,11 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                     continue
                 block: List[Any] = []
 
-                # ── Label line: ARGUMENT N   type ──
-                tags = _p(label("argument_type", arg["type"], lang)) if arg.get("type") else ""
+                # Label line: ARGUMENT N
                 head = f"{_p(t['argument_label']).upper()} {i}"
-                if tags:
-                    head += f'&nbsp;&nbsp;&nbsp;<font size="8" color="#8c959f">{tags}</font>'
                 block.append(_para(head, st["arglabel"]))
 
-                # ── Premises: numbered list with hanging indent ──
+                # Premises: numbered list with hanging indent
                 prem = arg.get("premises") or []
                 if prem:
                     block.append(_para(f'<i>{_p(t["premises"])}</i>', st["small"]))
@@ -260,16 +245,13 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                             f'<font color="#8c959f">{n}.</font>&nbsp;{_p(p_text)}',
                             st["premise"]))
 
-                # ── Derived argument (conclusion) in a subtle box ──
+                # Derived argument (conclusion) in a subtle box
                 block.append(_para(
                     f'<font size="8" color="#57606a">{_p(t["derived"]).upper()}</font><br/>'
                     f"<b>{_p(arg.get('argument'))}</b>",
                     st["conclusion"]))
 
-                # ── Fact-check of this argument's own premises ──
-                # Claims are extracted from the arguments, so each verdict names
-                # the argument it belongs to and can be printed where it matters
-                # instead of only in the list at the end.
+                # Fact-check of this argument's own premises
                 checked = [c for c in fact_checks_by_arg.get(_s(arg.get("arg_id")), [])]
                 if checked:
                     block.append(_para(f'<i>{_p(t["premise_verdicts"])}</i>', st["small"]))
@@ -283,9 +265,7 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                             f'</b></font>&nbsp;{_p(c.get("exact_claim"))}',
                             st["premise"]))
 
-                # ── Rebuttals aimed at this argument ──
-                # The stable id links a rebuttal to the argument it attacks, so
-                # it is printed where the reader meets that argument.
+                # Rebuttals aimed at this argument
                 aimed = [r for r in all_rebuttals
                          if _s(r.get("target_arg_id")) == _s(arg.get("arg_id"))
                          and _s(arg.get("arg_id"))]
@@ -310,9 +290,7 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                 fitems.append(ListItem(_para(line, st["li"])))
             story.append(ListFlowable(fitems, bulletType="bullet", leftIndent=14))
 
-        # ── Evasions by this speaker ──
-        # The evasion carries no argument id: it answers to a question, not to
-        # an argument, so it is printed once per speaker rather than per block.
+        # Evasions by this speaker
         spk_evasions = [e for e in all_evasions
                         if isinstance(e, dict) and _s(e.get("evading_speaker")) == _s(name)]
         if spk_evasions:
@@ -331,7 +309,7 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
                 eitems.append(ListItem(_para(line, st["li"])))
             story.append(ListFlowable(eitems, bulletType="bullet", leftIndent=14))
 
-    # ── Fact-check with sources ────────────────────────────────────────────────
+    # Fact-check with sources
     claims = fact_check.get("fact_checks") or fact_check.get("claims") or []
     claims = [c for c in claims if isinstance(c, dict)]
     if claims:
@@ -350,7 +328,6 @@ def build_pdf(debate: Dict, language: str = "sl") -> bytes:
             story.append(_para(head, st["body"]))
             if c.get("explanation"):
                 story.append(_para(f'<font size="9" color="#57606a">{_p(c["explanation"])}</font>', st["li"]))
-            # Kaj pove posamezen vir, po istih petih razsodbah kot trditev.
             tally = c.get("source_verdicts") or {}
             bits = [f'{_p(get_verdict_label(v, lang)["label"])}: {tally[v]}'
                     for v in ("TRUE", "PARTIALLY_TRUE", "MISLEADING", "FALSE", "UNVERIFIABLE")
@@ -408,8 +385,6 @@ def _collect_sources(claim: Dict) -> List[Dict]:
         if url and url not in seen:
             seen.add(url)
             out.append(s if isinstance(s, dict) else {"url": url})
-    # Analize, shranjene pred prehodom na en razsojevalni korak, hranijo
-    # Perplexityjeve navedke ločeno. Novejše jih imajo že v claim["sources"].
     pdata = claim.get("perplexity_data") or {}
     for url in (pdata.get("citations") or []) if isinstance(pdata, dict) else []:
         url = _s(url)

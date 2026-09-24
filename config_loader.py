@@ -1,20 +1,4 @@
-"""
-Centralized configuration loader.
-Reads config.yaml and provides typed access with defaults.
-
-Concurrent-safe overrides:
-  Background jobs run in their own thread and need to override pipeline.mode,
-  pipeline.language, pipeline.data_dir, pipeline.output_dir, etc. WITHOUT
-  trampling on other concurrent jobs. Each thread gets its own override stack
-  via threading.local(). `get()` checks the current thread's overrides first,
-  then falls back to the shared base config.
-
-  Usage in pipeline runner:
-      from config_loader import job_overrides
-      with job_overrides(**{"pipeline.mode": "debate", "pipeline.data_dir": "..."}):
-          # all cfg() reads in this thread see the overrides
-          run_pipeline()
-"""
+"""Centralized configuration loader."""
 
 import contextlib
 import threading
@@ -28,8 +12,6 @@ _DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
 _config: dict | None = None
 _load_lock = threading.Lock()
 
-# Per-thread override stack. Each thread sees only its own overrides.
-# Stored as {dotpath: value}.
 _local = threading.local()
 
 
@@ -50,12 +32,7 @@ def load_config(path: Path | str | None = None) -> dict:
 
 
 def get(dotpath: str, default: Any = None) -> Any:
-    """Get nested config value with dot notation: get('fact_checking.parallel_workers').
-
-    Thread-local overrides (set via job_overrides) take precedence over the
-    shared base config. This lets concurrent pipeline runs use different
-    pipeline.mode / data_dir / output_dir without race conditions.
-    """
+    """Get nested config value with dot notation: get('fact_checking.parallel_workers')."""
     overrides = getattr(_local, "overrides", None)
     if overrides and dotpath in overrides:
         val = overrides[dotpath]
@@ -74,10 +51,7 @@ def get(dotpath: str, default: Any = None) -> Any:
     return val
 
 
-# ── Združljivost novejših modelov ───────────────────────────────────────────
-# Generacije modelov sprejemajo različne parametre: GPT-5 in o-serija ne
-# sprejmeta temperature in zahtevata max_completion_tokens, Claude 5 je
-# temperature upokojil. Ta pomočnika to skrijeta pred klicnimi mesti.
+# Združljivost novejših modelov
 
 _OPENAI_RESTRICTED_PREFIXES = ("gpt-5", "o1", "o3", "o4")
 _ANTHROPIC_NO_TEMP_PREFIXES = ("claude-sonnet-5", "claude-opus-5",
@@ -87,7 +61,7 @@ _ANTHROPIC_NO_TEMP_PREFIXES = ("claude-sonnet-5", "claude-opus-5",
 def model_supports_temperature(model: str) -> bool:
     """False za modele, ki temperature ne sprejmejo (GPT-5, o-serija, Claude 5)."""
     m = (model or "").lower()
-    if m.startswith("openai/"):        # nekateri posredniki dodajo predpono
+    if m.startswith("openai/"):
         m = m[len("openai/"):]
     if m.startswith(_OPENAI_RESTRICTED_PREFIXES):
         return False
@@ -96,20 +70,12 @@ def model_supports_temperature(model: str) -> bool:
 
 def sampling_kwargs(model: str, temperature: float | None = None,
                     max_tokens: int | None = None) -> dict:
-    """Parametri vzorčenja, prilagojeni generaciji modela.
-
-    Uporaba na klicnem mestu:
-        client.chat.completions.create(
-            model=m, messages=[...], **sampling_kwargs(m, 0.0),
-            response_format={"type": "json_object"})
-    """
+    """Parametri vzorčenja, prilagojeni generaciji modela."""
     kwargs: dict[str, Any] = {}
     if temperature is not None and model_supports_temperature(model):
         kwargs["temperature"] = temperature
     if max_tokens is not None:
         m = (model or "").lower()
-        # max_completion_tokens zahteva samo nova OpenAI generacija;
-        # Anthropic in vsi ostali ostanejo pri max_tokens.
         needs_new_key = m.startswith(_OPENAI_RESTRICTED_PREFIXES)
         kwargs["max_completion_tokens" if needs_new_key else "max_tokens"] = max_tokens
     return kwargs
@@ -117,11 +83,7 @@ def sampling_kwargs(model: str, temperature: float | None = None,
 
 @contextlib.contextmanager
 def job_overrides(**overrides: Any) -> Iterator[None]:
-    """Context manager: apply per-job config overrides for the calling thread.
-
-    Keys use dot notation: `job_overrides(**{"pipeline.mode": "solo"})`.
-    On exit, restores the previous overrides for this thread.
-    """
+    """Context manager: apply per-job config overrides for the calling thread."""
     prev = getattr(_local, "overrides", {}) or {}
     new = dict(prev)
     new.update(overrides)

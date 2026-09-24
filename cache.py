@@ -1,7 +1,4 @@
-"""
-Simple disk cache for API responses.
-Avoids paying for redundant API calls during development / reruns.
-"""
+"""Simple disk cache for API responses."""
 
 import hashlib
 import json
@@ -56,7 +53,6 @@ class DiskCache:
         )
 
 
-# Module-level singleton
 _cache: DiskCache | None = None
 
 

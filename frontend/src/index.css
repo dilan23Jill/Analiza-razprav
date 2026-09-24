@@ -2,44 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Barvni temi ──────────────────────────────────────
-   Vrednosti so kanali RGB, ločeni s presledki, ker jih Tailwind vstavi
-   v rgb(var(--x) / <alpha-value>). Temna tema je privzeta; svetla se
-   vklopi z razredom `light` na elementu <html> (glej ThemeContext).   */
+/* Barvni temi */
 :root {
-  --c-surface-900: 11 14 20;      /* ozadje aplikacije */
-  --c-surface-800: 17 21 29;      /* navigacija, dvignjeni paneli */
-  --c-surface-700: 26 31 41;      /* kartice, vnosna polja */
-  --c-surface-600: 34 40 52;      /* hover, dvignjeni čipi */
-  --c-surface-500: 45 53 67;      /* obrobe, ločnice */
-  --c-ink: 255 255 255;           /* ospredje (text-white in sorodni) */
-  --c-body: 215 218 225;          /* privzeta barva besedila */
+  --c-surface-900: 11 14 20;
+  --c-surface-800: 17 21 29;
+  --c-surface-700: 26 31 41;
+  --c-surface-600: 34 40 52;
+  --c-surface-500: 45 53 67;
+  --c-ink: 255 255 255;
+  --c-body: 215 218 225;
   --c-shadow: 0.5;
   --c-shadow-strong: 0.45;
-  --c-overlay: 255 255 255;       /* prosojne plasti nad podlago */
+  --c-overlay: 255 255 255;
   color-scheme: dark;
 }
 
 html.light {
-  --c-surface-900: 255 255 255;   /* belo ozadje */
+  --c-surface-900: 255 255 255;
   --c-surface-800: 248 250 252;
   --c-surface-700: 241 245 249;
   --c-surface-600: 233 238 245;
   --c-surface-500: 209 217 228;
-  --c-ink: 0 0 0;                 /* črno ospredje na beli podlagi */
+  --c-ink: 0 0 0;
   --c-body: 0 0 0;
   --c-shadow: 0.10;
   --c-shadow-strong: 0.12;
-  --c-overlay: 15 23 42;          /* prekrivne plasti ostanejo modrikaste */
+  --c-overlay: 15 23 42;
   color-scheme: light;
 }
 
-/* Popravek berljivosti drobnega besedila v svetli temi.
-   Ista prosojnost ne da enakega kontrasta na beli in na črni podlagi: belo
-   besedilo pri 40 % na skoraj črnem doseže razmerje 3,8, temno pri 40 % na
-   belem pa le 2,5, kar je pod mejo berljivosti. V svetli temi zato najnižje
-   stopnje dvignemo. Zadeva samo barvo besedila; prosojne obrobe in podlage
-   (border-white/10, bg-white/5) ostanejo rahle, kot morajo biti. */
 html.light .text-white\/20 { color: rgb(var(--c-ink) / 0.40); }
 html.light .text-white\/30 { color: rgb(var(--c-ink) / 0.48); }
 html.light .text-white\/35 { color: rgb(var(--c-ink) / 0.54); }
@@ -47,16 +38,13 @@ html.light .text-white\/40 { color: rgb(var(--c-ink) / 0.60); }
 html.light .text-white\/50 { color: rgb(var(--c-ink) / 0.70); }
 html.light .text-white\/60 { color: rgb(var(--c-ink) / 0.82); }
 html.light .text-white\/65 { color: rgb(var(--c-ink) / 0.86); }
-/* Glavno besedilo je v svetli temi črno, ne sivo. */
+
 html.light .text-white\/70,
 html.light .text-white\/80,
 html.light .text-white\/85,
 html.light .text-white\/90 { color: rgb(var(--c-ink)); }
 
-/* ── Poudarne barve v svetli temi ─────────────────────
-   Odtenki 200–400 so izbrani za temno podlago in na beli skoraj izginejo.
-   V svetli temi jih zamenjamo z odtenkom 700, ki ima na belem zadosten
-   kontrast. Pomen barve (rdeča = napaka, zelena = potrjeno) ostane isti. */
+/* Poudarne barve v svetli temi */
 html.light .text-red-200,    html.light .text-red-300,
 html.light .text-red-400                       { color: #b91c1c; }
 html.light .text-green-200,  html.light .text-green-300,
@@ -90,10 +78,7 @@ html.light .text-accent-purple                 { color: #6d28d9; }
 html.light .text-accent-green                  { color: #166534; }
 html.light .text-accent-red                    { color: #4338ca; }
 
-/* ── Obrobe in ločnice v svetli temi ──────────────────
-   Prosojnost 5–20 % je na temni podlagi vidna, na beli pa ne. Gumbi s
-   tanko obrobo (Veljavno / Vprašljivo, Drži / Ne drži) bi bili sicer
-   videti kot golo besedilo. */
+/* Obrobe in ločnice v svetli temi */
 html.light .border-white\/5   { border-color: rgb(var(--c-overlay) / 0.14); }
 html.light .border-white\/10  { border-color: rgb(var(--c-overlay) / 0.20); }
 html.light .border-white\/15  { border-color: rgb(var(--c-overlay) / 0.24); }
@@ -107,7 +92,6 @@ html.light .divide-white\/10 > :not([hidden]) ~ :not([hidden]) {
   border-color: rgb(var(--c-overlay) / 0.18);
 }
 
-/* Rahle podlage so na belem prešibke, da bi ločile odsek od ozadja. */
 html.light .bg-white\/5       { background-color: rgb(var(--c-overlay) / 0.05); }
 html.light .bg-white\/10      { background-color: rgb(var(--c-overlay) / 0.08); }
 html.light .bg-white\/\[0\.02\] { background-color: rgb(var(--c-overlay) / 0.035); }
@@ -136,25 +120,24 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Headings a touch tighter for a more refined feel */
 h1, h2, h3, h4 {
   letter-spacing: -0.02em;
 }
 
-/* ── Text selection ───────────────────────────────── */
+/* Text selection */
 ::selection {
   background: rgba(99, 102, 241, 0.30);
   color: rgb(var(--c-ink));
 }
 
-/* ── Focus visibility (keyboard only) ─────────────── */
+/* Focus visibility (keyboard only) */
 :focus-visible {
   outline: 2px solid rgba(99, 102, 241, 0.6);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ── Scrollbar ────────────────────────────────────── */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -165,7 +148,7 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar-thumb:hover { background: rgb(var(--c-overlay) / 0.35); }
 * { scrollbar-width: thin; scrollbar-color: rgb(var(--c-surface-500)) transparent; }
 
-/* ── Timeline animations ─────────────────────────── */
+/* Timeline animations */
 @keyframes pulse-node {
   0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45); }
   50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
@@ -193,7 +176,7 @@ h1, h2, h3, h4 {
   animation: pulse-node 1.5s infinite;
 }
 
-/* ── Reusable card-hover lift (calm, subtle) ──────── */
+/* Reusable card-hover lift (calm, subtle) */
 .card-hover {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.2s ease,
@@ -204,21 +187,21 @@ h1, h2, h3, h4 {
   transform: translateY(-2px);
 }
 
-/* ── Gradient heading text ─────────────────────────── */
+/* Gradient heading text */
 .text-gradient {
   background: linear-gradient(100deg, #c7d2fe 0%, #818cf8 45%, #a78bfa 80%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-/* Svetli odtenki bi na beli podlagi izginili — v svetli temi zato temnejši. */
+
 html.light .text-gradient {
   background: linear-gradient(100deg, #4f46e5 0%, #6366f1 45%, #7c3aed 80%);
   -webkit-background-clip: text;
   background-clip: text;
 }
 
-/* ── Staggered list entrance ───────────────────────── */
+/* Staggered list entrance */
 .stagger > * {
   opacity: 0;
   animation: fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -235,7 +218,7 @@ html.light .text-gradient {
 .stagger > *:nth-child(10) { animation-delay: 0.48s; }
 .stagger > *:nth-child(n+11) { animation-delay: 0.53s; }
 
-/* ── Primary button glow + micro-interaction ───────── */
+/* Primary button glow + micro-interaction */
 .btn-glow {
   transition: box-shadow 0.25s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
               background-color 0.2s ease;
@@ -247,7 +230,7 @@ html.light .text-gradient {
   transform: scale(0.97);
 }
 
-/* ── Modern dot loader ─────────────────────────────── */
+/* Modern dot loader */
 .loader-dots {
   display: inline-flex;
   gap: 6px;
@@ -266,7 +249,7 @@ html.light .text-gradient {
   50%      { transform: translateY(-7px); opacity: 1; }
 }
 
-/* ── Animated gradient progress bar ────────────────── */
+/* Animated gradient progress bar */
 .progress-glow {
   position: relative;
   height: 6px;
@@ -288,7 +271,7 @@ html.light .text-gradient {
   to   { background-position: 250% 0; }
 }
 
-/* ── Glass card with gradient border + sheen sweep ─── */
+/* Glass card with gradient border + sheen sweep */
 .card-glass {
   position: relative;
   background: linear-gradient(180deg, rgb(var(--c-overlay) / 0.045), rgb(var(--c-overlay) / 0.015));
@@ -300,7 +283,7 @@ html.light .text-gradient {
               border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .card-glass::before {
-  /* gradient top edge */
+
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -310,7 +293,7 @@ html.light .text-gradient {
   transition: opacity 0.3s ease;
 }
 .card-glass::after {
-  /* sheen sweep on hover */
+
   content: '';
   position: absolute;
   top: 0; bottom: 0;
@@ -334,13 +317,13 @@ html.light .text-gradient {
   to   { left: 130%; }
 }
 
-/* ── Gradient active filter chip ───────────────────── */
+/* Gradient active filter chip */
 .chip-active {
   background: linear-gradient(120deg, #6366f1, #7c5cf0);
   box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.6);
 }
 
-/* ── Logo glow ─────────────────────────────────────── */
+/* Logo glow */
 @keyframes logo-breathe {
   0%, 100% { box-shadow: 0 0 12px -2px rgba(99, 102, 241, 0.35); }
   50%      { box-shadow: 0 0 22px -2px rgba(99, 102, 241, 0.65); }
@@ -349,7 +332,7 @@ html.light .text-gradient {
   animation: logo-breathe 3.5s ease-in-out infinite;
 }
 
-/* ── Animated nav-link underline ───────────────────── */
+/* Animated nav-link underline */
 .nav-underline {
   position: relative;
 }
@@ -368,7 +351,7 @@ html.light .text-gradient {
   right: 0;
 }
 
-/* ── Shimmer ring for active step icons ────────────── */
+/* Shimmer ring for active step icons */
 @keyframes ring-spin {
   to { transform: rotate(360deg); }
 }
@@ -386,9 +369,6 @@ html.light .text-gradient {
   animation: ring-spin 1s linear infinite;
 }
 
-/* Respect users who prefer less motion — decorative animations off.
-   POZOR: če ima Windows izklopljene "Učinke animacije", brskalnik javi
-   prefers-reduced-motion in ta blok se aktivira. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -398,8 +378,6 @@ html.light .text-gradient {
   }
   .stagger > * { opacity: 1 !important; }
 
-  /* Indikatorji NAPREDKA niso okras — sporočajo, da analiza teče.
-     Ostanejo animirani tudi pri reduced-motion (sicer izgledajo zamrznjeni). */
   .progress-glow::after { animation: progress-flow 2.4s linear infinite !important; }
   .step-ring::before    { animation: ring-spin 1s linear infinite !important; }
   .loader-dots span     { animation: dot-bounce 1.1s ease-in-out infinite !important; }

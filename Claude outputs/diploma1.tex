@@ -1,0 +1,2891 @@
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% diploma.tex
+%
+% Diplomsko delo — UL Fakulteta za računalništvo in informatiko
+% Visokošolski strokovni študijski program prve stopnje
+% Računalništvo in informatika
+%
+% Avtor: Dilan Mužič
+%
+% Predloga: vzorec_dip_Seminar.tex (Gašper Fijavž, Zoran Bosnić,
+%           Damjan Cvetan, Franc Solina) — struktura ohranjena,
+%           vsebina prilagojena temi naloge.
+%
+% ─────────────────────────────────────────────────────────────────
+% NAVODILA ZA UPORABO
+%
+% 1. Ta datoteka vsebuje SAMO naslove poglavij in podpoglavij.
+%    Besedilo napiši sam pod ustrezen ukaz \section / \subsection.
+% 2. Poleg te datoteke potrebuješ še:
+%       literatura.bib          — seznam virov
+%       pdfa-1b.xmp             — metapodatki za PDF/A
+%       sRGBIEC1966-2.1.icm     — barvni profil
+%    Vse tri dobiš skupaj s predlogo FRI.
+% 3. Prevajaj s pdflatex → bibtex → pdflatex → pdflatex.
+% 4. Pred oddajo prevedi z opcijo draft (vrstica 60), da vidiš
+%    predolge vrstice.
+%
+% Vsak stavek začni v NOVI vrstici izvorne datoteke — iskanje
+% in popravljanje bosta veliko hitrejša.
+% ─────────────────────────────────────────────────────────────────
+
+
+\documentclass[a4paper, 12pt]{book}
+\usepackage{float}
+%\documentclass[a4paper, 12pt, draft]{book}  % preveri predolge vrstice!
+
+
+\usepackage[utf8x]{inputenc} % slovenske črke v UTF-8
+\usepackage[slovene,english]{babel} % slovenski delilni vzorci
+\usepackage[pdftex]{graphicx} % vlaganje slik
+\graphicspath{{slike/}} % vse slike so v mapi slike/
+\usepackage{fancyhdr} % glave strani
+\usepackage{amssymb} % dodatni simboli
+\usepackage{amsmath} % enačbe, eqref
+\usepackage[hyphens]{url}
+\usepackage{booktabs} % \toprule, \midrule, \bottomrule
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  showstringspaces=false,
+  frame=none,
+  xleftmargin=0.6em,
+  literate={č}{{\v c}}1 {š}{{\v s}}1 {ž}{{\v z}}1
+           {Č}{{\v C}}1 {Š}{{\v S}}1 {Ž}{{\v Z}}1,
+}
+
+\emergencystretch=1.2em % raje malo raztegne presledke kot da besedilo uide iz roba
+\usepackage{placeins} % for \FloatBarrier
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{rotating} % obrnjena glava v tabeli usmerjanja
+\newcommand{\rot}[1]{\rotatebox{90}{\small #1}} % tabele, ki se lahko raztezajo čez več strani
+\definecolor{crta}{gray}{0.55}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.5}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{1}
+\setcounter{totalnumber}{3}
+
+\usepackage[pdftex, colorlinks=true,
+						citecolor=black, filecolor=black,
+						linkcolor=black, urlcolor=black,
+						pagebackref=false,
+						pdfproducer={LaTeX}, pdfcreator={LaTeX}, hidelinks]{hyperref}
+
+\usepackage{color}
+\usepackage[numbers]{natbib}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	PODATKI O DIPLOMI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Če se odločiš za drug naslov, ga spremeni SAMO tukaj — ukazi
+% \ttitle in \ttitleEn se uporabijo na naslovnici, v povzetku,
+% v abstractu in v metapodatkih PDF.
+%
+% Alternativni naslovi (izberi enega, ostale zakomentiraj):
+%   Večprehodna analiza argumentacije video debat z velikimi jezikovnimi modeli
+%   Hibridni pristop k ocenjevanju debat: nominalne ocene jezikovnega modela in deterministični izračun
+%   Spletna aplikacija za transkripcijo, preverjanje dejstev in analizo argumentacije video debat
+
+% POZOR: slovenski in angleški naslov morata biti prevoda istega naslova —
+% na ŠIS je prijavljen slovenski, angleški mora ustrezati njemu.
+\newcommand{\ttitle}{Sistem za avtomatizirano analizo argumentacije video razprav z uporabo velikih jezikovnih modelov}
+\newcommand{\ttitleEn}{A system for automated argumentation analysis of video debates using large language models}
+\newcommand{\tsubject}{\ttitle}
+\newcommand{\tsubjectEn}{\ttitleEn}
+\newcommand{\tauthor}{Dilan Mužič}
+\newcommand{\temail}{dm43010@student.uni-lj.si}
+\newcommand{\tmentor}{izr. prof. dr. Slavko Žitnik}
+\newcommand{\tyear}{2026}
+\newcommand{\tkeywords}{analiza argumentacije, veliki jezikovni modeli, preverjanje dejstev, obdelava naravnega jezika, transkripcija govora}
+\newcommand{\tkeywordsEn}{argumentation analysis, large language models, fact-checking, natural language processing, speech transcription}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	HYPERREF SETUP
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\hypersetup{pdftitle={\ttitle}}
+\hypersetup{pdfsubject=\ttitleEn}
+\hypersetup{pdfauthor={\tauthor, \temail}}
+\hypersetup{pdfkeywords=\tkeywordsEn}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% postavitev strani
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\addtolength{\marginparwidth}{-20pt} % robovi za tisk
+\addtolength{\oddsidemargin}{40pt}
+\addtolength{\evensidemargin}{-40pt}
+
+\renewcommand{\baselinestretch}{1.3} % razmik med vrsticami
+\setlength{\headheight}{15pt}
+\renewcommand{\chaptermark}[1]%
+{\markboth{\MakeUppercase{\thechapter.\ #1}}{}} \renewcommand{\sectionmark}[1]%
+{\markright{\MakeUppercase{\thesection.\ #1}}} \renewcommand{\headrulewidth}{0.5pt} \renewcommand{\footrulewidth}{0pt}
+\fancyhf{}
+\fancyhead[LE,RO]{\sl \thepage}
+\fancyhead[RE]{\sc \tauthor}
+\fancyhead[LO]{\sc Diplomska naloga}
+
+
+\newcommand{\BibTeX}{{\sc Bib}\TeX}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% naslovi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\autfont}{\Large}
+\newcommand{\titfont}{\LARGE\bf}
+\newcommand{\clearemptydoublepage}{\newpage{\pagestyle{empty}\cleardoublepage}}
+
+\setcounter{tocdepth}{1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% konstrukti
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newtheorem{izrek}{Izrek}[chapter]
+\newtheorem{trditev}{Trditev}[izrek]
+\newenvironment{dokaz}{\emph{Dokaz.}\ }{\hspace{\fill}{$\Box$}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PDF-A
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\Title{\ttitle}
+\def\Author{\tauthor, \temail}
+\def\Subject{\ttitleEn}
+\def\Keywords{\tkeywordsEn}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \convertDate converts D:20080419103507+02'00' to 2008-04-19T10:35:07+02:00
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\convertDate{%
+    \getYear
+}
+
+{\catcode`\D=12
+ \gdef\getYear D:#1#2#3#4{\edef\xYear{#1#2#3#4}\getMonth}
+}
+\def\getMonth#1#2{\edef\xMonth{#1#2}\getDay}
+\def\getDay#1#2{\edef\xDay{#1#2}\getHour}
+\def\getHour#1#2{\edef\xHour{#1#2}\getMin}
+\def\getMin#1#2{\edef\xMin{#1#2}\getSec}
+\def\getSec#1#2{\edef\xSec{#1#2}\getTZh}
+\def\getTZh #1#2{\edef\xTZh{#1#2}\getTZm}
+\def\getTZm#1#2{%
+    \edef\xTZm{#1#2}%
+    \edef\convDate{\xYear-\xMonth-\xDay T\xHour:\xMin:\xSec+\xTZh:\xTZm}%
+}
+
+\expandafter\convertDate\pdfcreationdate
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% get pdftex version string
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcount\countA
+\countA=\pdftexversion
+\advance \countA by -100
+\def\pdftexVersionStr{pdfTeX-1.\the\countA.\pdftexrevision}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% XMP data
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{xmpincl}
+\includexmp{pdfa-1b}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% pdfInfo
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pdfinfo{%
+    /Title (\ttitle)
+    /Author (\tauthor)
+    /Subject (\ttitleEn)
+    /Keywords (\tkeywordsEn)
+    /ModDate (\pdfcreationdate)
+    /Trapped /False
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\selectlanguage{slovene}
+\frontmatter
+\setcounter{page}{1}
+\renewcommand{\thepage}{}
+\newcommand{\sn}[1]{"`#1"'} % slovenski narekovaji: \sn{besedilo}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% naslovnica
+ \thispagestyle{empty}%
+  \begin{center}
+    {\large\sc Univerza v Ljubljani\\%
+      Fakulteta za računalništvo in informatiko\\%
+     }
+    \vskip 10em%
+    {\autfont \tauthor\par}%
+    {\titfont \ttitle \par}%
+    {\vskip 3em \textsc{DIPLOMSKO DELO\\[5mm]
+    VISOKOŠOLSKI STROKOVNI ŠTUDIJSKI PROGRAM\\ PRVE STOPNJE\\ RAČUNALNIŠTVO IN INFORMATIKA}\par}
+
+    \vfill\null%
+    {\large \textsc{Mentor}: \tmentor\par}
+
+    {\vskip 2em \large Ljubljana, \tyear \par}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% copyright stran
+\thispagestyle{empty}
+\vspace*{8cm}
+
+\noindent
+Copyright. Rezultati diplomske naloge so intelektualna lastnina avtorja
+in matiˇcne fakultete Univerze v Ljubljani. Za objavo in koriˇsˇcenje rezul-
+tatov diplomske naloge je potrebno pisno privoljenje avtorja, fakultete ter
+mentorja.
+
+\medskip
+
+\noindent
+Repozitorij: \url{https://github.com/dilan23Jill/Analiza-razprav}
+
+\begin{center}
+\mbox{}\vfill
+\emph{Besedilo je oblikovano z urejevalnikom besedil \LaTeX.}
+\end{center}
+\clearemptydoublepage
+
+
+\thispagestyle{empty}
+\
+\vfill
+
+\bigskip
+\noindent\textbf{Kandidat:} \tauthor\\
+\noindent\textbf{Naslov:} \ttitle\\
+\noindent\textbf{Vrsta naloge:} Diplomska naloga na visokošolskem strokovnem programu prve stopnje Računalništvo in informatika \\
+\noindent\textbf{Mentor:} \tmentor
+
+\bigskip
+\noindent\textbf{Opis:}\\
+\hspace{1em}V diplomski nalogi izdelajte sistem, ki na podlagi vnesenega posnetka ustvari strukturiran pregled argumentacije. Sistem naj podpira nastop enega govorca in razpravo ena proti ena. Iz posnetka naj izdela prepis in pri tem jasno loči govorce. Veliki jezikovni modeli naj samodejno izluščijo argumente in jih zapišejo kot premise in sklep. Izrečene preverljive trditve naj sistem prek vnaprej določenih mehanizmov ovrednoti kot resnične, delno
+resnične, zavajajoče, neresnične ali nepreverljive. Moderator ali drug stranski govorec naj bo zaznan in izločen iz ocenjevanja. Vsaka zaznana zmota naj ima dobesedni navedek, vsak izid preverjanja pa navedene vire. Sistem naj išče tudi logične zmote, razdeljene na formalne, neformalne in šibko sklepanje. Isti posnetek analizirajte večkrat in rezultate primerjajte.
+
+\bigskip
+\noindent\textbf{Title:} \ttitleEn
+
+\bigskip
+\noindent\textbf{Description:}\\
+In your thesis, create a system that creates a structured overview of the argumentation based on the entered recording. The system should support the performance of a single speaker and a one-on-one discussion. It should produce a transcript from the recording, clearly distinguishing the speakers. Large language models should automatically extract arguments and record them as premises and conclusions. The system should evaluate the stated verifiable claims as true, partially true, misleading, false or unverifiable through predefined mechanisms. Depending on the results of the verification and the validity of the arguments, the model should return a categorical assessment, and the code should calculate the accuracy figures. The moderator or other external speaker should be detected and excluded from the evaluation. Each detected error should have a verbatim citation, and each verification result should have the sources listed. The system should also look for logical errors, divided into formal, informal and weak reasoning. Analyze the same recording several times and compare the results.
+
+\vfill
+
+\vspace{2cm}
+\clearemptydoublepage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% zahvala  (neobvezno — če je ne želiš, zakomentiraj do naslednje vrstice \clearemptydoublepage)
+\thispagestyle{empty}\mbox{}\vfill\null\it%
+\noindent
+Iskreno se zahvaljujem mentorju izr.\ prof.\ dr.\ Slavku Žitniku za usmerjanje,
+strokovno vodenje, ideje in hitro odzivnost.
+Zahvaljujem se tudi družini, punci in prijateljem za vso spodbudo ter podporo v času
+študija in pri nastajanju diplomskega dela.
+
+\rm\normalfont
+\clearemptydoublepage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% posvetilo (neobvezno — celoten blok lahko izbrišeš)
+%\thispagestyle{empty}\mbox{}{\vskip0.20\textheight}\mbox{}\hfill\begin{minipage}{0.55\textwidth}%
+%% <-- posvetilo
+%\normalfont\end{minipage}
+%\clearemptydoublepage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% kazalo
+\pagestyle{empty}
+\def\thepage{}
+\tableofcontents{}
+
+\clearemptydoublepage
+
+
+\addcontentsline{toc}{chapter}{Povzetek}
+\chapter*{Povzetek}
+
+\noindent\textbf{Naslov:} \ttitle
+\bigskip
+
+\noindent\textbf{Avtor:} \tauthor
+\bigskip
+
+\noindent
+Diplomska naloga obravnava izdelavo sistema, ki
+posnetek razprave samodejno pretvori v strukturiran pregled predstavljene argumentacije. Spletne razprave pogosto trajajo več ur, med tem pa je veliko rečenega nepomembnega, ali pa gre za osebne napade. Gledalec, ki bi hotel presoditi, kdo je katero trditev dejansko podprl in kdo se je izmikal, mora za to porabiti veliko časa. Ročna analiza argumentacije je zamudna, sodba je pa lahko pristranska. Izdelali smo sistem, ki celotno pot od videoposnetka do berljivega poročila opravi samodejno. Posnetek prenese, naredi prepis z ločevanjem govorcev in argumentacijo analizira v zaporednih korakih, pri razpravi dveh govorcev v petih, pri nastopu enega govorca v štirih. Iz prepisa najprej izlušči argumente s premisami, nato v njih poišče logične zmote, preverljive podatke iz premis preveri v znanstvenih in spletnih virih, poveže odgovore z napadenimi argumenti in napiše povzetek. Osrednja zasnovna odločitev je ločnica med presojo in izračunom. Jezikovni model vrne izključno nominalne ocene iz vnaprej določenih množic in ne poda nobene številske ocene. Številke v poročilu nastanejo v sistemu, ki nominalne ocene prešteje, poveže med koraki in prikaže.
+
+\bigskip
+
+\noindent\textbf{Ključne besede:} \tkeywords.
+\clearemptydoublepage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% abstract
+\selectlanguage{english}
+\addcontentsline{toc}{chapter}{Abstract}
+\chapter*{Abstract}
+
+\noindent\textbf{Title:} \ttitleEn
+\bigskip
+
+\noindent\textbf{Author:} \tauthor
+\bigskip
+
+\noindent
+The thesis deals with the creation of a system that automatically converts a recording of a discussion into a structured overview of the presented argumentation. Online discussions often last for several hours, during which much of what is said is irrelevant or involves personal attacks. A viewer who wants to judge who actually supported which claim and who evaded it must spend a lot of time doing so. Manual analysis of the argumentation is time-consuming, and the judgment can be biased. We built a system that automatically completes the entire journey from video to readable report. It downloads the recording, produces a transcript with speaker separation and analyzes the argumentation in successive steps, five for a debate between two speakers and four for a single speaker. It first extracts arguments with their premises, then names the logical fallacies in them, checks the verifiable facts in the premises against scientific and online sources, links rebuttals to the arguments they attack and writes a summary. The central design decision is the dividing line between judgment and calculation. The language model returns exclusively categorical ratings from predefined sets and does not provide any numerical ratings. The numbers in the report are computed by the system, which counts the categorical ratings, links them across steps and displays them.
+
+\bigskip
+
+\noindent\textbf{Keywords:} \tkeywordsEn.
+\selectlanguage{slovene}
+\clearemptydoublepage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\mainmatter
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+%  1  UVOD
+
+\chapter{Uvod}
+\label{ch:uvod}
+
+Javne razprave o pomembnih vprašanjih so danes večinoma dostopne kot dolgi
+videoposnetki. Kdor jih spremlja, hitro pozabi, kaj natanko je kdo trdil in s
+katerimi razlogi je to podprl. Poslušanje vzame več ur, sproti pa je težko
+preveriti, ali navedeni podatki držijo in ali sklep res sledi iz razlogov, ki so
+bili zanj navedeni. Kdor si hoče ustvariti mnenje, mora posnetek pogledati do
+konca in si vzporedno delati zapiske.
+
+Od tod izhaja zamisel te naloge. Potreben je pripomoček, ki posnetek razprave
+prebere namesto gledalca in pokaže, kaj je kdo zagovarjal, s čim je to podprl,
+kje se je pri sklepanju zmotil in katere izrečene podatke potrjujejo zunanji
+viri. Bralec namesto večurnega poslušanja dobi pregled, ki ga prebere v nekaj
+minutah, skupaj s povezavami do virov, če želi kaj preveriti sam. Takšno orodje
+je uporabno za vsakogar, ki nima časa za celoten posnetek ali pa raje bere, kot
+posluša.
+
+Cilj naloge je izdelati sistem, ki celotno pot opravi samodejno. Sistem sprejme
+povezavo do posnetka ali naloženo datoteko, izdela prepis in ga razdeli po
+govorcih. Iz prepisa nato z velikimi jezikovnimi modeli izlušči stališča, ki jih
+govorci zagovarjajo, in razloge, s katerimi jih podpirajo. Vsak razlog, ki
+navaja preverljiv podatek, sooči z zunanjimi viri, v sklepanju pa poišče
+morebitne logične zmote. Izid je pregleden zapis argumentacije vseh sodelujočih,
+dostopen v spletni aplikaciji in izvozljiv v obliki PDF. Vstopno stran
+aplikacije, na kateri se analiza naroči, prikazuje slika~\ref{fig:nova-analiza}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth,keepaspectratio]{nova_analiza.png}
+\caption{Stran Nova analiza, na kateri uporabnik vnese povezavo ali datoteko in
+izbere možnosti analize.}
+\label{fig:nova-analiza}
+\end{figure}
+
+Pri tem je treba upoštevati, da jezikovni model ne bo vsega presodil pravilno.
+Cilj zato ni dokončna sodba, ampak zanesljivo izhodišče, ki ga uporabnik po
+potrebi popravi kar v aplikaciji (razdelek~\ref{ssec:urejanje}). Iz tega
+izhajata dve odločitvi, ki oblikujeta celoten sistem. Prva je, da model nikoli
+ne vrne številčne ocene, ampak izbere eno vrednost z vnaprej pripravljenega
+seznama, na primer resnično, delno resnično ali neresnično. Te vrednosti nato
+prešteje in med koraki poveže koda, zato zamenjava modela spremeni kakovost
+presoje, ne pa načina obdelave. Odločitev je utemeljena v
+razdelku~\ref{sec:kategorije-vs-stevilke}. Druga je, da analize ne opravi en sam
+klic modela, ampak več zaporednih korakov, od katerih vsak dobi le tisto, kar za
+svojo nalogo potrebuje, kar omogoča, da je za vsak korak izbran model, ki nalogi
+ustreza (razdelek~\ref{sec:koraki}).
+
+Ponovljivost je ovrednotena na dveh posnetkih, razpravi dveh govorcev in nastopu
+enega govorca. Vsak je analiziran petkrat, primerjani pa so število izluščenih
+argumentov, zaznane zmote, razsodbe preverjanja dejstev in to, ali se v vseh
+analizah pojavijo iste vsebinske teme.
+
+Poglavje~\ref{ch:ozadje} predstavi pojme in
+dosedanje delo na področjih, ki se jih naloga dotika, ter pove, v čem se opisani
+pristop od njih razlikuje. Poglavje~\ref{ch:zasnova} opiše zahteve in ključne
+odločitve pri zasnovi sistema. Poglavje~\ref{ch:implementacija} podrobno opiše
+posamezne korake in spletno aplikacijo. Poglavje~\ref{ch:vrednotenje} predstavi
+meritve ponovljivosti, stroška in časa, poglavje~\ref{ch:sklep} pa povzame
+ugotovitve in navede ideje za nadaljnje delo.
+
+
+%  2  OZADJE IN SORODNA DELA
+
+\chapter{Ozadje in sorodna dela}
+\label{ch:ozadje}
+
+Naloga se naslanja na pet področij, in sicer na teorijo argumentacije, zaznavo
+logičnih zmot, samodejno rudarjenje argumentov, samodejno preverjanje dejstev in
+uporabo velikih jezikovnih modelov v vlogi ocenjevalcev. To poglavje predstavi
+pojme in dosedanje delo na teh področjih, na koncu pa utemelji, v čem se opisani
+pristop razlikuje.
+
+
+\section{Osnovni pojmi}
+\label{sec:pojmi}
+
+\textbf{Trditev} je misel, izražena tako, kot da je v skladu z resničnostjo. 
+
+\textbf{Dejstvena trditev} je trditev, ki jo je mogoče soočiti z zunanjimi viri,
+ker govori o svetu: navaja število, datum, raziskavo, merljivo vrednost ali to, kdo
+je kaj rekel oziroma storil. Trditvi, ki pove, kaj bi bilo treba storiti ali kaj je pravično, ne pravimo dejstvena, saj izraža vrednostno ali normativno stališče, ki ga z viri ni mogoče potrditi ali ovreči.
+
+\textbf{Sklep} je trditev, ki jo govorec izpelje iz drugih trditev in jo z njimi utemeljuje.
+
+\textbf{Premisa} je trditev, iz katere sledi določen zaključek.
+
+\textbf{Argument} je sestava premis in sklepa.
+
+\textbf{Zmota} je napaka v sklepanju, zaradi katere premise sklepa ne podpirajo ali ga podpirajo šibkeje, kot trdi govorec (razdelek~\ref{sec:zmote}).
+
+\textbf{Razsodba} je izid preverjanja ene dejstvene trditve. Razsodbe so \sn{resnično}, \sn{delno resnično}, \sn{zavajajoče}, \sn{neresnično} in \sn{nepreverljivo}.
+
+\textbf{Zagon} je ena izvedba analize nad enim posnetkom.
+
+\textbf{Zavrnitev} je odgovor enega govorca, ki napade argument drugega.
+
+\textbf{Izmikanje} je primer, ko govorec na neposredno vprašanje nasprotnika ne odgovori. 
+
+\textbf{Razprava} je izmenjava nasprotujočih si mnenj, v kateri sodelujeta vsaj
+dva udeleženca. Vsak svoje stališče utemeljuje z razlogi in poskuša izpodbiti
+razloge nasprotnika. Pri formalnih razpravah sodeluje še moderator, ki gledalcem
+predstavi potek in skrbi, da udeleženca ostaneta pri temi.
+
+Formalna razprava ima ustaljen potek. Najprej ima vsak uvodni govor, v katerem
+predstavi svoje stališče in razloge zanj. Sledi zavrnitev, pri kateri vsak
+napade razloge nasprotnika. Nato pride navzkrižno spraševanje, pri katerem mora
+vsak odgovarjati na vprašanja nasprotnika. Temu sledi prosta izmenjava z najmanj
+pravili, na koncu pa še sklepni govor, ki povzame razpravo in nagovori
+občinstvo. Neformalne razprave, kakršnih je na spletu največ, so večinoma
+sestavljene samo iz proste izmenjave.
+
+
+\section{Zgradba argumenta}
+\label{sec:zgradba-argumenta}
+Za zgradbo argumenta potrebujemo premise in iz njih izpeljan sklep.
+
+Ker formalna logika pri vsakodnevnih razpravah ne zadošča, sistem gradi na modelu angleškega filozofa Stephena Toulmina~\cite{toulmin1958}, ki argument razčleni na šest delov: trditev (angl.\ claim), podatke, ki jo podpirajo (angl.\ data), sklepanje, ki povezuje podatke s trditvijo (angl.\ warrant), oporo za samo sklepanje (angl.\ backing), omejitev veljavnosti (angl.\ qualifier) in ugovor (angl.\ rebuttal).
+
+Preslikavo prikazuje tabela~\ref{tbl:toulmin}.
+
+\begin{table}[H]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.24\textwidth}p{0.13\textwidth}p{0.49\textwidth}@{}}
+\toprule
+\textbf{Del} & \textbf{Lastno polje} & \textbf{Kje v sistemu nastopa} \\
+\midrule
+trditev (\textit{claim}) & da & samostojno polje s sklepom argumenta \\
+\midrule
+podatki (\textit{data}) & da & samostojno polje s seznamom navedenih razlogov \\
+\midrule
+izjema (\textit{rebuttal}) & ne & pri Toulminu so to okoliščine, v katerih
+trditev ne velja; sistem jih posebej ne zajame, nasprotnikov odgovor pa ni izjema v
+tem pomenu in ga zajame četrti korak \\
+\midrule
+sklepanje (\textit{warrant}) & ne & izrazi se skozi zaznane zmote: manjkajoče
+in neočitno sklepanje je razlog za zapis zmote iz skupine šibkega sklepanja \\
+\midrule
+opora (\textit{backing}) & ne & posredno prek preverjanja dejstev, ki premise
+sooči z zunanjimi viri \\
+\midrule
+omejitev (\textit{qualifier}) & ne & prav tako skozi zaznane zmote: sklep,
+širši od tega, kar premise dopuščajo, je prehitra posplošitev \\
+\bottomrule
+\end{tabular}
+\caption{Preslikava Toulminovega modela v podatkovni model sistema.}
+\label{tbl:toulmin}
+\end{table}
+
+
+\section{Logične zmote}
+\label{sec:zmote}
+Logična zmota je napaka v sklepanju, zaradi katere argument ne dokazuje tega,
+kar naj bi dokazoval, čeprav se lahko zdi prepričljiv~\cite{copi2014}. Formalne
+zmote so napake v obliki sklepanja in jih je mogoče prepoznati brez poznavanja
+vsebine. Neformalne zmote, ki so v javnih razpravah bistveno pogostejše, so
+odvisne od konteksta in jih brez poznavanja tematike ni lahko
+prepoznati~\cite{walton2008}. Tretja skupina je šibko sklepanje, ki se pojavi,
+ko sklep iz premis sicer sledi, a je izrečen močneje, kot ga navedeni dokazi
+dopuščajo.
+
+Formalna zmota je torej napaka v obliki, neformalna napaka v rabi, šibko
+sklepanje pa napaka v moči sklepa. Neformalna zmota in šibko sklepanje sta
+odvisna od tega, o čem in v kakšnem položaju govorec govori. 
+
+Zaznava zmot v govorjenih razpravah je obdelana tudi v literaturi. Mancini in
+sodelavci so objavili prvi korpus za večmodalno razvrščanje zmot v političnih
+razpravah in ugotovili, da zvok izboljša mero $F_1$ za štiri do osem odstotnih
+točk~\cite{mancini2024fallacy}. Mera $F_1$ je uveljavljena mera uspešnosti
+razvrščanja in združuje dvoje: kolikšen delež označenih primerov je bil res
+pravilen in kolikšen delež pravilnih primerov je sistem sploh našel. Zavzame
+vrednosti med $0$ in $1$, pri čemer višja pomeni boljši izid. Njihov sistem pa
+dobi odsek, ki je že označen kot zmoten, in izbere le, katera od šestih zmot je
+v njem. Ne pove torej, kje v razpravi je zmota, ampak le, katera zmota je v že
+označenem odseku.
+
+
+\section{Samodejno rudarjenje argumentov}
+\label{sec:argument-mining}
+
+Rudarjenje argumentov je samodejno prepoznavanje in izluščanje zgradbe
+sklepanja, izraženega v naravnem jeziku~\cite{lawrence2019argument}. Naloga se običajno razčleni na tri korake: razdelitev besedila na argumentacijske enote, razvrstitev enot, na primer v trditve in premise, ter napoved razmerij med njimi, torej podpore ali napada~\cite{stede2018}.
+
+Govorjena razprava je za razčlenjevanje argumentov najtežje gradivo. Povedi
+ostajajo nedokončane, govorci si segajo v besedo, meja med samostojnim
+argumentom in podtočko istega argumenta pa je pogosto stvar presoje. Kako težka
+je naloga, pokaže ujemanje med ljudmi, ki isto besedilo označujejo neodvisno
+drug od drugega. Mere ujemanja, kot so $\pi$, $\kappa$ in $\alpha$, povedo,
+koliko se označevalci strinjajo bolj, kot bi se ujelo že po
+naključju. Vrednost $1$ pomeni popolno ujemanje, $0$ pa ujemanje na ravni
+naključja. V jezikoslovnih nalogah vrednosti nad $0{,}80$ veljajo za zanesljive,
+vrednosti pod $0{,}60$ pa za šibke. Pri prepričevalnih esejih so trije
+označevalci dosegli $\pi = 0{,}66$ za trditve in $\pi = 0{,}71$ za
+premise~\cite{stab2014}, v spletnih razpravnih nitih pa je ujemanje padlo na
+$\kappa = 0{,}53$ oziroma $\kappa = 0{,}55$~\cite{collagree2018}. 
+
+Z velikimi jezikovnimi modeli se je pristop k temu področju spremenil, saj lahko
+en sam poziv opravi več naštetih podnalog hkrati. Pregled Lija in sodelavcev med
+odprtimi izzivi navaja sklepanje čez dolg kontekst, razložljivost izida in
+pomanjkanje označenih podatkov~\cite{li2025llmargmining}.
+
+Govorjenim razpravam je namenjen korpus M-Arg~\cite{mestre2021marg}. Zajema pet
+soočenj ameriških predsedniških volitev 2020, sedem ur zvoka s prepisi, 6527
+izjav in 4104 oznake razmerij, ki jih je pripisala množica spletnih delavcev.
+Izhodiščni modeli tedanje generacije dosežejo skupno točnost 0,86, vendar je
+zbirka močno neuravnotežena. Mera $F_1$ za napade znaša 0,24 in za podpore 0,21,
+visoka točnost pa izvira predvsem iz pravilnega prepoznavanja parov brez
+razmerja. Ujemanje med označevalci je bilo pri tem nizko, $\alpha = 0{,}43$.
+Korpus poleg tega razmerja med izjavami le razvršča, zgradbe argumenta s
+premisami in sklepom pa ne izlušči. Upoštevati je treba tudi, da so današnji
+modeli precej zmogljivejši od tistih izpred petih let.
+
+
+\section{Samodejno preverjanje dejstev}
+\label{sec:fact-checking-sorodna}
+Samodejno preverjanje dejstev išče resničnost trditve s pomočjo obdelave
+naravnega jezika in zunanjih virov znanja~\cite{guo2022survey}. Razdeli se na
+štiri korake, in sicer zaznavo trditev, ki jih je vredno preveriti, pridobivanje
+dokazov, tvorjenje razsodbe in tvorjenje utemeljitve.
+
+Zaznava trditev mora ločiti preverljivo dejstveno trditev od zagovarjanja
+stališča. Pridobivanje dokazov je v obstoječih merilnih zbirkah pogosto omejeno
+na en sam vir, najpogosteje Wikipedijo, kar poenostavi vrednotenje, a slabo
+služi v resničnih razpravah, kjer se trditve raztezajo od medicine do aktualne
+politike. Tvorjenje razsodbe se zaplete pri sestavljenih trditvah, pri katerih
+je en del točen, drugi pa ne.
+
+Najbolj uveljavljen sklenjen sistem je ClaimBuster~\cite{hassan2017claimbuster},
+prvi, ki je celotno pot od besedila do razsodbe izvedel samodejno. Vsakemu
+stavku dodeli oceno, kako verjetno vsebuje trditev, vredno preverjanja, pri
+čemer doseže natančnost 79 in priklic 74 odstotkov. Natančnost pove, kolikšen
+delež stavkov, ki jih je sistem označil kot vredne preverjanja, to res je bil,
+priklic pa, kolikšen delež vseh takih stavkov je sistem sploh našel. Nato poišče
+že objavljena preverjanja in za nove trditve tvori poizvedbe po spletu.
+Preizkušen je bil v živo med soočenji ameriških volitev leta 2016. Deluje pa na
+ravni posameznega stavka, saj ne pove, čigav argument preverjena trditev
+podpira, in ne presodi, ali sklep iz nje sledi.
+
+
+\section{Veliki jezikovni modeli kot ocenjevalci}
+\label{sec:llm-judge}
+
+Uporaba velikega jezikovnega modela kot ocenjevalca je alternativa človeškemu
+vrednotenju, vendar model daje prednost daljšim odgovorom in bolje ocenjuje
+besedila, ki jih je sam ustvaril~\cite{zheng2023judging}. Raziskava petnajstih
+ocenjevalcev na več kot 150.000 primerih je pokazala, da pristranskost glede na
+položaj odgovora v pozivu ni naključna, ampak se sistematično razlikuje med
+modeli in nalogami~\cite{shi2025judging}. Zanesljivost ocenjevalcev je zato
+samostojna raziskovalna tema~\cite{gu2024}. Prav te ugotovitve so razlog za
+odločitev, da model ne vrne ocene na številčni lestvici, ampak izbere kategorijo
+iz zaprte množice.
+
+Zaprta množica sama ne zadošča. Če model dobi le seznam \sn{resnično}, \sn{delno
+resnično}, \sn{zavajajoče}, \sn{neresnično} in \sn{nepreverljivo}, brez pojasnila, kaj sodi pod katero vrednost, bo mejo med njimi vsakič postavil drugam. Zato je vsaka razsodba v pozivu opredeljena s pravilom (razdelek~\ref{ssec:razsodbe}). Pri imenih zmot so z razlago opremljena tista, ki se najlaže zamenjajo, vrste izmikanja pa so v pozivu le naštete, kar je ena od omejitev sistema.
+
+
+\section{Umestitev naloge glede na sorodna dela}
+\label{sec:umestitev}
+Obstoječi pristopi rešujejo posamezne dele naloge, ki si jo zastavlja to delo,
+nobeden pa ne pokriva poti od posnetka do poročila v celoti. M-Arg zajema
+govorjene razprave, a razmerja med izjavami le razvršča. Mancini in sodelavci
+zaznavajo zmote nad že označenimi odseki. ClaimBuster preverja dejstva, a na
+ravni posameznega stavka in brez zgradbe argumenta. Project
+Debater~\cite{slonim2021} argumente tvori in v razpravi sodeluje, pri opisanem
+sistemu pa je naloga obrnjena, saj argumente prepoznava in jih ne tvori.
+
+Enako pomembna je razlika v vhodu. Nobeno od naštetih del ne izhaja iz surovega
+zvočnega posnetka. ClaimBuster prejema podnapise televizijskega prenosa, M-Arg
+in korpus zmot pa se opirata na že pripravljene prepise z oznakami govorcev.
+Ločevanje govorcev je pri njih dano, v sistemu pa je del cevovoda.
+
+Sistem iz povezave naloži posnetek, iz njega naredi prepis z ločevanjem
+govorcev, izlušči argumente s premisami, najde in poimenuje zmote, preveri
+trditve iz premis v več neodvisnih virih in poveže zavrnitve z napadenimi
+argumenti. Celotno pot prikazuje slika~\ref{fig:cevovod}.  Ker model vrne izključno nominalne ocene, vse številke pa nastanejo v kodi, zamenjava modela spremeni kakovost presoje, ne pa načina obdelave.
+
+Prispevek tega dela je torej cenovno dostopen sistem s celotno potjo obdelave od posnetka do poročila v eni aplikaciji, v kateri je vsaka navedba povezana z argumentom, iz katerega je nastala, in z viri, ki jih uporabnik lahko sam odpre.
+
+
+\chapter{Zasnova sistema}
+\label{ch:zasnova}
+
+V tem poglavju so opisane zahteve in ključne odločitve, ki so oblikovale sistem.
+Velik problem je razdeljen na več manjših, za vsakega pa je izbrana rešitev, ki
+je glede na ceno, čas in točnost najprimernejša.
+
+\section{Zahteve}
+\label{sec:zahteve}
+
+Funkcionalne zahteve so:
+
+\begin{itemize}
+\item sprejem povezave do videoposnetka na YouTubu ali neposredno naložene
+datoteke, z možnostjo izbire časovnega odseka,
+\item prepis z ločenimi govorci, da je razvidno, kaj je povedal posamezni
+govorec,
+\item preverjanje dejstvenih trditev z razsodbami in navedenimi viri,
+\item analiza argumentacije, torej argumenti s premisami, preslikava odgovorov
+in izmikanj, zaznane logične zmote ter končna sinteza,
+\item spletna aplikacija, ki omogoča ročno popravljanje analize in ponovitev
+analize istega posnetka brez ponovnega prepisa,
+\item izvoz poročila v obliki PDF.
+\end{itemize}
+
+Nefunkcionalne zahteve so:
+
+\begin{itemize}
+\item Sledljivost: vsaka zaznana zmota mora navesti argument in njegov
+del, v katerem je napaka, vsaka razsodba preverjanja dejstev pa vire in premiso,
+ki jo preverja. Vsak podatek v poročilu mora biti mogoče izslediti nazaj do
+argumenta, iz katerega je nastal.
+\item Ponovljivost: ponovni zagon analize na istem posnetku mora vrniti
+vsebinsko primerljiv rezultat, kar pokaže, da je sistem konsistenten. Izmerjena
+je v razdelku~\ref{sec:ponovljivost}.
+\item Nevtralnost: sistem ne sme kaznovati stališča, ampak kvečjemu
+način njegove utemeljitve. Zaznava zmot zato zahteva, da model pokaže premiso, ki nosi napako, in poimenuje napako v zgradbi sklepanja, pri dvoumnem primeru pa mora obrazložitev navesti obe branji, bralec pa lahko zaznavo
+potrdi, zavrne ali odstrani (razdelka~\ref{ssec:prehod2} in~\ref{ssec:frontend}).
+\item Obvladljiv strošek: analiza sprejetih posnetkov mora ostati v
+meji dveh evrov, sicer sistem ni uporaben za redno rabo. Dejanski stroški so
+izmerjeni v razdelku~\ref{sec:strosek-cas}.
+\item Odpornost: jezikovni modeli občasno vrnejo okvarjen ali nepopoln
+izhod, zunanje storitve pa omejujejo število klicev, zato mora cevovod take
+napake preživeti brez izgube celotne analize.
+\end{itemize}
+
+
+\section{Pregled sistema}
+\label{sec:cevovod}
+
+Sistem je zasnovan kot cevovod zaporednih korakov, in sicer prenos zvoka, prepis z ločevanjem govorcev, večkoračna analiza argumentacije, katere tretji korak je preverjanje dejstev, ter shranjevanje in prikaz. Celoten cevovod prikazuje slika~\ref{fig:cevovod}.
+
+Ker je cevovod razdeljen na natančno določene zaporedne korake, je vsakega
+mogoče razvijati in preizkušati posebej, brez posega v preostanek aplikacije.
+Prepis se shrani ločeno od analize, zato ponovna analiza istega posnetka
+v celoti preskoči prenos, pripravo zvoka in prepis (razdelek~\ref{ssec:rerun}).
+
+Ena od zasnovnih odločitev je, da preverjanje dejstev za vsako preverljivo
+trditev zbere gradivo iz več vrst virov hkrati in na koncu model glede na rezultate poda eno oceno.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth,keepaspectratio]{cevovod.pdf}
+\caption{Pregled sistema od prvega do zadnjega koraka. Ob vsakem koraku je
+navedeno, kaj v njem nastane, barva okvira pa pove, ali korak opravi zunanja
+storitev, klic jezikovnega modela ali sam sistem. Oštevilčeni so samo koraki
+analize. Preverjanje dejstev je sestavljeno iz treh delov. Črtkana pot pove, da ponovna analiza istega posnetka uporabi shranjeni prepis in prve štiri korake preskoči.}
+\label{fig:cevovod}
+\end{figure}
+
+
+\section{Podatkovni model}
+\label{sec:podatkovni-model}
+
+Koraki analize si podajajo zapise v obliki JSON. Osrednji zapis je argument, ki
+ga ustvari prvi korak: stališče in seznam premis. Koda mu po
+prvem koraku dodeli oznako \texttt{arg\_id}, sestavljeno iz imena govorca in
+zaporedne številke (razdelek~\ref{ssec:arg-id}). Zmote, preverjene trditve in
+zavrnitve, ki nastanejo v poznejših korakih, niso vpisane v argument, ampak
+nosijo njegovo oznako in, kjer je smiselno, še številko premise. Vsaka
+ugotovitev je tako pripeta natanko enemu argumentu, kar zahteva sledljivost iz
+razdelka~\ref{sec:zahteve}. Zapise in to, kdo zapiše katero polje, povzema
+tabela~\ref{tbl:podatkovni-model}, primeri posameznih zapisov pa so navedeni pri
+korakih v poglavju~\ref{ch:implementacija}.
+
+\begin{table}[H]
+\centering\small\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.17\textwidth}p{0.47\textwidth}p{0.28\textwidth}@{}}
+\toprule
+Zapis & Polja & Kdo ga zapiše \\
+\midrule
+argument & \texttt{arg\_id}, stališče, premise &
+model v koraku 1, \texttt{arg\_id} koda \\
+\midrule
+zmota & \texttt{arg\_id}, številka premise, ime, kategorija, del argumenta,
+obrazložitev & model v koraku 2; kategorijo in veljavnost \texttt{arg\_id} koda \\
+\midrule
+trditev & besedilo, \texttt{arg\_id}, številka premise, govorec, tip, namen &
+model v koraku 3; tip poenoti koda \\
+\midrule
+razsodba & razsodba, obrazložitev, popravek, oznaka vsakega vira &
+model v koraku 3 \\
+& seznam virov, seštevek oznak, število virov in domen & koda \\
+\midrule
+zavrnitev & kdo, komu, \texttt{arg\_id}, vrsta, jedro, odziv & model v koraku 4 \\
+\midrule
+izmikanje & kdo, vprašanje, način, kolikokrat, opis & model v koraku 4 \\
+\midrule
+sinteza & povzetek, slog in točnost po govorcih, vpliv moderatorja &
+model v koraku 5 \\
+\bottomrule
+\end{tabular}
+\caption{Zapisi, ki jih ustvari analiza. Vsi razen sinteze se prek
+\texttt{arg\_id} navezujejo na argument iz prvega koraka.}
+\label{tbl:podatkovni-model}
+\end{table}
+
+
+\section{Nominalne ocene modela in izračun v kodi}
+\label{sec:kategorije-vs-stevilke}
+
+Osrednja odločitev naloge je, v kakšni obliki naj model pove svoje ugotovitve. Model nikjer ne vrne ocene na lestvici, ampak na vsakem mestu, kjer presoja, izbere vrednost z vnaprej pripravljenega seznama. Ta mesta našteva tabela~\ref{tbl:zaprte}.
+
+\begin{table}[H]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.30\textwidth}p{0.62\textwidth}@{}}
+\toprule
+Kaj model izbere & Med katerimi vrednostmi \\
+\midrule
+skupna razsodba o trditvi & resnično, delno resnično, zavajajoče, neresnično, nepreverljivo \\
+\midrule
+kam kaže posamezen vir & resnično, delno resnično, zavajajoče, neresnično, nepreverljivo \\
+\midrule
+ime zmote & ena od dvaintridesetih v zaprtem slovarju ali \texttt{other} \\
+\midrule
+vrsta zavrnitve & neposredno nasprotovanje, rušenje premise, druga razlaga, izpodbijanje sklepanja \\
+\midrule
+vrsta izmikanja & preusmeritev, menjava teme, odgovor brez vsebine, delni odgovor, preglasitev \\
+\midrule
+
+tip trditve & statistična, zgodovinska, znanstvena, navedek, politična, zdravstvena, ekonomska, zemljepisna \\
+\midrule
+vloga udeleženca & glavni govorec, debater, moderator \\
+\bottomrule
+\end{tabular}
+\caption{Mesta, kjer model izbere vrednost iz zaprte množice.}
+\label{tbl:zaprte}
+\end{table}
+
+Takim vrednostim pravimo nominalne, ker povedo, v kateri razred nekaj sodi, ne
+pa, za koliko je nekaj boljše od česa drugega. Model torej ne meri, ampak
+razvršča.
+
+Nobena od teh vrednosti ni ocena kakovosti argumenta. Razsodbi povesta, ali
+izrečeni podatek drži, ena o trditvi kot celoti in druga o vsakem viru posebej.
+Ime zmote poimenuje napako v sklepanju. Vrsti zavrnitve in izmikanja opišeta,
+kako je potekala izmenjava med govorcema. Tip trditve in vloga udeleženca zapise le razvrstijo, tip trditve pa pri tem določi še, kateri
+zbiralci virov stečejo (razdelek~\ref{ssec:engine-routing}).
+
+Nobena od zaznav ne stoji sama. Zmota navede tisti del argumenta, v katerem
+naj bi bila napaka, in obrazložitev, zakaj je to napaka. Zavrnitev navede
+argument, ki ga napada, jedro izrečenega in odziv izvirnega govorca, svoje
+presoje pa ne doda. Izmikanje navede vprašanje, ki je ostalo brez odgovora, in
+opiše, na kakšen način se mu je govorec izognil. Bralec zato vsak očitek najde
+ob tistem, na kar se nanaša, in ga lahko preveri.
+
+Številke v poročilu izračuna sistem, ki te nominalne vrednosti prešteje. Takih
+številk je pet:
+
+\begin{itemize}
+\item koliko trditev je bilo preverjenih,
+\item koliko trditev je dobilo katero od petih razsodb, skupno in po govorcih,
+\item koliko virov stoji za posamezno trditvijo,
+\item koliko različnih domen ti viri pokrivajo,
+\item koliko teh virov kaže v katero smer, torej seštevek oznak pri eni sami
+trditvi.
+\end{itemize}
+
+Model zapiše le dve števili, ki nista oceni, ampak štetji: kolikokrat je bilo
+vprašanje, ki se mu je govorec izmaknil, postavljeno, in koliko vprašanj je
+postavil moderator. Drugo koda popravi navzgor na vsaj toliko, kolikor vprašanj
+je model naštel.
+
+Presoja modela je omejena na izbiro z zaprtega seznama, vse nadaljnje računanje
+pa teče znotraj sistema in je zato ob istem vhodu vedno enako. Zamenjava modela s tem
+spremeni kakovost presoje, ne pa načina obdelave, zato je učinek novega modela
+mogoče izmeriti brez sprememb v kodi.
+
+Sistem ne presoja, ali je argument dober, ali je po zavrnitvi obstal in kako je
+pomemben. To ni njegova naloga, saj je sodba o tem, kdo je bil prepričljivejši,
+odvisna od bralca. Sistem pokaže, kaj je bilo rečeno, in
+poimenuje zmote v sklepanju, odločitev pa prepusti bralcu. Sinteza povzame, kaj je kdo zagovarjal, na čem je to utemeljil, kje se je
+izmikal in katera vprašanja so ostala odprta, ne da bi izrekla, kdo je bil
+boljši. Po korakih razčlenjeno ločnico med presojo modela in izračunom v kodi
+navaja dodatek~\ref{app:locnica}.
+
+\section{Razdelitev analize na več korakov}
+\label{sec:koraki}
+
+Celotno analizo bi bilo mogoče opraviti z enim samim klicem modela. Model bi dobil prepis in eno dolgo navodilo, naj izlušči argumente, oceni njihovo
+zgradbo, poišče odgovore in zmote ter napiše povzetek. Ta pristop je bil
+zavrnjen iz treh razlogov.
+
+Prvič, dolg prepis in več hkratnih nalog si delijo isto omejeno pozornost
+modela. Kakovost posameznih nalog zato pada, izhod pa rad preseže dovoljeno
+dolžino in se odreže sredi stavka. Drugič, en klic pomeni en model, zato bi vse
+naloge opravil najdražji, čeprav bi za nekatere zadostoval cenejši. Tretjič, ena
+napaka bi podrla celoto, pri razdeljeni analizi pa odpove le prizadeti korak,
+ostali se izvedejo do konca.
+
+Analiza je zato razdeljena na pet zaporednih korakov. Korak je stopnja analize,
+ki dobi določen vhod in vrne urejen izhod, na katerem gradijo naslednje stopnje.
+Štirje koraki so klici jezikovnega modela, in sicer izluščanje argumentov,
+zaznava zmot, preslikava odgovorov in sinteza. Vsak od njih opravi svojo nalogo
+z enim samim pozivom. Tretji korak, preverjanje dejstev, je drugačen. Model v njem
+sicer sodeluje, vendar ne presoja argumentacije, temveč izrečene podatke sooči z
+zunanjimi viri, in to z več klici na različne ponudnike, katerih izide nato
+združi koda (razdelek~\ref{sec:fact-checking}). Vseh pet povzema
+tabela~\ref{tbl:koraki}.
+
+\begin{table}[htbp]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.26\textwidth}p{0.17\textwidth}p{0.34\textwidth}l@{}}
+\toprule
+Korak & Glavni vhod & Izhod & Model \\
+\midrule
+1 izluščanje argumentov & prepis & argumenti s premisami, stališča govorcev & zmogljivejši \\
+\midrule
+2 zaznava zmot & samo izhod 1 & zmote z imenom, kategorijo, delom argumenta, v katerem je napaka, in oznako argumenta & zmogljivejši \\
+\midrule
+3 preverjanje dejstev & premise iz izhoda 1 & razsodbe z navedenimi viri & ločeno \\
+\midrule
+4 preslikava odgovorov & prepis, izhod 1 & odgovori na argumente, izmikanja & cenejši \\
+\midrule
+5 sinteza & izhodi od 1 do 4 & povzetek, pri enem govorcu še seznam nepodprtih trditev & zmogljivejši \\
+\bottomrule
+\end{tabular}
+\caption{Koraki analize z vhodi, izhodi in izbiro modela.}
+\label{tbl:koraki}
+\end{table}
+
+Razdelitev omogoča tudi, da je za vsak korak izbran model glede na zahtevnost
+naloge. Zmogljivejši model opravi izluščanje argumentov, zaznavo zmot in
+sintezo. Izluščanje je med njimi najpomembnejše, saj kot edino ustvari
+argumente, na katerih delajo vsi nadaljnji koraki. Odpoved katerega koli drugega
+koraka izid le oslabi. 
+
+Iz tabele je razvidno, da vsak korak dobi le tisto, kar za svojo nalogo
+potrebuje. Prepis prejmeta samo koraka za izluščanje argumentov in preslikava odgovorov. Ostali trije delajo z izhodi prejšnjih korakov. 
+Zaznava zmot ne potrebuje celega prepisa, ker lahko samo iz izluščenih argumentov poišče zmote.
+Preverjanje dejstev dela na premisah in ne na prepisu, sicer bi preverjalo tudi podatke, ki v nobenem argumentu ne nastopajo, razsodb pa ne bi bilo mogoče pripeti k premisi.
+Preslikava odgovorov je predvsem vezava že izluščenih argumentov na mesta v prepisu in sklepanja ne presoja, zato kot edini od štirih klicev analize teče na cenejšem modelu. Pri posnetku z enim govorcem odpade, ker ni sogovornika.
+
+Ta razdelitev poveča število klicov in podaljša čas obdelave.
+
+\section{Arhitektura aplikacije}
+\label{sec:arhitektura}
+
+Analiza enega posnetka traja več minut, zato je ni mogoče izvesti znotraj ene
+same spletne zahteve. Odjemalec odda naročilo, strežnik ustvari opravilo in
+vrne njegov identifikator, cevovod pa steče v ločeni niti. Odjemalec medtem
+prikazuje stanje in ob koncu prikaže rezultat.
+
+Prepisi končanih analiz se hranijo ločeno od rezultatov. Ponovna analiza istega
+posnetka zato preskoči prenos in prepis. Prav ta mehanizem poceni meritve
+ponovljivosti v poglavju~\ref{ch:vrednotenje}, saj gre isti prepis skozi analizo
+večkrat, plača pa se le analiza.
+
+Odjemalec je enostranska aplikacija, ki strukturirane rezultate prikaže po govorcih in argumentih, omogoča ročno popravljanje analize ter izvoz poročila v PDF
+(razdelek~\ref{sec:aplikacija}).
+
+Razdelitev na odjemalca, strežnik in opravila v ozadju prikazuje
+slika~\ref{fig:arhitektura}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{arhitektura.pdf}
+\caption{Arhitektura aplikacije. Strežnik naročilo sprejme in takoj vrne oznako
+opravila, analiza pa steče v svoji niti. Odjemalec njeno stanje spremlja in
+prikazuje na vmesniku.}
+\label{fig:arhitektura}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{loading.png}
+\caption{Prikaz poteka analize. Zgoraj je opomba »Analysis in progress« in identifikator naloge. Sledi seznam korakov obdelave: zelene kljukice označujejo že dokončane korake, trenutni korak je označen z vijolično, preostali koraki so še v čakanju. Na dnu je napredovalni trak, ki prikazuje trenutno delo.}
+\label{fig:loading}
+\end{figure}
+
+\chapter{Implementacija}
+\label{ch:implementacija}
+
+V tem poglavju so podrobno opisani posamezni koraki cevovoda. Zaledni del
+sistema je napisan v jeziku Python, uporabniški vmesnik pa v ogrodju React.
+
+
+\section{Pridobivanje zvoka}
+\label{sec:prenos}
+
+Sistem sprejme povezavo do posnetka na YouTubu ali datoteko, ki jo uporabnik
+naloži sam. Pri povezavi pred prenosom poizve po metapodatkih in iz njih razbere naslov, ime kanala in trajanje. Uporabniku tako takoj pove, ali je posnetek dosegljiv, in mu ponudi izbiro odseka. Kadar trajanja ni mogoče pridobiti, vmesnik ponudi ročno izbiro najdaljšega odseka. Posnetek, daljši od 23 minut, in prenos v živo analiza zavrne. Meja izhaja iz
+modela za prepis, ki v enem klicu sprejme največ 1400 sekund zvoka.
+
+Prenos nato opravi orodje \texttt{yt-dlp}. To iz posnetka izlušči zvočno sled in jo shrani v formatu m4a. Slike ne prenese, ker je analiza govora ne potrebuje. Če je uporabnik izbral časovni odsek, se pred nadaljnjo obdelavo izreže samo izbrani del.
+
+
+\subsection{Prepis z ločevanjem govorcev}
+\label{ssec:diarizacija}
+
+Prepis opravi model \texttt{gpt-4o-transcribe-diarize}, ki poleg besedila vrne tudi oznake govorcev. Ločevanje govorcev je nujno, saj brez njega ni mogoče pripisati argumenta osebi, ki ga je izrekla, in celotna analiza izgubi pomen.
+
+
+\subsubsection{Oznake govorcev}
+Oznake, ki jih vrne prepis, so brezimenske, torej »Speaker~1«, »Speaker~2«. Kdo je kdo, pove uporabnik. Imena lahko vpiše pred analizo, takrat jih koda pred izluščanjem vstavi v prepis, ali pa govorca preimenuje v vmesniku po analizi (razdelek~\ref{ssec:urejanje}).
+Pri razpravi sistem pred izluščanjem preveri še, ali prepis vsebuje vsaj dva
+različna govorca. Če je ločevanje oba glasova zlilo v enega, analizo zavrne, saj
+razprave iz takega prepisa ni mogoče analizirati. Prepis je shranjen kot
+besedilo, v katerem je vsaka izjava v svoji vrstici v obliki \texttt{Ime:
+besedilo}. Spodaj je začetek enega od shranjenih prepisov.
+
+\begin{quote}
+\footnotesize
+
+\textbf{Dr.\ Raoul Kaninadyke:} Doing great.
+
+\textbf{Tristan Hughes:} Well, good, okay, very laconic in your answer there. Straight away, thank you very much. Time to free it. Um, we're back in person to do\ldots well, we're the guinea pigs really for a new format, which is agree to disagree. Am I right there? You agree to disagree. Yes, I sit there nodding and they're nodding. Kind of makes sense with strong agree, strong disagree.
+
+Uh, see if we can do that. But well, it's regarding ancient Greece. And we've got here a selection of questions for it. Don't even know what's coming up, but I think it's going to be\ldots they really want the gut reactions. So let's see what we've got.
+
+Oxford academic versus someone who just interviews people about ancient history day in day out. So, alright. You ready? Let's go. Let's do it.
+
+Okay. I'll pick the first one. The Trojan War actually happened.
+
+\textbf{Dr.\ Raoul Kaninadyke:} Oh, disagree.
+
+\textbf{Tristan Hughes:} Can I put this here? I don't know if this is going to be\ldots Can we do strongly disagree or strongly disagree?
+
+\textbf{Dr.\ Raoul Kaninadyke:} You know, I'm only going to put disagree actually, because I think there's a way that you can\ldots
+
+\textbf{Tristan Hughes:} There is, of course.
+\end{quote}
+
+\section{Večkoračna analiza argumentacije}
+\label{sec:analiza}
+
+Analiza je razdeljena na zaporedne korake, pri razpravi dveh govorcev na pet in pri nastopu enega govorca na štiri. Vsak dobi svoj določen vhod, opravi nalogo in vrne strukturiran izhod, ki ga naslednji prejmejo kot vhod. 
+
+Vrstni red korakov ni poljuben. Izluščanje mora teči prvo, ker vsi nadaljnji koraki delajo na argumentih, ki jih ustvari. Zaznava zmot in preverjanje dejstev sta neodvisna drug od drugega, oba pa potrebujeta že izluščene argumente. Preslikava odgovorov potrebuje poleg argumentov še prepis, sinteza pa stoji zadnja, ker je edina, ki mora videti izide vseh prejšnjih. Kateri jezikovni model opravlja katero nalogo in zakaj je bil izbran, je navedeno v dodatku~\ref{app:modeli}. Pozivi, po katerih se ravnajo modeli, pa so navedeni v dodatku~\ref{app:pozivi}.
+
+\subsection{Sistemski pozivi}
+\label{ssec:sistemski-poziv}
+
+Vhod ni pri vseh korakih enak. Prepis posnetka bereta samo dva: izluščanje argumentov in preslikava zavrnitev. Pri teh dveh je uporabniški poziv sestavljen iz prepisa in za njim navodilo. Prepis je v obeh klicih isti in na istem mestu, razlikuje ju le navodilo, ki mu sledi.
+
+Iskanje zmot in sinteza prepisa ne vidita. Delata z izluščenimi argumenti in z izhodi prejšnjih korakov, ti pa so kot JSON vpisani kar v navodilo. Prepisa ne potrebujeta: kar je bilo treba razbrati iz posnetka, je razbral prvi korak, poznejša dva pa presojata tisto, kar je ta zapisal. Posnetek zato preberemo dvakrat in ne petkrat, vsak korak pa vidi natanko toliko gradiva, kolikor ga njegova naloga zahteva.
+
+Sistemski poziv za razsodbo pove le vlogo in obliko odgovora. Merila razsodbe, prepoved lastnega iskanja in postopek označevanja posameznih virov so v navodilu. Kaj vsebuje sistemski poziv posameznega klica, povzema tabela~\ref{tbl:hisna}. 
+
+\begin{table}[H]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.40\textwidth}p{0.52\textwidth}@{}}
+\toprule
+Klic modela & Kaj mu pove sistemski poziv \\
+\midrule
+izluščanje argumentov (korak 1) & naj izlušča in ne presoja, da argumenta ne sme
+izpustiti ali oslabiti, ter kdo v posnetku šteje za udeleženca \\
+\midrule
+zaznava zmot (korak 2) & skupno držo ter merilo, kdaj se zmota sme zapisati in
+kako se zapiše dvoumen primer \\
+\midrule
+razbiranje in razgradnja trditev (korak 3a) & celotno navodilo za nalogo je
+poslano kot sistemski poziv; drže presojanja nima, ker korak trditve le izbere
+iz premis in razstavi \\
+\midrule
+zbiranje virov (korak 3b) & sistemskega poziva nima; navodilo, naj poroča le,
+kaj viri pravijo, in ne izreka sodbe, je v uporabniškem sporočilu \\
+\midrule
+razsodba nad viri (korak 3c) & vlogo preverjevalca dejstev in zahtevo po
+veljavnem JSON; merila razsodbe so v navodilu, ne tu \\
+\midrule
+preslikava zavrnitev (korak 4) & skupno držo ter merilo, kaj šteje za
+izmikanje \\
+\midrule
+sinteza (korak 5) & skupno držo ter da sme poročati le o tem, kar so našli
+prejšnji koraki \\
+\bottomrule
+\end{tabular}
+\caption{Kaj pove sistemski poziv posameznega klica.}
+\label{tbl:hisna}
+\end{table}
+
+Trije klici, zaznava zmot, preslikava zavrnitev in sinteza, dobijo isto skupno
+držo: poročajo nevtralno, ne razglasijo zmagovalca in ne ocenjujejo, čigav
+primer je močnejši. Da so ti trije odstavki enaki od besede do besede, preverja
+test. Sklepanje od teh treh presoja le zaznava zmot, ki poimenuje napake,
+preslikava zavrnitev in sinteza pa opisujeta, kaj je bilo rečeno. Resničnost
+trditev presoja preverjanje dejstev, ki za vsako trditev zbere vire in nad njimi
+izreče eno od petih razsodb. 
+
+Izluščanje presojevalne drže ne dobi. Ne odloča namreč, ali je z argumentom kaj
+narobe, ampak samo, kje se začne in kje neha. Merila za presojo mu zato ne
+povedo ničesar o nalogi, ki jo opravlja. Namesto tega dobi navodilo, ki je zanj
+edino pomembno. Argumenta ne sme izpustiti, ker se z njegovim sklepom ne
+strinja, ne sme ga prepisati v šibkejši obliki in ne sme mu dodati razlogov, ki
+jih ni bilo. Nevtralnost je pri tem koraku vprašanje popolnosti in ne ocene, saj
+argument, ki tu izpade, poznejšim korakom sploh ne pride v roke.
+
+Izluščanje dobi tudi pravila o tem, kdo v posnetku šteje za udeleženca, torej
+koliko debaterjev je, kdo je moderator in kaj z glasovi iz občinstva. To
+vprašanje se postavi samo tam, kjer se bere prepis, zato ima isto razlikovanje v
+svojem navodilu tudi preslikava zavrnitev, ki je edini drugi korak s prepisom.
+Koraki, ki delajo z izluščenimi argumenti, teh glasov ne vidijo več.
+
+\subsection{Prvi korak: izluščanje trditev in argumentov}
+\label{ssec:prehod1}
+
+Prvi korak je edini, ki argumente ustvari. Vsi nadaljnji na njih gradijo, zato
+je od prvega koraka odvisno vse ostalo.
+
+Glavna nevarnost pri tej nalogi ni, da bi model kak argument spregledal, ampak
+da bi ob vsakem branju izbral druge. Če bi presojal, kateri argumenti so
+pomembni, bi bila analiza odvisna od tega, kaj je model tokrat štel za
+pomembno. Poziv zato presoje ne dovoli, ampak predpiše preizkus: sklep se vključi takrat in samo takrat, kadar govorec zanj navede vsaj dva razloga. Nič drugega ne odloča, ne kako pomemben se sklep zdi, ne koliko argumentov je model že našel.
+
+Sklep z enim samim razlogom torej ne postane argument. Tak osamljeni razlog je
+skoraj vedno razlog za nekaj širšega, kar govorec zagovarja, in se tja pripne
+kot premisa. Poziv tudi izrecno pove, da ciljnega števila argumentov ni: če
+govorec ne sestavi nobenega celega argumenta, je prazen seznam pravilen izid.
+
+Ko so sklepi izbrani, jih poziv združi po stališčih. Model najprej našteje
+stališča, ki jih govorec zagovarja, nato vsak sklep pripne natanko enemu
+stališču, vsako stališče pa postane en argument, katerega premise so pripeti
+sklepi. Poseben del poziva loči naštevanje argumentov od naštevanja premis: če
+govorec našteva korake ene same izpeljave, gre za en argument z več premisami
+in ne za več argumentov.
+
+Premisa pri tem ni gol podatek, ampak kratek podargument: trditev skupaj z
+razlogom, ki ga je zanjo navedel govorec. Več podatkov, ki podpirajo isti razlog,
+poziv združi v eno premiso, zato se število premis ne napihne s številom
+navedenih statistik.
+
+Po prvem koraku koda iz izida odstrani argumente z manj kot dvema premisama, saj
+pravila iz poziva model ne upošteva vedno. Izjema je govorec, pri katerem bi s
+tem izginili vsi argumenti. Takrat jih koda obdrži, ker prazen izid pri takem
+govorcu pomeni, da je spodletelo izluščanje, in ne, da govorec ni argumentiral.
+
+Vhod koraka je prepis. Izhod je za vsakega govorca stališče in seznam
+argumentov. Skrajšan primer je spodaj, oznako \texttt{arg\_id} pa doda koda šele
+po koraku.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+{"speakers": {"Speaker A": {
+   "position": "The Trojan War as Homer tells it did not happen.",
+   "arguments": [{
+      "arg_id": "Speaker A#0",
+      "argument": "Homer's war is not a historical event: the site shows
+                   destruction, not a ten-year siege.",
+      "premises": [
+        "Excavations at Hisarlik show several destruction layers - but none
+         that fits a single long siege.",
+        "The epics were written down centuries after the supposed events."]}]}}}
+\end{lstlisting}
+
+Poziv je naveden v dodatku~\ref{app:poziv-izluscanje}.
+
+\subsection{Drugi korak: logične zmote}
+\label{ssec:prehod2}
+
+Drugi korak prejme izključno izhod prvega koraka in ne dobi prepisa. Ta omejitev
+je namerna, saj je zmota napaka v tem, kako premise nosijo sklep, in prav to je
+argument. Prenagla posplošitev, zamenjava sosledja z vzročnostjo in sklicevanje
+na avtoriteto so vsi razvidni iz izluščenega argumenta samega, zato prepis za to
+nalogo ni potreben.
+
+Korak zapiše samo zmote. Argumentov, v katerih zmote ne najde, ne ocenjuje in o
+njih ne pove ničesar, saj sistem ne presoja, kako dober je argument. Vsak zapis
+nosi ime iz zaprtega slovarja, kategorijo, obrazložitev, oznako argumenta, na
+katerega se nanaša, in tisti del argumenta, v katerem je napaka: stališče ali
+premiso, prepisano iz izhoda prvega koraka.
+
+Vhod koraka je izhod prvega koraka v obliki JSON, torej argumenti obeh govorcev z
+oznakami. Izhod je seznam zmot:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+{"fallacies": [{
+   "arg_id": "Speaker B#2", "premise_index": 1, "speaker": "Speaker B",
+   "type": "hasty_generalization",
+   "category": "weak_reasoning",
+   "evidence": "Achilles was a terrible person - ...",
+   "explanation": "One character is taken as proof of how ..."}]}
+\end{lstlisting}
+
+Kategorijo koda po potrebi prepiše, kot je opisano spodaj.
+
+Vrsto zmote model izbere iz zaprtega slovarja 32 poimenovanih zmot, ki jih
+dopolnjuje še možnost \texttt{other} za primer, ko nobeno ime ne ustreza. Brez te
+omejitve isti pojav dobi vsakič drugo ime in ga med zagoni ni mogoče prešteti. Če
+model vrne ime zunaj te množice, ga shema poskusi preslikati na sopomenko, sicer
+pa ga ohrani tako, kot ga je zapisal model.
+
+Kategorijo iz razdelka~\ref{sec:zmote} model sicer navede, vendar pri vseh
+32 imenih iz slovarja obvelja tista, ki jo sistem izpelje iz imena.
+Potrditev posledice je vedno formalna, slamnati mož vedno neformalen, prenagla
+posplošitev vedno šibko sklepanje. Ime je namreč zanesljivejše od kategorije,
+saj model dobro prepozna, za kateri pojav gre, uvrstitev v teoretično skupino pa
+je opravilo, ki ga koda opravi zanesljivo. Modelova kategorija obvelja le pri
+imenu zunaj slovarja in pri \texttt{other}; kategorijo, ki je shema ne prepozna,
+nadomesti z neformalno.
+
+Spodaj je kratek izsek iz poziva:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+PART B - RHETORIC != FALLACY - CLASSIFY CORRECTLY:
+These are rhetorical DEVICES. Do NOT report them as fallacies when they accompany
+real argumentation:
+  * Hyperbole and dramatic emphasis        * Rhetorical questions
+  * Analogy, metaphor, vivid imagery       * Personal anecdote used as illustration
+  * Humor, irony, sarcasm                  * Anaphora / repetition for emphasis
+  * Framing and loaded word choice         * Appeals to shared values
+The SAME move becomes a fallacy ONLY when it REPLACES the argument (e.g. emotional
+appeal with no reasoning = appeal to emotion; anecdote presented as proof of a
+general rule = hasty generalization). Ask: "If I strip this device away, is there
+still an argument left?" Yes -> rhetoric, do not report it. No -> consider a fallacy.
+[...]
+AMBIGUOUS CASES - IMPORTANT:
+Sometimes a statement COULD be a fallacy OR a legitimate rhetorical device - it
+depends on interpretation. [...] In these cases:
+- Still include it, but say so in the explanation
+- Present BOTH interpretations: "This could be seen as [fallacy] because [...],
+  but it could also be interpreted as [legitimate use] because [...]."
+- Let the reader decide - your job is to flag it and explain both sides.
+\end{lstlisting}
+
+Dvoumnega primera torej korak ne izpusti, ampak ga zapiše in v obrazložitvi
+navede obe branji. Odločitev je prepuščena bralcu, ki zaznavo v aplikaciji lahko
+potrdi, zavrne ali popravi, lahko pa doda tudi zmoto, ki jo je model
+spregledal (razdelek~\ref{ssec:urejanje}).
+
+O poteku izmenjave ta korak ne poroča. Vidi namreč le izluščene argumente obeh
+govorcev, brez prepisa in brez zaporedja, zato ne more vedeti, kdo je komu
+odgovoril. Izmenjava je v celoti naloga četrtega koraka, ki prepis prejme.
+
+
+\subsection{Tretji korak: preverjanje dejstev}
+\label{sec:fact-checking}
+
+Tretji korak iz premis izbere podatke, ki jih je mogoče soočiti z zunanjimi
+viri, zanje zbere gradivo in o vsakem izreče razsodbo. Za razliko od drugih
+korakov ni en klic modela, ampak zaporedje stopenj, opisanih v nadaljevanju:
+izbira trditev, razgradnja sestavljenih trditev, usmerjanje k zbiralcem, sestava
+seznama virov, štetje domen in razsodba.
+
+Vhod ni JSON, ampak besedilo, ki ga iz argumentov sestavi koda, po en blok za
+vsak argument:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+[Speaker A#0] speaker: Speaker A
+  position: Homer's war is not a historical event: ...
+  premise 0: Excavations at Hisarlik show several destruction layers ...
+  premise 1: The epics were written down centuries after ...
+\end{lstlisting}
+
+Izhod je za vsako trditev en zapis. Seznam virov, seštevek oznak in števili virov
+in domen izračuna koda, vse drugo zapiše model:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+{"exact_claim": "The epics were written down centuries after the events",
+ "arg_id": "Speaker A#0", "premise_index": 1, "claim_type": "historical",
+ "verdict": "TRUE", "explanation": "...", "correction": "",
+ "sources": [{"title": "...", "url": "https://...", "date": "2019",
+              "relevant_quote": "...", "source_type": "peer_reviewed",
+              "source_verdict": "TRUE"}, ...],
+ "source_verdicts": {"TRUE": 3, "PARTIALLY_TRUE": 1, "MISLEADING": 0,
+                     "FALSE": 0, "UNVERIFIABLE": 6},
+ "evidence_metrics": {"source_count": 10, "independent_domain_count": 8}}
+\end{lstlisting}
+
+\subsubsection{Izbira preverljivih trditev}
+\label{ssec:claim-extraction-fc}
+
+Ta stopnja dobi izluščene argumente in iz njihovih premis pobere tiste, ki so
+preverljive. Nalogo opravi jezikovni model, vodi pa ga naslednje navodilo:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+You are given the arguments already extracted from a debate, each with an
+arg_id and numbered premises. Find the premises that assert something
+CHECKABLE against outside sources and return them as claims.
+
+A premise is checkable when it states a fact about the world: a number, a
+date, a study, a measurable trend, who said or did what. A premise is NOT
+checkable when it states what ought to be done, what is right or fair, or
+how something feels - those are the positions being debated, not facts.
+
+One premise may carry SEVERAL checkable facts (several statistics in one
+sentence). Return each as its own claim, quoting that part of the premise as
+written. Do not invent detail that is not in the premise, and do not
+generalise it - carry over every number, date and scope word exactly as the
+premise has them.
+
+For each claim return:
+- exact_claim: the checkable assertion, in the premise's own words
+- arg_id: the arg_id it came from, EXACTLY as given
+- premise_index: the number of the premise it came from
+- speaker: the speaker of that argument
+- claim_type: one of [statistic, historical, scientific, quote, policy,
+  health, economic, geographic]
+- context: one sentence on what the argument uses this fact for
+\end{lstlisting}
+
+Najzahtevnejši del ni iskanje, ampak razmejitev med dejstveno trditvijo in
+zagovarjanim stališčem. Premisa \sn{stopnja brezposelnosti se je lani znižala za
+dve odstotni točki} je preverljiva, premisa \sn{takšna politika je nepravična}
+pa ne. Sistem o vrednotah namenoma ne razsoja, saj so prav te predmet razprave.
+Navodilo zato prepoveduje tudi posploševanje, torej mora model vsako število,
+datum in besedo, ki določa obseg, prenesti natanko tako, kot stoji v premisi.
+
+Trditev, katere oznaka argumenta ni med izluščenimi argumenti, koda zavrže, saj
+je ne bi mogla pripeti nobeni premisi.
+
+V istem odgovoru model vsaki trditvi pripiše tip, kar je vrstica
+\texttt{claim\_type} v pozivu zgoraj. Merilo je, česa se trditev tiče, in ne,
+kdo jo je izrekel. Trditev o številu obolelih je \texttt{health}, trditev o
+letnici bitke \texttt{historical}, dobesedno povzemanje tujih besed
+\texttt{quote}.
+
+Tip je edina oznaka v tem koraku, ki ima izvedbene posledice, saj po njej koda
+izbere zbiralce (tabela~\ref{tbl:usmerjanje}). Zato je množica zaprta in je ne
+varuje le poziv, ampak tudi koda. Tip, ki ga model zapiše drugače, koda preslika
+na ustrezno vrednost (\texttt{medical} na \texttt{health}), tip, ki ga ne
+prepozna, pa nadomesti s \texttt{statistic}. Ta sproži vse zbiralce, zato
+trditev z nepričakovanim tipom ne ostane brez gradiva.
+
+Zgornje meje števila preverjenih trditev sistem nima.
+
+\subsubsection{Razgradnja sestavljenih trditev}
+\label{ssec:clustering}
+
+Govorec v en stavek pogosto stlači dve različni dejstvi. Če je eno točno in
+drugo ne, razsodba za tak stavek ni mogoča, saj bi morala biti hkrati pritrdilna
+in odklonilna. Razgradnja tako trditev razstavi na več podtrditev, ki se
+preverijo ločeno. Vsaka podtrditev obdrži govorca, oznako argumenta in številko
+premise tiste trditve, iz katere je nastala, poleg tega pa dobi še zapis
+izvirnega besedila. Tip ji model določi znova, saj se dve dejstvi istega stavka
+lahko tičeta različnih področij. Koda tudi tu preveri, da je tip iz zaprte
+množice, sicer podtrditev podeduje tip izvirne trditve. Nalogo opravi
+najcenejši model, saj gre za preoblikovanje besedila in ne za presojo. Navodilo
+je navedeno v dodatku~\ref{app:poziv-razgradnja}.
+
+Trditev, ki povedo isto, sistem ne združuje. Kadar isto dejstvo navedeta dva
+govorca ali kadar isti govorec z njim podpre dva argumenta, se preveri dvakrat.
+
+\subsubsection{Kateri vir dobi katero poizvedbo}
+\label{ssec:engine-routing}
+
+Sistem uporablja devet virov, in sicer spletno iskanje, PubMed, Semantic
+Scholar, OpenAlex, Crossref, Wikidata, Google Fact Check, Perplexity in Grok.
+Nobeden ne izreče razsodbe. Vsi so zbiralci, torej vsak poišče gradivo in ga
+vrne, razsodbo pa nato izreče en sam korak
+(razdelek~\ref{ssec:razsojanje}).
+
+Poizvedbe se ne pošljejo vsem. Katere zbiralce trditev sproži, določa njen tip,
+saj ta pove, kje jo je smiselno iskati. Razporeditev navaja
+tabela~\ref{tbl:usmerjanje}.
+
+\begin{table}[H]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}llcccccc@{}}
+\toprule
+Tip trditve & oznaka & \rot{akademske zbirke} & \rot{Wikidata} &
+\rot{Google Fact Check} & \rot{Perplexity} & \rot{Grok} & \rot{spletno iskanje} \\
+\midrule
+statistična & \texttt{statistic} & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+politična & \texttt{policy} &  & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+ekonomska & \texttt{economic} &  & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+navedek & \texttt{quote} &  & $\circ$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
+znanstvena & \texttt{scientific} & $\bullet$ & $\circ$ & $\bullet$ & $\bullet$ &  & $\bullet$ \\
+zdravstvena & \texttt{health} & $\bullet$ & $\circ$ & $\bullet$ & $\bullet$ &  & $\bullet$ \\
+zgodovinska & \texttt{historical} &  & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ \\
+zemljepisna & \texttt{geographic} &  & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ \\
+\bottomrule
+\end{tabular}
+\caption{Zbiralci, ki stečejo pri posameznem tipu trditve. Polna pika
+$\bullet$ pomeni, da zbiralec steče vedno, prazni znak $\circ$, da steče le,
+kadar trditev vsebuje letnico ali katero koli število, prazno polje pa, da pri
+tem tipu ne steče. Google Fact Check, Perplexity in spletno iskanje stečejo pri
+vseh tipih.}
+\label{tbl:usmerjanje}
+\end{table}
+
+Za pravili stojita dva premisleka. Akademske zbirke stečejo pri znanstvenih,
+zdravstvenih in statističnih trditvah, ker so recenzirani članki tam edini vir,
+ki ga spletno iskanje ne najde zanesljivo. Grok se pri znanstvenih,
+zdravstvenih, zgodovinskih in zemljepisnih trditvah izpusti, ker išče tudi po
+omrežju X, kjer je o dolgo uveljavljenih dejstvih več razprave kot gradiva.
+Wikidata je zbirka strukturiranih podatkov, zato steče pri tipih, ki običajno
+nosijo merljive vrednosti, sicer pa le, kadar je število v trditvi sami.
+
+Koliko zadetkov vrne posamezen zbiralec, je omejeno v kodi in navedeno v
+tabeli~\ref{tbl:zadetki}. Štirje akademski viri se najprej zlijejo v en nabor,
+iz njega odpadejo enaki naslovi, preostali pa se uredijo po številu citatov in
+letnici.
+
+\begin{table}[H]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.34\textwidth}p{0.24\textwidth}p{0.34\textwidth}@{}}
+\toprule
+Zbiralec & Zgornja meja & Kaj vrne \\
+\midrule
+PubMed, Semantic Scholar, OpenAlex, Crossref & pet vsak, nato skupaj šest &
+naslov, revija, letnica, število citatov in izvleček do 600 znakov \\
+\midrule
+Wikidata & tri & ime entitete, opis in nekaj lastnosti iz poizvedbe SPARQL \\
+\midrule
+Google Fact Check & tri & kdo je preverjal, njegova ocena, naslov in datum \\
+\midrule
+spletno iskanje & brez meje & povzetek najdenega ter strani z naslovom, datumom
+in navedkom \\
+\midrule
+Grok & brez meje & povzetek najdenega po spletu in omrežju X ter strani \\
+\midrule
+Perplexity & brez meje & povzetek najdenega in povezave, na katere se povzetek
+sklicuje \\
+\bottomrule
+\end{tabular}
+\caption{Koliko zadetkov posamezen zbiralec največ vrne in v kakšni obliki.}
+\label{tbl:zadetki}
+\end{table}
+
+Trije zbiralci svojih zadetkov ne omejujejo, ker gre za odgovore modelov z
+lastnim iskalnikom. Prav zato je seznam virov omejen posebej, saj lahko ti
+zbiralci vrnejo več povezav, kot jih razsodba potrebuje in kot jih bralec
+poročila prebere.
+
+Perplexity trditve prejme v paketih po pet in odgovori z oštevilčenim seznamom,
+ki ga koda razreže po trditvah. Povezave vrne za ves paket skupaj, zato trditvi
+pripadajo le tiste, na katere se njen razdelek sklicuje z oznako $[n]$. Brez tega
+bi seznam virov ene trditve nosil strani o štirih drugih. Kadar odgovora ni
+mogoče razrezati, ga koda zavrže, namesto da bi gradivo pripisala napačni
+trditvi.
+
+Kateri zbiralci niso stekli ali niso vrnili ničesar, se zabeleži skupaj z
+razlogom in gre naprej v razsojevalni korak. 
+
+\subsubsection{Kako nastane seznam virov}
+\label{ssec:viri}
+
+Zbiralci vrnejo gradivo v treh oblikah. Akademske zbirke, Wikidata in Google
+Fact Check vrnejo zapise iz svojih baz, spletno iskanje in Grok povzetek
+najdenega s seznamom strani, Perplexity pa besedilo najdenega in povezave, na
+katere se sklicuje. Nobeden ne pove, ali trditev drži. Iz vsega tega koda
+sestavi en seznam z največ desetimi viri.
+
+Deset mest se ne napolni tako, da bi prvi zbiralec oddal vse, kar ima, in bi
+zadnji ostal praznih rok. Polnijo se izmenično, torej po en vir od vsakega
+zbiralca, ki je kaj našel, nato drugi krog, in tako naprej, dokler mest ni deset
+ali dokler zbiralcem ne zmanjka gradiva. Vrstni red kroga je stalen:
+
+\begin{enumerate}\itemsep2pt
+\item stran, ki jo je našlo spletno iskanje,
+\item članek iz akademskih zbirk,
+\item strukturirano dejstvo iz Wikidate,
+\item objavljeno preverjanje iz Google Fact Check,
+\item stran iz Grokovega iskanja po spletu in omrežju X,
+\item povezava, na katero se sklicuje Perplexityjev odgovor.
+\end{enumerate}
+
+Vsak zbiralec ponudi svoje zadetke v vrstnem redu, po katerem jih je sam
+uvrstil, zato v prvi krog vstopi najbolje citiran in ne naključen članek.
+
+Izmenično polnjenje ima svoj razlog. Deset člankov iste založbe je veliko manj
+različnih domen kot dva članka, dve novici, podatek statističnega urada in
+objavljeno preverjanje. Koda o virih prešteje prav dvoje, koliko jih je in s
+koliko različnih domen prihajajo, obe števili pa se izpišeta ob razsodbi, zato
+mora seznam to pestrost ohraniti. Vprašanje, komu dati prednost, je rešeno že
+korak prej, saj o tem, kdo sploh dobi krog, odloči usmerjanje iz
+razdelka~\ref{ssec:engine-routing}. Med zbiralci, ki so stekli in kaj našli,
+zato ni razloga koga postavljati pred drugega.
+
+Vsak vir nosi naslov in povezavo, kadar ju zbiralec vrne, pa še datum in kratek
+navedek iz besedila. Vir iz Perplexityja je le povezava, zato je njegov naslov
+kar ime domene. Vsaka povezava se uvrsti le enkrat. Kadar isto stran vrneta dva
+zbiralca, obvelja zapis tistega, ki je bil prej na vrsti, drugi pa svojega mesta
+ne izgubi, saj v istem krogu ponudi naslednjo stran. Ker seznam nastane
+izključno iz odgovorov zbiralcev, razsojevalni korak ne more dodati vira, ki ga
+sistem ne bi imel. Sistem virov tudi ne razvršča po kakovosti, saj kaj o trditvi
+pove posamezen vir, pove razsojevalni korak sam.
+
+\subsubsection{Koliko in kako neodvisnih virov je bilo najdenih}
+\label{ssec:neodvisnost}
+
+Neodvisnost je merjena v domenah in ne v povezavah, saj pet zadetkov z istega
+spletišča ni pet potrditev. Povezavi \texttt{bbc.co.uk/a} in \texttt{bbc.co.uk/b}
+sta dva vira in ena domena.  Domena je ime gostitelja brez predpone \texttt{www.}, zato \texttt{news.bbc.co.uk} in \texttt{bbc.co.uk} štejeta za dve domeni. Število različnih domen je zato zgornja ocena neodvisnosti in ne natančna mera. 
+
+Obe števili se izpišeta ob vsaki razsodbi in v nadaljnjo obdelavo ne vstopita.
+Razsodbe ne popravljata in v noben seštevek ne štejeta. Sta izključno podatek
+bralcu, da lahko razsodbo, ki stoji na dveh virih ene domene, prebere drugače
+kot tisto, ki stoji na osmih virih iz petih domen.
+
+\subsubsection{Ena razsodba nad vsem zbranim gradivom}
+\label{ssec:razsojanje}
+
+Zbiranje in razsojanje sta ločena koraka. Ko so vsi usmerjeni zbiralci končali,
+gre njihovo gradivo v en sam klic modela, ki edini izreče razsodbo. Ta model po
+spletu ne išče, ampak sodi o tem, kar mu sistem izroči, in nič drugega.
+
+Poziv je sestavljen po ustaljenem vrstnem redu, ki je v celoti naveden v
+dodatku~\ref{app:poziv-razsodba}. Za uvodnim navodilom gre trditev s svojim
+tipom in kratkim opisom, čemu jo argument rabi, nato gradivo, vsak zbiralec v
+svojem poimenovanem sklopu, nato oštevilčen seznam virov, nazadnje pa seznam
+zbiralcev, ki niso stekli ali niso vrnili ničesar, z razlogom za vsakega.
+
+Model vrne razsodbo, obrazložitev in, kadar trditev ne drži ali je zavajajoča,
+v enem stavku še pravilen podatek. Kadar je odgovor odrezan, ga koda zahteva
+znova z dvojnim proračunom, kadar pa ni veljaven JSON, ga zahteva znova z
+enakim, v obeh primerih največ trikrat. 
+
+V istem odgovoru gre model še enkrat čez oštevilčen seznam in vsakemu viru
+pripiše eno od istih petih razsodb, tokrat pa odgovarja na ožje vprašanje, in
+sicer kam kaže ta vir sam zase, sodeč po naslovu, datumu in navedku, ki mu je
+bil pokazan. Vir, ki govori o čem drugem ali pove premalo, dobi
+\sn{nepreverljivo}, in poziv izrecno zahteva prav to vrednost povsod, kjer
+model ni prepričan. Ker so vrednosti iste kot pri trditvi, bralec ne dobi novega
+besednjaka. Kako je to videti v vmesniku, prikazuje
+slika~\ref{fig:viri-okno}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth,keepaspectratio]{viri_okno.png}
+\caption{Okno ene preverjene trditve. Zgoraj sta razsodba in obrazložitev, pod
+njima seštevek oznak virov, spodaj pa oštevilčen seznam desetih virov, kjer ima
+vsak svojo oznako. Seštevek je izpis in ne izračun razsodbe, saj razsodba
+\sn{resnično} stoji ob štirih virih, ki o trditvi ne povedo ničesar.}
+\label{fig:viri-okno}
+\end{figure}
+
+To \textbf{ni glasovanje}. Seštevek nikjer ne odloča o razsodbi in razsodba se
+od večine sme razlikovati. Ena uradna statistika lahko odtehta tri strani, ki
+druga drugo prepisujejo, in kadar model tako presodi, mora to zapisati v
+obrazložitev. Kadar si gradivo nasprotuje, se to prav tako zapiše v
+obrazložitev, namesto da bi eden od virov obveljal.
+
+Koda oznake preveri, preden jih sprejme. Številka, ki kaže mimo seznama, se
+zavrže, vrednost, ki ni ena od petih, postane \sn{nepreverljivo}, vir, ki ga
+model ni omenil, pa ostane brez oznake in se v seštevek ne šteje. Model tako ne
+more označiti vira, ki ga sistem nima, in tudi ne več virov, kot jih je dobil.
+
+Razsojanje je zbrano na enem mestu z razlogom. Sklep, ki ga podpira članek iz
+medicinske revije, in sklep, ki ga podpira ena spletna stran, nista dva
+enakovredna glasova, ampak dva različno podprta dela istega gradiva, o katerih
+presoja isti korak po istih merilih. Ker razsoja eno mesto, tudi merila
+razsojanja obstajajo na enem mestu, zato se ne morejo razhajati že v izhodišču.
+
+\subsubsection{Razsodba}
+\label{ssec:razsodbe}
+
+Vsaka preverjena trditev dobi eno od petih razsodb, opisanih v
+tabeli~\ref{tbl:razsodbe}, skupaj z navedenimi viri.
+
+\begin{table}[H]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}lp{0.62\textwidth}@{}}
+\toprule
+Razsodba & Pomen \\
+\midrule
+resnično & osrednja trditev je točna, kot je bila izrečena, manjše zaokroževanje pa je dopustno \\
+\midrule
+delno resnično & smer je pravilna, a število odstopa več kot za zaokrožitev, ne da bi
+spremenilo poanto, ali pa manjka pomemben pojasnjevalni kontekst \\
+\midrule
+zavajajoče & vsebuje resnične prvine, a kot celota ustvarja napačen vtis \\
+\midrule
+neresnično & osrednja trditev je v nasprotju z zanesljivimi viri \\
+\midrule
+nepreverljivo & ustreznih virov ni v nobeno smer, zato sistem ne ugiba \\
+\bottomrule
+\end{tabular}
+\caption{Pet razsodb preverjanja dejstev in njihov pomen.}
+\label{tbl:razsodbe}
+\end{table}
+
+Tabela pove, kaj posamezna razsodba pomeni, ne pa, kako se model med njimi
+odloči. To določajo tri pravila, ki jih poziv navede v tem vrstnem redu:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+HOW TO JUDGE - three rules, applied in this order:
+  1. WHAT IS CLAIMED: read the claim by the impression it leaves on a
+     listener, not only its literal phrasing. This decides WHAT is being
+     asserted.
+  2. WHEN: verify that assertion AS OF THE TIME IT WAS MADE where context
+     allows. A claim that was true when stated but is outdated now is TRUE,
+     with the explanation saying it is outdated - never FALSE.
+  3. QUALIFIERS BIND: dates, named entities and scope words (all / most /
+     only / first / never) are part of the assertion. If one is wrong, the
+     claim is FALSE even when the rest is right - an event misdated by a year
+     is FALSE, not PARTIALLY_TRUE. A figure that is close but not exact is
+     PARTIALLY_TRUE; a figure wrong enough to change the point is FALSE.
+\end{lstlisting}
+
+Vrstni red pravil ni naključen, saj vsako odgovori na drugo vprašanje. Prvo
+določi, kaj trditev sploh zatrjuje, in to po vtisu, ki ga pusti pri poslušalcu,
+ne le po dobesedni ubeseditvi. Na tem pravilu stoji razsodba \sn{zavajajoče}:
+trditev, sestavljena iz samih točnih podatkov, lahko kot celota pusti napačen
+vtis, sodba po golem besedilu pa tega ne bi zaznala.
+
+Drugo pravilo določi, za kateri trenutek se zatrjevano preverja, in sicer za
+trenutek, ko je bilo izrečeno. Podatek, ki je bil takrat točen in je medtem
+zastarel, zato dobi razsodbo \sn{resnično}, obrazložitev pa pove, da je zastarel. Pri razpravah o
+politiki in gospodarstvu, kjer se številke hitro spreminjajo, je to pogost
+primer.
+
+Tretje pravilo pove, da letnica, ime in beseda, ki določa obseg, niso okras,
+ampak del zatrjevanega. Trditev z napačno letnico je zato neresnična, četudi je vse drugo točno. Pri številih pravilo razlikuje: število, ki je blizu, a ne natančno,
+pomeni \sn{delno resnično}, število, ki je napačno toliko, da spremeni poanto, pa
+\sn{neresnično}. S tem je meja med obema razsodbama postavljena na istem mestu kot
+v tabeli~\ref{tbl:razsodbe}, zato si definicije in pravila ne nasprotujejo.
+
+\subsection{Četrti korak: preslikava odgovorov in izmikanj}
+\label{ssec:prehod4}
+
+Četrti korak poveže odgovore z argumenti, na katere se nanašajo, in zabeleži, na
+katera vprašanja govorci niso odgovorili. Za vsak odgovor navede, kdo je komu
+odgovoril, na kateri argument, jedro odgovora in odziv izvirnega govorca v enem
+stavku ter vrsto odgovora. Vrste so štiri, in sicer neposredno nasprotovanje,
+rušenje premise, ponudba druge razlage in izpodbijanje sklepanja.
+
+Za vsako izmikanje zapiše, kdo se je izmaknil, na katero vprašanje, na kakšen
+način in kolikokrat je bilo vprašanje postavljeno. Načini so preusmeritev,
+menjava teme, odgovor brez vsebine, delni odgovor in preglasitev. Obe množici
+sta zaprti; vrednost zunaj njiju shema preslika na najbližjo dovoljeno
+(razdelek~\ref{ssec:validacija}).
+
+Vhod koraka sta prepis in izhod prvega koraka, izhod pa sta seznama zavrnitev in
+izmikanj:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+{"rebuttals": [{"by": "Speaker B", "to": "Speaker A",
+   "target_arg_id": "Speaker A#0",
+   "rebuttal_type": "alternative_explanation",
+   "rebuttal_content": "The layers fit a long conflict remembered as one war.",
+   "response": "Speaker A concedes a conflict but not Homer's version."}],
+ "evasions": [{"evading_speaker": "Speaker A",
+   "question_asked": "Which layer would you accept as Troy?",
+   "evasion_type": "partial_answer", "times_asked": 2,
+   "explanation": "..."}]}
+\end{lstlisting}
+
+Kdo je iz izmenjave izšel bolje, korak ne pove. Zapiše, kaj je bilo rečeno,
+presojo pa prepusti bralcu. Tudi izmikanje ni stopnjevano: sistem zapiše, da
+odgovora ni bilo, na kakšen način in kolikokrat, ne pa, kako hudo je to. Prav to
+zahteva tudi poziv:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+Record what was said, not who you think won. Whether the argument survived the
+exchange is left to the reader.
+\end{lstlisting}
+
+Ta korak je poleg prvega edini, ki prejme prepis, saj brez zaporedja izrečenega
+ni mogoče vedeti, kdo je komu odgovoril in kaj je ostalo brez odgovora. Prav
+zato ima v svojem navodilu tudi pravila o moderatorju in o glasovih iz
+občinstva: vprašanje moderatorja ni zavrnitev, izmikanje pa šteje le med
+govorcema. Izvede se le v načinu razprave, pri posnetkih z enim govorcem pa se
+izpusti. Navodilo je v celoti navedeno v dodatku~\ref{app:poziv-zavrnitve}.
+
+
+\subsection{Peti korak: sinteza}
+\label{ssec:prehod5}
+
+Ta korak prejme izhode prejšnjih korakov in razsodbe preverjanja dejstev,
+prepisa pa ne. Vsak vhod je omejen na dolžino, ki jo določa koda; kadar ga je
+treba skrajšati, se odstranjujejo zadnji elementi najdaljšega seznama, tako da
+krajšanje ne odreže v celoti enega od govorcev.
+
+Korak vrne povzetek razprave v štirih do šestih stavkih, ki opiše glavna
+razhajanja, kaj je kdo zagovarjal in na čem je to utemeljil, vzorce izmikanja in
+vprašanja, ki so ostala odprta. Za vsakega govorca doda še en stavek o tem,
+kako je argumentiral, in en stavek, ki povzame razsodbe preverjanja njegovih
+trditev, ter opiše, kako so vprašanja moderatorja oblikovala izmenjavo.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+{"comparative_evaluation": {
+   "moderator_influence": {"present": false},
+   "per_speaker": {"Speaker A": {
+      "rhetorical_style": "Builds each point from an archaeological detail.",
+      "factual_accuracy": "Most checked claims were rated TRUE."}}},
+ "summary": "The main clash was over ..."}
+\end{lstlisting}
+
+Razsodbe o tem, čigav nastop je bil boljši, ne izreče, prav tako ne našteva
+močnih in šibkih točk. Utemeljitev te odločitve je v
+razdelku~\ref{sec:kategorije-vs-stevilke}, poziv pa jo zapiše kot pravilo:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+NO VERDICT: Do NOT declare a winner and do NOT rank the debaters. Never state
+that one side "won", "dominated", "prevailed" or "made the stronger case", and
+never award a category to either debater. Describe what each side argued and
+how they argued it, and leave the conclusion to the reader. Do NOT rate the
+quality of anyone's case. This applies to EVERY field below, including
+`summary`.
+\end{lstlisting}
+
+Ker korak vidi vse, kar so ugotovili prejšnji, je tudi edino mesto, kjer se
+ugotovitve o dejstvih in ugotovitve o sklepanju srečajo v istem besedilu. Pri
+posnetku z enim govorcem dobi svoj poziv brez zavrnitev in brez primerjave med
+govorcema, namesto tega našteje trditve, ki jih je govorec izrekel brez vsakega
+razloga. Ker sinteza prepisa ne vidi, prvi korak pa gole trditve izpusti, lahko ta
+seznam nastane le iz premis, ki jih govorec ni utemeljil. Trditev, ki ni postala
+del nobenega argumenta, vanj ne pride. Obe navodili sta v celoti navedeni v dodatku~\ref{app:poziv-sinteza}.
+
+
+\section{Sistemska obdelava izhodov}
+\label{sec:determinizem}
+
+Na več mestih sistem izhodu modela ne zaupa in ga popravi z določenim
+postopkom. Ti posegi so skupaj tisto, kar loči nominalno presojo modela od
+izračuna, opisano v razdelku~\ref{sec:kategorije-vs-stevilke}.
+
+\subsection{Validacija sheme in preslikava vrednosti}
+\label{ssec:validacija}
+
+Izhod vsakega koraka analize gre skozi shemo, ki preveri prisotnost pričakovanih
+polj in vrednosti nominalnih oznak: ime in kategorijo zmote, vrsto zavrnitve in
+vrsto izmikanja. Neveljavne vrednosti se ne zavržejo, ampak preslikajo na
+dovoljene: ime zmote \texttt{false cause post hoc} sistem na primer preslika v
+\texttt{post\_hoc}, kategorijo \texttt{weak} v \texttt{weak\_reasoning}, vrsto
+zavrnitve \texttt{undermining the premise} pa v \texttt{undermining\_premise}.
+Manjkajoča polja dobijo varne privzete vrednosti, dodatna polja pa se ohranijo.
+Kadar izhod sheme sploh ne prestane, sistem model enkrat vpraša znova in šele
+nato uporabi tisto, kar je iz prvega odgovora mogoče rešiti.
+
+Stroga zavrnitev neveljavnega izhoda bi analizo prekinila zaradi ene same
+napačne besede, tiho sprejetje pa bi pomenilo, da se ista kategorija v poročilu
+pojavi pod več imeni in da je nadaljnja obdelava nemogoča.
+
+
+\subsection{Stabilni identifikatorji argumentov}
+\label{ssec:arg-id}
+
+Vsak argument dobi identifikator, sestavljen iz imena govorca in zaporednega
+indeksa, na primer \texttt{Govorec~A\#3}. Identifikatorje dodeli koda po prvem
+koraku, ne model. Postopek je determinističen: ponovni zagon nad istim izhodom
+da enake identifikatorje, zato je zadetek v predpomnilniku neškodljiv. Ker so
+identifikatorji dodeljeni pred izločanjem argumentov z manj kot dvema premisama,
+v zaporedju lahko manjka kakšna številka, kar povezav ne moti. Če bi
+identifikatorje določal model, jih ne bi bilo mogoče zanesljivo ohraniti enakih
+v vseh korakih, povezovanje med koraki pa temelji prav na njih.
+
+
+\subsection{Povezovanje med koraki}
+\label{ssec:povezovanje}
+
+Kasnejši koraki se na argumente sklicujejo prek identifikatorjev. Sklic obvelja
+le, kadar oznaka obstaja in pripada govorcu, ki ga zapis navaja: zaznana zmota
+mora kazati na argument govorca, ki naj bi jo zagrešil, zavrnitev pa na argument
+govorca, ki mu je namenjena. Tako model zmote ali zavrnitve ne more pripeti
+argumentu drugega govorca, kot ga je sam navedel.
+
+Kadar oznaka ni veljavna, sistem argument poskusi najti po besedilu, in sicer
+le med argumenti navedenega govorca. Iz obeh besedil vzame besede, daljše od
+treh znakov, in izračuna, kolikšen delež vseh besed si delita. To razmerje je
+Jaccardov koeficient. Primerjava zajame besedilo argumenta skupaj z njegovimi
+premisami, ker se zavrnitev pogosto nanaša na premiso in ne na glavno trditev.
+Ujemanje se sprejme tudi, kadar se prvih šestdeset znakov glavne trditve
+dobesedno pojavi v sklicu ali obratno. Šestdeset znakov je približno ena
+vrstica, kar je dovolj, da ne gre za naključno sovpadanje, in dovolj malo, da
+zajame tudi skrajšan navedek. Obvelja argument z najvišjim rezultatom, če ta
+doseže vsaj 0,25; sicer sklic ostane nerazrešen in se v poročilu ne prikaže kot
+povezava.
+
+Prag je nizko postavljen namenoma. Dolg argument s premisami prinese veliko
+besed, ki jih v kratkem sklicu ni, zato koeficient ostane nizek tudi takrat, ko
+sklic meri prav nanj, in ob strožjem pragu bi ostalo nerazrešenih veliko
+pravilnih sklicev. Cena nizkega praga je, da lahko sklic obvelja za napačen
+argument istega govorca, kadar sta si dva njegova argumenta besedno blizu.
+Argumenta drugega govorca ne more doseči, ker iskanje poteka le med argumenti
+navedenega govorca. Ujemanje po besedilu je rezervna pot; glavna ostaja
+identifikator, ki ga navede model.
+
+\section{Obvladovanje stroškov in ponovljivosti}
+\label{sec:stroski}
+
+Analiza enega posnetka sproži več deset klicev jezikovnih modelov in zunanjih
+iskalnikov. Da ostane cena obvladljiva in izid med zagoni primerljiv, sistem
+uporablja tri mehanizme: kratke vhode pri korakih, ki prepisa ne potrebujejo,
+izbiro modela glede na zahtevnost naloge in predpomnilnik na disku.
+
+\subsection{Dolžina vhoda in izbira modelov}
+\label{ssec:vhod-modeli}
+
+Prepis prejmeta le prvi in četrti korak. Preostali delajo z izluščenimi
+argumenti, ki so bistveno krajši od prepisa, zato je vhod pri njih krajši. To
+je hkrati razlog, da je razdelitev na več korakov cenejša, kot bi bilo videti na
+prvi pogled: dodatnih klicev je več, a so kratki.
+
+Prepis se pripravi enkrat in se v obeh korakih, ki ga dobita, uporabi
+nespremenjen. Zgornja meja njegove dolžine je nastavljiva; prepis, ki bi jo
+presegel, sistem zavrne pred prvim klicem modela, namesto da bi ga skrajšal in
+analiziral le del razprave.
+
+Model je izbran glede na zahtevnost naloge. Izluščanje argumentov, zaznava zmot
+in sinteza dobijo zmogljivejši model: prvi zato, ker razmejitev argumentov
+določa vse nadaljnje korake, druga dva pa zato, ker zahtevata razlikovanje
+odtenkov. Preslikava odgovorov je pretežno primerjalna in zanjo zadošča cenejši
+model. Razporeditev je nastavljiva, zato je učinek zamenjave posameznega modela
+mogoče izmeriti ob nespremenjeni preostali kodi.
+
+\subsection{Ocene modela}
+\label{ssec:ocene-modela}
+
+Posegi iz razdelka~\ref{sec:determinizem} tečejo v kodi in so zato povsem
+ponovljivi. Ponovljiva ni presoja modela sama. Korak izluščanja, ki določa
+nabor argumentov, sicer zahteva temperaturo 0, a je trenutna generacija modelov
+Claude ne sprejema več, zato teče pri privzeti nastavitvi ponudnika. Nihanja
+števila izluščenih argumentov med zagoni istega prepisa zato ni bilo mogoče
+odpraviti. Kako veliko je bilo in kaj se pri tem ni spreminjalo, je opisano v
+razdelku~\ref{sec:ponovljivost}.
+
+\subsection{Predpomnilnik na disku}
+\label{ssec:disk-cache}
+
+Sistem hrani lasten predpomnilnik na disku, ki pokriva izide korakov analize in
+izide preverjanja dejstev. Ključ je zgoščena vrednost vhodnih podatkov, torej
+kratek niz, ki ga iz njih izračuna zgoščevalna funkcija in se ob najmanjši
+spremembi vhoda povsem spremeni. Pri korakih analize sta v ključ vključena tudi
+zgoščena vrednost poziva in ime modela, na katerem korak teče: sprememba poziva
+ali zamenjava modela zato samodejno razveljavi zapise, ki so nastali pred njo.
+Pri preverjanju dejstev ključ sestavljajo le vhodni podatki, zato je treba ob
+spremembi katerega od teh pozivov predpomnilnik izprazniti ročno. Zapis velja
+sedem dni.
+
+Predpomnilnik ima dva namena. Med razvojem prihrani ponovne klice ob vsakem
+poskusu, v rabi pa omogoči, da ponovna analiza istega posnetka ne plača ponovno
+tistega, kar se ni spremenilo.
+
+Prepis potuje k ponudniku kot ločen blok, označen za predpomnjenje na njegovi
+strani. Ponudnik predpomnjeno vsebino vrne le klicu z istim modelom in istim
+začetkom zahteve, ta pa obsega tudi sistemski poziv. Prvi in četrti korak imata
+različna sistemska poziva in tečeta na različnih modelih, zato četrti korak
+prepisa, ki ga je zapisal prvi, ne prebere iz predpomnilnika. Oznaka koristi le
+ponovnemu klicu istega koraka v nekaj minutah, na primer ob ponovni zahtevi po
+neveljavnem izhodu. Deljeno predpomnjenje med koraki bi zahtevalo skupen
+sistemski poziv in isti model za oba koraka; ker četrti korak na cenejšem modelu
+prepis prebere po nizki ceni že sam, sprememba ne bi prinesla omembe vrednega
+prihranka.
+
+Pri merjenju ponovljivosti v razdelku~\ref{sec:ponovljivost} je predpomnilnik
+na disku izklopljen. Sicer bi drugi in vsak nadaljnji zagon vrnil shranjeni izid
+prvega, meritev pa bi pokazala popolno ujemanje, ki bi merilo predpomnilnik in ne
+modela.
+
+\section{Spletna aplikacija}
+\label{sec:aplikacija}
+
+\subsection{Vmesnik REST in izvajanje opravil v ozadju}
+\label{ssec:backend}
+
+Zaledni del je izveden v ogrodju FastAPI.
+Analiza traja od nekaj minut do več deset minut, zato je ni mogoče izvesti znotraj enega zahtevka.
+Oddaja posnetka zato ustvari opravilo, ki se izvede v svoji niti, odjemalec pa stanje spremlja s periodičnim povpraševanjem.
+Vsako opravilo ima svojo delovno mapo. Ločena nit vsakih pet minut počisti opravila, ki so končana več kot eno uro: iz njihovih map izbriše zvok in vmesne datoteke, prepis pa obdrži. Ob zagonu strežnika enako počisti mape, ki jih nihče ni spremenil vsaj šest ur, tako da ne poseže v analizo, ki še teče.
+
+Med izvajanjem odjemalec prikazuje, kateri korak teče, kar prikazuje
+slika~\ref{fig:loading}. Splošen pogled na končano analizo prikazuje
+slika~\ref{fig:izdelek}.
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.46\textheight,keepaspectratio]{pregled.png}
+\caption{Končana analiza v spletnem vmesniku. Na vrhu je glava z nastavitvami in navigacijo, pod njo dejanja za urejanje, ponovno analizo, izvoz v PDF in pojasnilo, kako brati analizo, spodaj pa časovnica argumentov in pregled dejstev.}
+\label{fig:izdelek}
+\end{figure}
+
+\subsection{Prikaz rezultatov}
+\label{ssec:frontend}
+Uporabniški vmesnik je enostranska aplikacija, izdelana z ogrodjem React.
+Rezultat analize se prikaže kot časovnica po govorcih: vsak argument je
+razčlenjen na premise in sklep, nanj vezana zavrnitev, zaznane zmote in
+povezane preverjene trditve pa so prikazani ob njem. Vsak argument je na časovnici
+oštevilčeno vozlišče, katerega oranžno polnilo pove, da je bila v argumentu
+zaznana zmota ali neresnična trditev.
+
+Nad časovnico so metapodatki analize, torej način, govorci, datum in povezava
+do posnetka, ter pet dejanj: ročno urejanje, ponovna analiza nad
+shranjenim prepisom, ponovno preverjanje dejstev nad isto analizo, izvoz v PDF
+in pojasnilo, kako brati analizo. Prikazuje jih slika~\ref{fig:nastavitve}.
+Ločena zavihka prikazujeta vse preverjene trditve z viri in celotno besedilno
+poročilo.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth,keepaspectratio]{nastavitve.png}
+\caption{Pet dejanj nad končano analizo, in sicer ročno urejanje, ponovna
+analiza, ponovno preverjanje dejstev, izvoz v PDF in priročnik za uporabo.}
+\label{fig:nastavitve}
+\end{figure}
+
+Zaznane zmote so naštete pod argumentom, v katerem so bile najdene, vsaka s
+svojim imenom, kategorijo in delom argumenta, na katerem stoji. Bralec lahko
+vsako zaznavo potrdi, zavrne ali odstrani iz analize. Previdnost, ki jo
+zahteva razdelek~\ref{sec:zahteve}, je s tem vidna prav tam, kjer jo bralec
+sreča, in ne le v pozivu.
+
+Preverjene trditve so pripete k premisi, iz katere so nastale. Ob premisi stoji
+pika v barvi razsodbe, klik nanjo pa odpre okno s trditvijo, razsodbo,
+obrazložitvijo, seštevkom po petih razsodbah in oštevilčenim seznamom virov, v
+katerem ima vsak vir svojo oznako. Oznaka vira ne ocenjuje vira samega, ampak
+pove le, kam ta vir kaže glede preverjane trditve.
+
+Prikaz argumentov po govorcih prikazuje slika~\ref{fig:vmesnik-arg1}, preverjene trditve z viri pa slika~\ref{fig:dejstva}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.55\textheight,keepaspectratio]{dejstvo.png}
+\caption{Primer preverjanja trditve.
+Zgoraj je prikazana izvorna trditev skupaj z oceno RESNIČNO. Sledi podrobna razlaga, ki povzema poročilo in druge vire ter pojasni, zakaj je trditev ocenjena kot resnična. Pod razlago so številčni povzetki ocen in seznam desetih virov z individualnimi ocenami ter povezavami.}
+\label{fig:dejstva}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.55\textheight,keepaspectratio]{arg1.png}
+\caption{V odprtem argumentu zgoraj so oštevilčene premise in iz njih izpeljani sklep, ob vsaki premisi pa pika v barvi razsodbe za trditve, ki iz nje izvirajo. Pod argumentom so zaznane zmote z imenom iz zaprtega slovarja, kategorijo in delom argumenta, v katerem je napaka. Gumba \sn{Correct} in \sn{Not correct} bralčevo presojo zapišeta ob zaznavo.}
+\label{fig:vmesnik-arg1}
+\end{figure}
+
+
+\subsection{Ponovna analiza brez ponovnega prepisa}
+\label{ssec:rerun}
+
+Prepisi se hranijo ločeno od delovnih map opravil, zato je mogoče analizo ponoviti brez ponovnega prenosa in ponovnega prepisa posnetka.
+Ta možnost je bila ustvarjena za primere, ko se spremeni konfiguracija ali kateri od pozivov, izkazala pa se je za bistveno tudi pri ovrednotenju: brez nje bi bilo petkratno ponavljanje analize istega posnetka v razdelku~\ref{sec:ponovljivost} znatno dražje.
+
+\subsection{Ročno urejanje analize}
+\label{ssec:urejanje}
+
+Sistem ni nezmotljiv, zato lahko lastnik analize njen izid popravi. Vmesnik
+podpira preimenovanje govorca, urejanje njegovega stališča in sklepov,
+dodajanje, urejanje, premikanje med govorci in brisanje argumentov, dodajanje,
+urejanje in brisanje odgovorov ter zaznanih zmot, urejanje povzetka in naslova
+ter presojo zaznane zmote.
+
+Posebna je zadnja operacija, ki analize ne popravlja, ampak jo presoja. Pri
+vsaki zaznani zmoti bralec lahko označi, ali jo potrjuje ali zavrača, ne da bi jo
+pri tem izbrisal.
+
+Vmesnik za urejanje prikazuje slika~\ref{fig:urejanje}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.95\textheight,keepaspectratio]{edit.png}
+\caption{Vmesnik za urejanje analize. Zgoraj je naslov strani z gumboma Shrani in zapri. Sledi razdelek govorca (Sophie Winkleman) z glavno trditvijo.
+Pod njim je seznam argumentov. Vsak argument vsebuje: oznako govorca, besedilo sklepa, seznam premis  z možnostjo brisanja in dodajanja, razdelek za zavrnitve, ki je v tem primeru prazen.}
+\label{fig:urejanje}
+\end{figure}
+
+
+
+\subsection{Podatkovna baza in hramba}
+\label{ssec:baza}
+Za hrambo je uporabljen SQLite. Baza ima tri tabele: uporabnike, prijavne seje in
+analize. Pri vsaki analizi se poleg metapodatkov hranita celoten izhod analize in
+preverjanja dejstev v zapisu JSON. Prepisa baza ne hrani. Shranjen je v ločeni
+mapi na disku, od koder ga uporabi ponovna analiza.
+
+\subsection{Večjezičnost in izvoz v PDF}
+\label{ssec:i18n-pdf}
+
+Vmesnik in poročila so na voljo v slovenščini in angleščini.
+Prevajanje ima dve ločeni plasti, ki ju je treba obravnavati ločeno.
+
+Prva plast so napisi vmesnika in poročila, torej naslovi razdelkov, oznake polj in sporočila o napakah.
+Ti so zbrani v dveh slovarjih, po enem na vsaki strani: zaledni skrbi za poročilo in izvoz, sprednji za vmesnik.
+Delitev je posledica tega, da poročilo nastane na strežniku in mora biti prevedeno, še preden ga odjemalec dobi, jezik poročila se zato izbere ob zagonu analize in se skupaj z njo shrani.
+
+Druga plast so nominalne vrednosti, ki jih vrne model, torej ime zmote, njena kategorija, razsodba o trditvi, tip trditve ter vrsti zavrnitve in izmikanja. Te ostanejo v angleščini povsod v podatkih, ker jih koda primerja dobesedno.
+
+Jezik analize določa tudi jezik besedila, ki ga zapišejo modeli. Pri slovenščini je pozivom dodano navodilo, naj bo vsa proza v izhodu slovenska, vrednosti iz zaprtih množic pa ostanejo angleške. Akademske zbirke in Google Fact Check iščejo po angleških besedah, zato sistem za trditev v drugem jeziku najprej izdela angleške ključne besede.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  5  vrednotenje
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Vrednotenje}
+\label{ch:vrednotenje}
+
+Vrednotenje odgovarja na vprašanje, kako zanesljivo se je na izid mogoče
+opreti. Merjena je ponovljivost, torej kako podobni so si rezultati, ko sistem
+na istem gradivu teče petkrat. Večje kot je ujemanje, zanesljivejši je sistem.
+
+\section{Zbirka in metodologija}
+\label{sec:zbirka}
+
+Meritve so bile opravljene na dveh posnetkih, eden v načinu solo, drugi v načinu
+razprave. Prvi je nastop ene govorke o tehnologiji v šolah, drugi pa razprava
+dveh zgodovinarjev o antični Grčiji. Oba sta v angleščini in oba trajata manj
+kot 23 minut, kolikor je zgornja meja sistema.
+% TODO: navedi natančni dolžini obeh posnetkov.
+Izbrana sta bila zato, ker je pri obeh tema jasna, veliko je
+sklicevanja na vire in statistične podatke, oba pa sta civilizirana in
+kakovostno posneta.
+
+Vsak posnetek je analiziran petkrat, skupaj torej deset analiz. Prvi zagon vsake
+serije opravi celoten cevovod, štirje nadaljnji pa uporabijo shranjeni prepis
+(razdelek~\ref{ssec:rerun}). Prepis je konstanta in ni predmet meritve. Nihanje,
+ki ga meritve zajamejo, izhaja iz analize. To je namerna omejitev, na katero se
+vrača razdelek~\ref{sec:razprava}.
+
+Meritve o izluščanju, temah in zmotah izhajajo iz teh desetih zagonov
+neposredno. Preverjanje dejstev se je po njih spremenilo, zato je bilo nad istimi
+desetimi shranjenimi analizami pognano znova. Argumenti, premise in zmote pri tem
+ostanejo take, kot so bile izluščene, znova nastanejo samo trditve, viri in
+razsodbe. Meritve v razdelku~\ref{sec:dejstva-meritev} izhajajo iz tega zagona.
+
+Nastavitve so za vseh deset zagonov enake in navedene v
+poglavju~\ref{ch:implementacija}.
+
+Kot mera razpršenosti sta navedena vzorčni standardni odklon in koeficient
+variacije, torej odklon glede na povprečje.
+
+Vse, kar je v tem poglavju izmerjeno, je ponovljivost in ne pravilnost. Meritve
+povedo, koliko se izidi sistema med zagoni ujemajo med sabo, ne pa, ali so
+argumenti pravilno izluščeni, zmote pravilno poimenovane in razsodbe pravilno
+izrečene. Sistem, ki bi se vsakič enako motil, bi po teh merilih dosegel
+najboljši izid. Pravilnost bi zahtevala referenčno označeno zbirko, ki je za to
+nalogo ni, na kar se vrača razdelek~\ref{sec:razprava}.
+
+\section{Ponovljivost}
+\label{sec:ponovljivost}
+
+\subsection{Število argumentov in premis}
+
+Osnovni izid analize je množica argumentov. Tabela~\ref{tbl:ponovljivost}
+prikazuje, kako se ta množica spreminja med zagoni nad istim prepisom.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+& \multicolumn{5}{c}{zagon} \\
+\cmidrule(l){2-6}
+& 1 & 2 & 3 & 4 & 5 \\
+\midrule
+\multicolumn{6}{l}{\textbf{razprava dveh govorcev}} \\
+argumentov          & 19 & 18 & 15 & 18 & 12 \\
+premis              & 53 & 45 & 39 & 47 & 41 \\
+premis na argument  & 2,8 & 2,5 & 2,6 & 2,6 & 3,4 \\
+\midrule
+\multicolumn{6}{l}{\textbf{nastop enega govorca}} \\
+argumentov          & 3 & 3 & 3 & 4 & 3 \\
+premis              & 19 & 19 & 17 & 22 & 16 \\
+premis na argument  & 6,3 & 6,3 & 5,7 & 5,5 & 5,3 \\
+\bottomrule
+\end{tabular}
+\caption{Število izluščenih argumentov in premis v petih zagonih nad istim
+prepisom.}
+\label{tbl:ponovljivost}
+\end{table}
+
+Pri razpravi se število argumentov giblje med 12 in 19, povprečje je 16,4 z
+odklonom 2,9, koeficient variacije torej 17,6 odstotka. Število premis niha
+manj, povprečno 45,0 z odklonom 5,5 oziroma 12,2 odstotka.
+
+Pri nastopu enega govorca je nihanje v relativnem merilu podobno, in sicer 3,2
+argumenta z odklonom 0,4, torej 14,0 odstotka, in 18,6 premise z odklonom 2,3,
+torej 12,4 odstotka.
+
+Med načinoma je razlika. Razprava dveh govorcev da petkrat toliko argumentov kot
+enako dolg nastop enega, nastop pa dvakrat toliko premis na argument. Razprava
+teče od teme do teme in vsak govorec zagovarja več ločenih stališč, medtem ko
+govorka v nastopu razvija majhno število tez z dolgim nizom razlogov. Sistem to
+razliko izrazi, ne da bi bil za katero od zvrsti posebej nastavljen.
+
+Nihanje števila argumentov pa ni nihanje vsebine. To pokaže naslednji razdelek.
+
+\subsection{Razlika med zagoni}
+\label{sec:ujemanje}
+
+Pomembneje od golega števila argumentov je, ali gre v vseh zagonih za isto
+vsebino. Argument je lahko drugače ubeseden, tema, ki jo obravnava, pa mora biti
+ista.
+
+Za razpravo je bilo opredeljenih deset tem, ki se v posnetku obravnavajo, za
+nastop pa štiri, in za vsak zagon ročno preverjeno, ali se tema pojavi med argumenti ali njihovimi premisami.
+Rezultat je v tabeli~\ref{tbl:ujemanje}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccccc c}
+\toprule
+tema & 1 & 2 & 3 & 4 & 5 & pojavitev \\
+\midrule
+\multicolumn{7}{l}{\textbf{razprava dveh govorcev}} \\
+trojanska vojna              & X & X & X & X & X & 5/5 \\
+Šparta in njen sloves        & X & X & X & X & X & 5/5 \\
+atenska demokracija          & X & X & X & X & X & 5/5 \\
+Ahil in Herkul               & X & X & X & X & X & 5/5 \\
+Zevs                         & X & X & X & X & X & 5/5 \\
+Odisej                       & X & X & X & X & ne & 4/5 \\
+Aleksander Veliki            & X & X & X & X & X & 5/5 \\
+Perzijci in Grki             & X & X & X & X & X & 5/5 \\
+rimski uspeh                 & X & X & X & X & X & 5/5 \\
+barve na kipih               & X & X & X & X & X & 5/5 \\
+\midrule
+\multicolumn{7}{l}{\textbf{nastop enega govorca}} \\
+tehnologija v razredu        & X & X & X & X & X & 5/5 \\
+telefoni in družbena omrežja & X & X & X & X & X & 5/5 \\
+umetna inteligenca in nadzor & X & X & X & X & X & 5/5 \\
+branje in pomnjenje          & X & X & X & X & X & 5/5 \\
+\bottomrule
+\end{tabular}
+\caption{Pojavljanje vsebinskih tem v petih zagonih. Trinajst tem od
+štirinajstih se pojavi v vseh petih zagonih svoje serije.}
+\label{tbl:ujemanje}
+\end{table}
+
+Trinajst tem od štirinajstih se pojavi v vseh petih zagonih. Edina izjema je
+Odisej, ki v petem zagonu razprave izpade.
+
+Ta izid je pomembnejši od nihanja števil iz prejšnjega razdelka. Pomeni namreč,
+da razlika med 12 in 19 argumenti ni razlika v tem, o čem sistem poroča, ampak v
+tem, kako drobno isto vsebino razdeli. Nihanje je v razmejitvi in ne v zaznavi.
+
+\subsection{Zaznane zmote}
+\label{sec:zmote-meritev}
+
+Zmote so najmanj stabilen izid analize. Pri razpravi jih sistem zazna med dvema
+in štirimi, povprečno 3,0 z odklonom 1,0, torej koeficient variacije 33,3
+odstotka. Pri nastopu enega govorca med petimi in sedmimi, povprečno 5,6 z
+odklonom 0,9, torej 16,0 odstotka. Podrobnosti povzema
+tabela~\ref{tbl:zmote-stabilnost}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\toprule
+& razprava & nastop \\
+\midrule
+zaznav skupaj (5 zagonov)     & 15 & 28 \\
+različnih imen                & 7 & 9 \\
+kategorija šibko sklepanje    & 12 & 17 \\
+kategorija neformalna         & 3 & 11 \\
+kategorija formalna           & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{Zaznane zmote v petih zagonih vsake serije. Nobena zaznava ne pade v
+kategorijo formalnih zmot.}
+\label{tbl:zmote-stabilnost}
+\end{table}
+
+Formalne zmote se ne pojavijo. Zaprti slovar vsebuje imena formalnih zmot in
+koda kategorijo izpelje iz imena (razdelek~\ref{ssec:prehod2}), a v 43 zaznavah
+ni nobene formalne. To ni nujno napaka sistema, saj je formalna zmota napaka v
+obliki sklepanja in je v govorjeni razpravi redka, ker nihče ne govori v
+silogizmih.
+
+Najpogostejši imeni sta pri razpravi \sn{non sequitur} s sedmimi zaznavami od
+petnajstih in pri nastopu \sn{post hoc} s sedmimi od osemindvajsetih. Obe sodita
+v šibko sklepanje.
+
+\section{Preverjanje dejstev}
+\label{sec:dejstva-meritev}
+
+\subsection{Koliko trditev nastane}
+\label{ssec:koliko-trditev}
+
+Preverjanje dejstev dela na premisah, ki jih je izluščil prvi korak, zgornje
+meje števila trditev pa sistem nima (razdelek~\ref{ssec:claim-extraction-fc}).
+Koliko trditev nastane, je zato posledica tega, koliko preverljivih podatkov je
+govorec navedel.
+
+Pri razpravi je bilo v petih zagonih preverjenih 298 trditev, na zagon
+povprečno 59,6 z odklonom 12,3, torej koeficient variacije 20,6 odstotka. Pri
+nastopu enega govorca 189 trditev, na zagon povprečno 37,8 z odklonom 2,4, torej
+6,3 odstotka.
+
+Načina se pri tem obnašata različno. Pri razpravi je nihanje števila trditev
+večje od nihanja premis iz razdelka~\ref{sec:ponovljivost}, pri nastopu pa
+občutno manjše. Pri razpravi se namreč sestavita dve presoji, saj se med zagoni
+razlikuje najprej množica premis, nato pa še izbira, katere od njih so
+preverljive. Pri nastopu je preverljivih podatkov manj in so bolj izraziti,
+zato jih zagon zajame skoraj enako ne glede na to, kako so premise razdeljene.
+
+
+
+\subsection{Porazdelitev razsodb}
+\label{ssec:razsodbe-meritev}
+
+Sistem deleža točnosti ne izračuna, zato tudi ni ene številke, katere nihanje bi
+bilo mogoče meriti. Merjena je porazdelitev razsodb, ki jo prikazuje
+tabela~\ref{tbl:zbirka}.
+
+Vseh preverjenih trditev je bilo 487. Pri 27 od njih razsodba ni uspela, kar
+obravnava razdelek~\ref{ssec:neuspele}, zato je razsodbo dobilo 460 trditev,
+282 pri razpravi in 178 pri nastopu. Deleži v tabeli so računani na teh 460 in
+ne na 487, ker trditev brez razsodbe ne sodi v nobeno od petih vrednosti.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{razprava} & \multicolumn{2}{c}{nastop} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+razsodba & trditev & delež & trditev & delež \\
+\midrule
+resnično           & 149 & 52,8 \% & 49 & 27,5 \% \\
+delno resnično     & 92 & 32,6 \% & 78 & 43,8 \% \\
+zavajajoče     & 21 & 7,4 \% & 37 & 20,8 \% \\
+neresnično        & 14 & 5,0 \% & 7 & 3,9 \% \\
+nepreverljivo  & 6 & 2,1 \% & 7 & 3,9 \% \\
+\midrule
+skupaj         & 282 & 100 \% & 178 & 100 \% \\
+\bottomrule
+\end{tabular}
+\caption{Porazdelitev razsodb čez pet zagonov vsake serije. Deleži so računani
+brez razsodb, ki niso uspele, te obravnava
+razdelek~\ref{ssec:neuspele}.}
+\label{tbl:zbirka}
+\end{table}
+
+Porazdelitvi se med posnetkoma razlikujeta in razlika je vsebinska. Razprava
+zgodovinarjev navaja večinoma dobro dokumentirana dejstva o antiki, zato
+prevladuje \sn{resnično} z 52,8 odstotka. Nastop o tehnologiji v šolah navaja
+sodobne statistične in zdravstvene podatke, ki so pogosto izrečeni brez omejitev,
+ki bi jih raziskava zahtevala, zato tam prevladujeta \sn{delno resnično} in
+\sn{zavajajoče}, ki skupaj pokrivata 64,6 odstotka trditev.
+
+Razsodba \sn{neresnično} je v obeh serijah redka, pri razpravi 5,0 in pri nastopu
+3,9 odstotka. Trditev, izrečena v govoru, redko vsebuje vse omejitve, ki bi jo
+naredile natanko točno, in redko je popolnoma napačna.
+
+\subsection{Viri in njihove oznake}
+\label{ssec:viri-meritev}
+
+Vsaka od 460 trditev z razsodbo je dobila natanko deset virov, kolikor je
+zgornja meja seznama (razdelek~\ref{ssec:viri}).  Število
+različnih domen, ki jih teh deset virov pokriva je povprečno 8,0 pri
+razpravi in 7,6 pri nastopu.
+
+Razsodnik vsak vir posebej označi z eno od istih petih razsodb
+(razdelek~\ref{ssec:razsojanje}). Porazdelitev teh oznak prikazuje
+tabela~\ref{tbl:oznake-virov}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{razprava} & \multicolumn{2}{c}{nastop} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+oznaka vira & virov & delež & virov & delež \\
+\midrule
+nepreverljivo & 1790 & 63,5 \% & 1081 & 60,7 \% \\
+resnično          & 634 & 22,5 \% & 305 & 17,1 \% \\
+delno resnično    & 318 & 11,3 \% & 301 & 16,9 \% \\
+neresnično       & 55 & 2,0 \% & 61 & 3,4 \% \\
+zavajajoče    & 23 & 0,8 \% & 32 & 1,8 \% \\
+\midrule
+skupaj        & 2820 & 100 \% & 1780 & 100 \% \\
+\bottomrule
+\end{tabular}
+\caption{Oznake posameznih virov čez pet zagonov vsake serije.}
+\label{tbl:oznake-virov}
+\end{table}
+
+Skoraj dve tretjini virov o trditvi ne povesta ničesar. Povprečna trditev ima
+med desetimi viri okoli štiri, ki se do nje vsebinsko opredelijo, pri razpravi
+3,7 in pri nastopu 3,9. Iskalnik vrne strani, ki so tematsko blizu, kar pa še ne pomeni, da katera od
+njih obravnava prav to število ali prav ta datum.
+
+Ta porazdelitev tudi pokaže, zakaj seštevek oznak ni glasovanje
+(razdelek~\ref{ssec:razsojanje}). Če se upoštevajo samo viri, ki se vsebinsko
+opredelijo, se razsodba o trditvi v 67,8 odstotka primerov ujema z
+najpogostejšo oznako med njimi, v 32,2 odstotka pa se od nje razlikuje. Skoraj
+tretjina razsodb torej ni tista, ki bi jo dalo preštevanje virov. Razlika je
+večja pri nastopu, kjer se razsodba od najpogostejše oznake razlikuje v 41,2
+odstotka primerov, in manjša pri razpravi, kjer se v 26,5 odstotka. 
+
+
+\subsection{Razsodbe, ki niso uspele}
+\label{ssec:neuspele}
+
+Kadar razsodbe ni mogoče dobiti, trditev ostane brez nje in se to zabeleži.
+Takih trditev je bilo pri razpravi 16 od 298, torej 5,4 odstotka, in pri nastopu
+11 od 189, torej 5,8 odstotka. Delež je v obeh serijah skoraj enak, kar pomeni,
+da odpoved ni vezana na zvrst posnetka.
+
+Vseh 27 neuspehov ima isti vzrok. Model vrne besedilo, ki ni veljaven JSON,
+običajno zaradi neubeženega narekovaja v obrazložitvi. Gre torej za obliko odgovora in ne za presojo.
+
+Ker razsodba, ki ni uspela, ni razsodba, so deleži v tabeli~\ref{tbl:zbirka}
+računani brez njih. Odpoved je vidna tudi uporabniku, saj trditev v poročilu
+ostane brez razsodbe.
+
+\section{Strošek in čas}
+\label{sec:strosek-cas}
+
+Čas in strošek obdelave povzema tabela~\ref{tbl:strosek}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\toprule
+& razprava & nastop \\
+\midrule
+\multicolumn{3}{l}{\textbf{čas obdelave}} \\
+prvi zagon, celoten cevovod (min)   & 31,3 & 19,2 \\
+ponovna analiza, povprečje (min)    & 11,9 & 8,2 \\
+razpon ponovnih analiz (min)        & od 7,1 do 15,1 & od 7,0 do 9,6 \\
+celotna serija petih zagonov (min)  & 79,0 & 52,1 \\
+\midrule
+\multicolumn{3}{l}{\textbf{strošek}} \\
+prvi zagon, celoten cevovod (EUR)   & 1,78 & 1,16 \\
+ponovna analiza, povprečje (EUR)    & 1,09 & 0,75 \\
+prepis (EUR)                        & 0,69 & 0,41 \\
+celotna serija petih zagonov (EUR)  & 6,14 & 4,16 \\
+\bottomrule
+\end{tabular}
+\caption{Čas in strošek obdelave.}
+\label{tbl:strosek}
+\end{table}
+
+Prvi zagon je pri razpravi trajal 31,3 minute, ponovne analize pa povprečno 11,9
+minute. Razliko naredi prepis z ločevanjem govorcev, ki je časovno najdražja
+stopnja cevovoda. Mehanizem ponovne analize (razdelek~\ref{ssec:rerun}) je s tem
+pogoj za to vrednotenje, saj bi serija petih zagonov brez njega prepis plačala
+petkrat.
+
+Nihanje časa ponovnih analiz je precejšnje, od sedmih do 15 minut, in izhaja
+pretežno iz zunanjih iskalnikov, ki niso pod nadzorom sistema.
+
+Prva analiza je dražja od ponovnih, ker plača tudi prenos in prepis.
+% TODO: navedi razpon stroškov ponovnih analiz.
+
+\section{Razprava o omejitvah}
+\label{sec:razprava}
+
+Vse številke v tem poglavju merijo, ali se sistem ujema s samim sabo, ne pa,
+ali ima prav. Ali je posamezna zaznana zmota res zmota in ali je razsodba
+pravilna, ostaja stvar presoje bralca, ki ima za to v aplikaciji vgrajeno
+orodje (razdelek~\ref{ssec:urejanje}).
+
+Nihanje prepisa ni izmerjeno. Ker ponovne analize uporabljajo shranjeni prepis,
+meritve zajamejo nihanje analize in ne nihanja prepisa.
+
+Ena kategorija je prazna. Kategorija formalnih zmot se ni pojavila nikoli.
+Zaprti slovar je torej širši od tega, kar sistem na tem gradivu dejansko
+uporabi.
+
+Del razsodb ne uspe. Odpoved razčlenjevanja odgovora zadene 27 trditev od 487,
+torej 5,5 odstotka. Gre za obliko odgovora in ne za presojo.
+
+Vse meritve so bile opravljene na angleških posnetkih. Kako zanesljiva je
+analiza slovenskih posnetkov, ni izmerjeno.
+
+\section{Kaj iz meritev sledi}
+\label{sec:sklepi-meritev}
+
+Najbolj stabilna je razgradnja govora na sestavne dele. Trinajst vsebinskih tem
+od štirinajstih se pojavi v vseh petih zagonih svoje serije, kar pomeni, da
+bralec dobi isti pregled predstavljenih stališč ne glede na to, kateri zagon
+prebere. To je hkrati najbolj zamuden korak pri poslušanju razprave. Meritev pa
+pove le, da sistem vsakič najde iste teme, ne pa, da jih najde vse.
+
+Manj zanesljiva je razmejitev teh tem na posamezne argumente, kjer nihanje znaša
+17,6 odstotka. 
+
+Najmanj zanesljiv je izid, ki zahteva presojo o kakovosti sklepanja. Zaznane
+zmote nihajo pri razpravi za tretjino. Te izide je smiselno brati kot opozorila,
+ki jih uporabnik preveri.
+
+Pri preverjanju dejstev meritve pokažejo predvsem, da presoja ni preštevanje, saj
+se skoraj tretjina razsodb razlikuje od najpogostejše oznake med viri, ki se do
+trditve opredelijo. 
+
+Cilj naloge iz poglavja~\ref{ch:uvod} ni bila dokončna sodba, ampak zanesljivo
+izhodišče, ki ga uporabnik po potrebi popravi. Meritve to razmejitev podpirajo,
+saj je stabilno tisto, kar je v sistemu razgradnja in povezovanje, tisto, kar je
+presoja, pa niha in je zato tudi predstavljeno kot presoja.
+% 6  SKLEPNE UGOTOVITVE
+
+\chapter{Sklepne ugotovitve}
+\label{ch:sklep}
+
+Izdelano orodje opravi osnovni pregled govora ali razprave. Izlušči zagovarjana
+stališča z razlogi zanje, označi logične zmote, poveže zavrnitve z napadenimi
+argumenti in preveri izrečene podatke v več neodvisnih virih. V ponovljenih
+analizah istega posnetka so bili glavni sklopi argumentov prepoznani vsakič,
+torej je pregled med zagoni stabilen. Ali je tudi pravilen, meritve v tej nalogi
+ne povedo, saj referenčno označene zbirke zanje ni bilo.
+
+Človeška presoja pa ostaja potrebna. Isto stališče je lahko zapisano v enem
+argumentu ali v več, zato je razdelitev vedno tudi stvar razlage. Podobno velja
+za zmote: ali je sklicevanje na avtoriteto zmota ali legitimen argument, je
+odvisno od tega, kdo je avtoriteta in o čem govori. Sistem zato vsako zaznavo
+opremi s tistim delom argumenta, v katerem naj bi bila napaka, in z razlago,
+tako da jo uporabnik lahko potrdi ali zavrne. Aplikacija tudi ne razglasi
+zmagovalca, ampak predstavi obe strani. Sodba o razpravi tako ostane odločitev
+bralca.
+
+Največ dela je zahtevalo preverjanje, ali sistem res dela to, kar je zapisano.
+Večkrat se je pokazalo, da se del kode sploh ne izvede ali da se ne ravna po
+pravilih iz poziva. Zahtevno je bilo tudi zapisati pravila za posamezni korak,
+saj vnaprej ni bilo jasno, na kaj vse je treba modela opozoriti.
+
+Omejitev, ki ostaja odprta, je merjenje trdnosti dokaza. Sistem prešteje, koliko
+neodvisnih virov je našel, ne pove pa, kako trden je posamezen dokaz. Trditev,
+ki jo podpirajo tri šibke študije, in trditev, ki jo podpira ena velika, sta pri
+nas videti enako podprti.
+
+\section*{Ideje za nadaljnje delo}
+\label{sec:nadaljnje-delo}
+
+Sistem pokriva široko področje, zato se nadaljnje delo ponuja na vsakem koraku.
+
+\begin{itemize}
+\item \textbf{Ponovljivost zaznanih zmot in razmejitve argumentov.} To sta
+      koraka, ki najbolj nihata, hkrati pa sta bistvo orodja. Pri obeh bi bilo
+      treba najprej izmeriti, koliko nihanja izvira iz poziva in koliko iz
+      modela.
+\item \textbf{Daljši posnetki.} Sistem sprejme največ triindvajset minut, kolikor v enem
+      klicu sprejme model za prepis. Daljšo razpravo mora uporabnik razdeliti
+      na odseke, ki se ne združijo. Analiza čez več odsekov bi zahtevala, da se
+      argumenti in govorci ujamejo med njimi, kar je težji del naloge od samega
+      rezanja zvoka.
+\item \textbf{Več kot dva govorca.} Trenutno sta podprta nastop enega govorca
+      in razprava dveh. Razprava dva proti dva bi zahtevala drugačen zapis
+      strani in drugačno preslikavo zavrnitev.
+\item \textbf{Jeziki.} Vse meritve so bile opravljene na angleških posnetkih.
+      Ponovljivost in kakovost analize slovenskih in drugih posnetkov še nista
+      izmerjeni.
+\item \textbf{Pravila glede na temo.} Vsi posnetki dobijo ista pravila.
+      Zgodovinska in filozofska razprava imata drugačna težišča, zato bi
+      prilagojena merila lahko izboljšala zaznavo zmot.
+\item \textbf{Trdnost dokaza.} Sistem prešteje vire in domene, ne pove pa,
+      kako trden je posamezen dokaz.
+\item \textbf{Čas analize.} Analiza traja razmeroma dolgo, kar omejuje rabo,
+      pri kateri bi si uporabnik želel izid takoj.
+\end{itemize}
+
+\cleardoublepage
+\addcontentsline{toc}{chapter}{Literatura}
+\bibliographystyle{plain}
+\bibliography{literatura}
+
+\appendix
+
+\chapter{Modeli po korakih cevovoda}
+\label{app:modeli}
+
+Tabela~\ref{tbl:modeli} navaja, kateri jezikovni model opravlja katero nalogo v
+cevovodu, in utemeljitev vsake izbire. Razporeditev je nastavljiva v datoteki
+\texttt{config.yaml}, zato je učinek zamenjave posameznega modela mogoče
+izmeriti ob nespremenjeni preostali kodi.
+
+\begingroup
+\small
+\arrayrulecolor{crta}
+\begin{longtable}{@{}p{0.28\textwidth}p{0.24\textwidth}p{0.40\textwidth}@{}}
+\caption{Modeli po korakih cevovoda z utemeljitvijo izbire, v vrstnem redu
+izvajanja. Model za preslikavo odgovorov je pripet na različico
+\texttt{claude-haiku-4-5}.}
+\label{tbl:modeli}\\
+\toprule
+Korak & Model & Utemeljitev izbire \\
+\midrule
+\endfirsthead
+\toprule
+Korak & Model & Utemeljitev izbire \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+transkripcija z ločevanjem govorcev & gpt-4o-transcribe-diarize & edini razpoložljivi model z vgrajenim ločevanjem govorcev \\
+izluščanje argumentov (korak 1) & claude-sonnet-5 & razmejitev argumentov določa vse nadaljnje korake \\
+zaznava zmot (korak 2) & claude-sonnet-5 & presoja odtenkov med legitimno potezo in zmoto \\
+izluščanje preverljivih trditev & gpt-5.6-luna & visoke omejitve pretoka, zanesljiv strukturiran izhod \\
+razgradnja sestavljenih trditev & gpt-4.1-nano & trivialna naloga, najcenejši razpoložljivi model \\
+angleške ključne besede za akademske zbirke & gpt-4.1-nano & le pri trditvah v drugem jeziku, ker zbirke iščejo po angleških besedah \\
+iskanje po spletu & gpt-4o & vgrajeno orodje za spletno iskanje \\
+iskanje z navedbo virov & sonar-pro & iskanje po spletu z obveznim navajanjem virov \\
+iskanje po spletu in omrežju X & grok-4.3 & vgrajeno iskanje po spletu in omrežju X \\
+razsodba nad zbranim gradivom & claude-sonnet-5 & presoja gradiva brez lastnega iskanja \\
+preslikava odgovorov (korak 4) & claude-haiku-4-5 & pretežno primerjalna naloga, nizka cena ob zadostni kakovosti \\
+sinteza (korak 5) & claude-sonnet-5 & povzemanje čez izhode vseh korakov \\
+\end{longtable}
+\endgroup
+
+\chapter{Ločnica med presojo in izračunom}
+\label{app:locnica}
+
+Tabela~\ref{tbl:locnica} po korakih razčleni, katere odločitve v cevovodu opravi
+jezikovni model in katere koda. Odločitev je utemeljena v
+razdelku~\ref{sec:kategorije-vs-stevilke}, izvedba pa je opisana v
+razdelku~\ref{sec:determinizem}.
+
+\begin{table}[htbp]
+\centering
+\small
+\arrayrulecolor{crta}
+\begin{tabular}{@{}p{0.44\textwidth} | p{0.44\textwidth}@{}}
+\toprule
+Model presodi & Sistem \\
+\midrule
+meje argumentov, stališča in premise & argumentom dodeli oznake \texttt{arg\_id}, odstrani argumente z manj kot dvema premisama \\
+\midrule
+ime zmote iz zaprtega slovarja & sopomenke poenoti, iz imena izpelje kategorijo \\
+\midrule
+del argumenta, v katerem je napaka, in njegovo oznako & preveri, da oznaka pripada istemu govorcu, sicer argument poišče po besedilu \\
+\midrule
+preverljive trditve in njihov tip & tip preslika na zaprto množico in po njem izbere zbiralce \\
+\midrule
+ & zbere gradivo, sestavi seznam največ desetih virov, prešteje vire in domene \\
+\midrule
+razsodbo nad gradivom in oznako vsakega vira & oznake preveri in sešteje \\
+\midrule
+vrsto zavrnitve in izmikanja & vrsti preslika na zaprto množico, zavrnitev pripne napadenemu argumentu \\
+\midrule
+ & zavrne posnetek, daljši od 23 minut, in pri razpravi prepis z enim samim govorcem \\
+\bottomrule
+\end{tabular}
+\caption{Ločnica med presojo in izračunom.}
+\label{tbl:locnica}
+\end{table}
+
+
+\chapter{Pozivi, po katerih se ravna sistem}
+\label{app:pozivi}
+
+Ta dodatek navaja pozive petih korakov, v katerih model odloča o zgradbi
+analize, o poteku izmenjave ali o izidu preverjanja, in sicer izluščanje
+argumentov, razgradnjo sestavljenih trditev, razsodbo nad zbranim gradivom,
+preslikavo odgovorov in izmikanj ter sintezo. Poziv za izbiro preverljivih trditev je v celoti naveden že v
+razdelku~\ref{ssec:claim-extraction-fc} in tu ni ponovljen. Pozivi so v
+angleščini. Pri slovenski analizi jim je dodano navodilo, naj bo vsa proza v
+izhodu slovenska.
+
+Pozivi so zaradi dolžine skrajšani. Izpuščeni so primeri, s katerimi so pravila
+ponazorjena, in tista navodila o obliki izhoda, ki niso del vsebinske odločitve.
+Pri razsodbi je oblika izhoda navedena, ker je oštevilčen seznam oznak virov
+tisto, kar korak vrne poleg razsodbe. Vsa pravila, ki jih opisuje
+poglavje~\ref{ch:implementacija}, so navedena.
+
+Sistemski pozivi iz razdelka~\ref{ssec:sistemski-poziv} tu niso ponovljeni.
+Vsak od spodnjih pozivov je torej to, kar model prejme poleg svojega
+sistemskega poziva.
+
+\section{Izluščanje argumentov}
+\label{app:poziv-izluscanje}
+
+To je najdaljši in najpomembnejši poziv v sistemu, saj kot edini ustvari
+argumente, na katerih delajo vsi nadaljnji koraki
+(razdelek~\ref{ssec:prehod1}). Njegova osrednja skrb je ponovljivost: namesto da
+bi model presojal, kateri argumenti so pomembni, dobi preizkus, ki ga uporabi na
+vsakem sklepu posebej.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+Extract EVERY argument each speaker actually makes in the transcript above.
+
+WHAT COUNTS AS AN ARGUMENT - A TEST, NOT A JUDGEMENT
+
+An argument is one connected chain: premises -> reasoning -> conclusion. It
+ends when the speaker moves to a different conclusion that does not rest on
+the same premises.
+
+Do NOT decide which arguments are the "main" ones. That judgement is not
+reproducible: two readings of one transcript pick different subsets, and the
+analysis then depends on which subset was picked rather than on what was
+said. Apply this test instead, to every conclusion the speaker asserts, in
+transcript order:
+
+    Include it if - and only if - the speaker states a conclusion AND gives
+    at least TWO reasons for it in this recording.
+
+Nothing else decides inclusion: not how important the conclusion seems, not
+how many entries you already have, not how much transcript is left. A bare
+assertion with no reason is not an argument. Neither is a conclusion propped
+up by a single reason - that lone reason is almost always a reason for
+something larger the speaker argues, so attach it there as a premise instead
+of listing it alone.
+
+NO TARGET COUNT: none is required, expected, or inferred from the
+recording's length. If a speaker makes no complete argument, return an empty
+list for them - never invent arguments to fill space.
+
+GROUPING - BY POSITION, NOT BY JUDGEMENT OF SIZE
+
+Do not weigh "fewer, richer" against "more, smaller"; that trade-off is what
+makes two readings disagree. Group mechanically:
+
+  STEP 1. List the distinct POSITIONS this speaker defends. A position must
+          be a claim that can be AFFIRMED OR DENIED as stated. It must NOT be
+          a summary gesturing at a set of proposals ("society should take
+          deliberate steps") - such a wrapper swallows several real positions
+          and hides them as premises.
+  STEP 2. Attach every conclusion that passed the test to the ONE position it
+          supports. If a claim would fit two, the positions overlap and must
+          be merged or re-cut so nothing appears twice.
+  STEP 3. Each position becomes ONE argument: the position is the argument
+          text, the conclusions attached to it are its premises.
+
+MERGE into one argument:
+  - The same conclusion restated, hedged or elaborated, however far apart it
+    sits. Speakers open with a thesis and close by restating it: ONE argument.
+  - A series of cases, statistics or historical episodes that all answer the
+    SAME question - one argument whose premises are those cases.
+  - A stepping stone and the conclusion it exists to license. Likewise a whole
+    CHAIN of principles that exists only to reach one final thesis.
+
+SEPARATE into distinct arguments:
+  - A different conclusion that stands on its own, on premises of its own
+  - A clear pivot: "another reason is...", "a second point is..."
+  - An item explicitly announced as a separate entry in an enumerated list
+
+EXCEPTION - EXPLICIT ENUMERATION FIXES THE COUNT: if the speaker or the
+video title announces a numbered list ("nine reasons why..."), the arguments
+MUST mirror it: one per announced item, in order.
+
+COUNTER-EXCEPTION - ENUMERATED PREMISES ARE NOT ENUMERATED ARGUMENTS:
+Enumeration splits arguments only when each numbered item carries its own
+standalone conclusion. A speaker enumerating the PREMISES of a single
+derivation ("premise one... premise seven... THEREFORE God exists") is
+building ONE argument. Test each item: "Does this item ALONE support the
+speaker's final position?"
+    -> works alone        -> enumeration of ARGUMENTS, split per item
+    -> works only JOINTLY -> ONE argument, the items are its premises
+
+WHAT IS NOT AN ARGUMENT
+  - A bare assertion the speaker never justifies
+  - Asides, insults, mockery - never arguments, and never premises. If an
+    insult comes with a substantive reason, extract only the reason.
+  - META-COMMENTARY about the argument itself: its persuasion record, the
+    speaker's history of using it, self-assessment of its quality.
+  - SARCASM/IRONY: extract the speaker's ACTUAL position, not the surface
+    words.
+  - POSITION vs FACT: the position a speaker defends (moral, normative,
+    policy) is the debate itself, not an error.
+
+PREMISES - LOAD-BEARING MINI-ARGUMENTS
+
+A premise is a statement the argument DEPENDS ON: remove it and the argument
+weakens or falls. If removing it changes nothing, it is filler.
+
+Write each premise as a compact mini-argument when the speaker supports it:
+"claim - because/since the reason they gave". If they assert it without
+support, record the bare claim - do NOT invent reasoning.
+
+EACH PREMISE MUST: directly support the conclusion; be a complete
+self-standing claim; add something the others do not already cover; pass
+"without this the argument would not work".
+
+NEVER as premises: restatements of the conclusion (circular); transitions and
+fillers; purely illustrative examples; background facts that do not feed the
+conclusion; vague gestures ("look at history") without specifics.
+
+ONE PREMISE PER REASON - NOT PER PIECE OF EVIDENCE:
+The unit is a REASON, not a fact. When several figures, cases or studies
+support the SAME reason, they belong in ONE premise: state the reason, then
+list the evidence compactly inside that same string.
+
+  WRONG - four premises, one reason:
+    "Teen suicide rose 167% among girls and 91% among boys to 2020."
+    "Eating-disorder admissions in the UK rose six-fold in a decade."
+    "Self-harming among teens rose 500% in nine years."
+    "One in three British children are now short-sighted."
+  RIGHT - one premise:
+    "Children's health indicators have worsened sharply - teen suicide up
+     167% (girls) and 91% (boys) to 2020, eating-disorder admissions
+     six-fold in a decade, self-harm up 500% in nine years, one in three now
+     short-sighted."
+
+Extract premises faithfully, with zero editorializing. Philosophical,
+theological and scientific axioms are valid starting points, not flaws -
+describe what was argued; judgement happens in the next pass.
+\end{lstlisting}
+
+\section{Razgradnja sestavljenih trditev}
+\label{app:poziv-razgradnja}
+
+Ta poziv razstavi trditev, ki nosi več neodvisnih dejstev, na podtrditve, ki
+jih je mogoče preveriti ločeno (razdelek~\ref{ssec:clustering}).
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+Analyze each claim below and determine if it contains MULTIPLE independent
+verifiable facts. If a claim makes 2+ distinct factual assertions, decompose
+it into atomic sub-claims that can each be verified independently.
+
+RULES:
+- Only decompose claims that CLEARLY contain multiple independent facts
+- Each sub-claim must be self-contained and verifiable on its own
+- Keep simple claims unchanged (output them as-is)
+- Preserve the speaker, claim_type and context from the original
+- Add "parent_claim" field referencing the original text when decomposing
+\end{lstlisting}
+
+
+\section{Razsodba nad zbranim gradivom}
+\label{app:poziv-razsodba}
+
+Ta poziv prejme vse gradivo, ki so ga vrnili zbiralci, in je edini korak
+preverjanja dejstev, ki izreče razsodbo (razdelek~\ref{ssec:razsojanje}).
+Oznake v zavitih oklepajih koda zapolni: \texttt{material} so poimenovani
+sklopi gradiva in oštevilčen seznam virov, \texttt{VERDICT\_RULES} pa so pomeni petih razsodb iz
+tabele~\ref{tbl:razsodbe} skupaj s tremi pravili razsojanja, navedenimi v
+razdelku~\ref{ssec:razsodbe}.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+You are a professional fact-checker. Every source below was retrieved by
+this system. You have NO search of your own: judge the claim on this material
+and on nothing else. If the material does not settle the claim, say
+UNVERIFIABLE.
+
+CLAIM: "{claim}"
+TYPE: {claim_type}
+CLAIM CONTEXT: {what was being argued when the claim was made}
+
+{material}
+
+{VERDICT_RULES}
+
+ALSO:
+- Weigh the material by what it shows, not by how many collectors mention it.
+  Several collectors reporting the same underlying source is still one source.
+- Where the material contradicts itself, say so in the explanation rather than
+  picking the more convenient side.
+- Never invent a source or a URL. Refer to sources only by their number.
+
+THEN GO THROUGH THE SOURCE LIST ONE BY ONE. For every number in it, say which
+of the same five verdicts THAT SOURCE ON ITS OWN supports for the claim, judged
+only from the title, date and quoted text you were shown for it:
+- TRUE / PARTIALLY_TRUE / MISLEADING / FALSE - the source speaks to the claim
+  and points that way
+- UNVERIFIABLE - the source is about something else, or says too little to
+  point either way. Use this whenever you are not sure; do not guess a
+  direction.
+Your own verdict need not match the majority. A single official statistic can
+outweigh several pages that merely repeat each other, and you should say so in
+the explanation when it does.
+
+Return ONLY valid JSON:
+{
+  "verdict": "TRUE|PARTIALLY_TRUE|MISLEADING|FALSE|UNVERIFIABLE",
+  "explanation": "3-5 sentences with the specific figures and dates the
+                  material gives",
+  "sources": [
+    {"n": 1, "verdict": "TRUE|PARTIALLY_TRUE|MISLEADING|FALSE|UNVERIFIABLE"},
+    {"n": 2, "verdict": "..."}
+  ],
+  "correction": "If FALSE or MISLEADING: the accurate information. Otherwise
+                 an empty string"
+}
+\end{lstlisting}
+
+Sklop \texttt{material} je sestavljen po ustaljenem vrstnem redu. Spodaj je
+primer, kakšen je videti pri zdravstveni trditvi, pri kateri sta Wikidata in
+Grok izpadla:
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+=== PEER-REVIEWED LITERATURE ===
+1. Myopia prevalence in UK children (2022) - Br J Ophthalmol [88 citations]
+   Abstract: Cross-sectional study of 1,200 children ...
+
+=== EXISTING FACT-CHECKS ===
+- Full Fact rated it: Mostly false
+
+=== WEB SEARCH FINDINGS ===
+NHS material reports about one in five, not one in three.
+
+=== PERPLEXITY FINDINGS ===
+UK studies put myopia between 15 and 20 percent for children.
+
+=== NUMBERED SOURCE LIST ===
+[1] NHS myopia (official_stat, 2024) - https://nhs.uk/myopia
+     "around one in five children"
+[2] Myopia prevalence in UK children (peer_reviewed, 2022) - https://...
+[3] Full Fact: Mostly false (fact_checker, Unknown) - https://...
+[4] ons.gov.uk (perplexity, Unknown) - https://ons.gov.uk/eyes
+
+=== COLLECTORS THAT DID NOT RUN ===
+- wikidata: no year and no number in the claim
+- grok: claim type 'health' adds noise on X
+\end{lstlisting}
+
+
+\section{Preslikava odgovorov in izmikanj}
+\label{app:poziv-zavrnitve}
+
+Ta poziv je poleg izluščanja edini, ki dobi prepis, in edini, ki bere potek
+izmenjave. Oznaka \texttt{prev\_pass} je izhod
+prvega koraka, torej izluščeni argumenti z oznakami.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+Analyze the debate transcript (provided above) focusing on argumentative
+exchanges, rebuttals, AND evasion patterns.
+
+ARGUMENTS IDENTIFIED: {prev_pass}
+
+MODERATOR - CONTEXT, NOT CONTENT:
+- Moderator questions are FACILITATION, not rebuttals. Never list them as
+  rebuttals, arguments, or as evasion targets between debaters.
+- Do NOT flag a debater for "evading" a moderator's routine question. Evasion
+  only counts between debaters.
+- DO use moderator content as a BRIDGE: if the moderator summarizes debater A
+  and debater B then responds, B is rebutting A. Set "by": "B", "to": "A",
+  not to the moderator.
+- Use moderator sub-questions to disambiguate WHICH of A's arguments B is
+  responding to, so the rebuttal mapping is precise.
+
+INCIDENTAL VOICES (audience, off-camera crew, brief interjections):
+- Ignore irrelevant chatter entirely.
+- If a non-debater raises a substantive point and the debaters engage with it,
+  treat the non-debater like a moderator. Map any rebuttal to the actual
+  debater whose position is being contested, not the incidental voice.
+
+Map every significant rebuttal between debaters. For each:
+- target_arg_id: copy the arg_id of the challenged argument, VERBATIM
+- target_claim: copy the exact argument text that is being challenged
+- rebuttal_content: 1-2 sentences, just the core of the rebuttal
+- response: 1 sentence, how the original speaker reacted
+
+Record what was said, not who you think won. Whether the argument survived
+the exchange is left to the reader.
+
+Rebuttal types:
+  direct_contradiction | undermining_premise | alternative_explanation |
+  questioning_warrant
+
+CRITICALLY, detect EVASION and NON-ANSWERS:
+- when a direct question is asked and the speaker deflects, pivots, or gives
+  a non-answer
+- when a speaker repeats the same question, they are NOT getting an answer
+- when a speaker changes the subject instead of addressing the point raised
+
+Evasion types:
+  deflection | topic_change | non_answer | partial_answer | talked_over
+\end{lstlisting}
+
+
+\section{Sinteza}
+\label{app:poziv-sinteza}
+
+Ta poziv prejme izhode vseh prejšnjih korakov in prepisa ne dobi. Oznake v zavitih oklepajih koda zapolni z izhodi
+posameznih korakov.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+You are synthesizing a complete debate analysis from multiple specialized
+analyses.
+
+CLAIM EXTRACTION: {claims_pass}
+REBUTTALS:        {rebuttal_pass}
+FALLACIES:        {fallacy_pass}
+FACT-CHECK DATA:  {fact_check_data}
+
+This is a 1v1 debate: EXACTLY TWO debaters, taken from the claim extraction.
+A moderator, host or audience member is not one of them.
+
+CRITICAL RULES:
+- MODERATOR EXCLUSION: exclude a moderator entirely from the per-speaker
+  part. The moderator is NOT a debater and must NEVER be assessed alongside
+  the two debaters. Their influence is reported separately.
+- NO VERDICT: do NOT declare a winner and do NOT rank the debaters. Never
+  state that one side "won", "dominated", "prevailed" or "made the stronger
+  case", and never award a category to either debater. Describe what each
+  side argued and how they argued it, and leave the conclusion to the reader.
+  Do NOT rate the quality of anyone's case. This applies to EVERY field.
+- DEFENSIVE ROLES ARE LEGITIMATE: a debater may contribute mainly by DEFENCE,
+  making few or even zero own arguments while dismantling the opponent's
+  case. Describe that as what it is. Do NOT treat a low own-argument count as
+  a shortcoming.
+- EVASION PATTERNS: record who avoided answering direct questions from the
+  OTHER debater, as the rebuttal pass listed them. Report the dodge, do not
+  grade it.
+- DEBATABLE CLAIMS: not everything is TRUE/FALSE. Acknowledge legitimately
+  debatable positions.
+- FALLACIES: report them exactly as the fallacy pass listed them. Do not add,
+  drop or re-grade any.
+
+Return JSON:
+{
+  "comparative_evaluation": {
+    "moderator_influence": {
+      "present": false,
+      "question_count": 0,
+      "pressed_more": "<debater|balanced|n/a>",
+      "notes": "1-2 sentences on how the moderator's questions shaped the
+                exchange, descriptive only"
+    },
+    "per_speaker": {
+      "<debater_name>": {
+        "rhetorical_style": "1 sentence on HOW they argued: tone, structure,
+                             use of examples. Describe, do not rate.",
+        "factual_accuracy": "1 sentence restating what the fact-check data
+                             says about their claims"
+      }
+    }
+  },
+  "summary": "4-6 sentence account: the main clash points, what each debater
+              argued and what they rested it on, evasion patterns, and which
+              questions were left open. DESCRIBE, do not judge. No winner,
+              no ranking, no overall verdict."
+}
+\end{lstlisting}
+
+Pri posnetku z enim govorcem korak dobi svoj poziv, ki nima ne zavrnitev ne
+primerjave med govorcema. Vrne povzetek in seznam trditev, ki jih govorec ni
+podprl z nobenim razlogom.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true]
+There is NO opponent in this recording, so there is nothing to compare
+against. Describe what the speaker argued. Do NOT rate how good it was.
+
+Return JSON:
+{
+  "single_speaker_evaluation": {
+    "unsupported_claims": ["a claim the speaker asserted without giving any
+                           reason or evidence for it, in their own words"]
+  },
+  "summary": "4-6 sentence descriptive account: what the speaker argues,
+              which positions they take and what they rest them on.
+              No rating, no verdict, no 'strong' or 'weak'."
+}
+\end{lstlisting}
+
+
+\end{document}

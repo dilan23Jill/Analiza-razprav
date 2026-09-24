@@ -1,14 +1,4 @@
-"""
-Fact-checker v3 — Enhanced verification pipeline.
-
-Improvements over v2:
-  - Wikidata SPARQL API (structured facts, dates, numbers)
-  - CrossRef API (130M+ academic works via DOI)
-  - Claim decomposition (break complex claims into atomic sub-claims)
-  - Cross-source weighted agreement scoring (formal consensus mechanism)
-  + All v2 features: parallel workers, OpenAlex, Google FactCheck,
-    Perplexity, disk cache, retry logic, i18n
-"""
+"""Fact-checker v3 — Enhanced verification pipeline."""
 
 import hashlib
 import json
@@ -31,37 +21,37 @@ from translations import t, get_verdict_label
 logger = logging.getLogger(__name__)
 load_dotenv()
 
-# ── MERILA ZA RAZSODBO ──────────────────────────────────────────────────────
-# Ta pravila prejme en sam klic: razsojevalni korak v _judge_claim. Zbiralci
-# jih ne dobijo, ker ne razsojajo — vrnejo gradivo, ne mnenja. Ker razsodbo
-# izreče eno mesto po enih merilih, se merila ne morejo razhajati med seboj.
+# MERILA ZA RAZSODBO
 VERDICT_RULES = """VERDICT DEFINITIONS — apply consistently:
   • TRUE            — core assertion accurate as stated (minor rounding tolerated)
-  • PARTIALLY_TRUE  — right direction, but numbers/details are off, or important
-                      qualifying context is missing
+  • PARTIALLY_TRUE  — right direction, but a figure is off by more than rounding
+                      without changing the point, or important qualifying context
+                      is missing
   • MISLEADING      — contains technically true elements but creates a FALSE overall
                       impression (framing, cherry-picked baseline, critical omission)
   • FALSE           — core assertion contradicted by reliable sources
   • UNVERIFIABLE    — no adequate sources either way (do NOT guess)
 
 HOW TO JUDGE — three rules, applied in this order:
-  1. IMPRESSION, NOT WORDING: judge by the impression the claim leaves on a listener,
-     not only its literal phrasing.
-  2. TEMPORAL: verify the claim AS OF THE TIME IT WAS MADE where context allows. A claim
-     that was true when stated but is outdated now is explained as outdated, NOT called FALSE.
-  3. QUALIFIERS BIND: dates, numbers, named entities and scope words (all / most / only /
-     first / never) are part of the claim. If a qualifier is wrong, the claim is wrong even
-     when the rest is right — an event misdated by a year is FALSE, not PARTIALLY_TRUE."""
+  1. WHAT IS CLAIMED: read the claim by the impression it leaves on a listener,
+     not only its literal phrasing. This decides WHAT is being asserted.
+  2. WHEN: verify that assertion AS OF THE TIME IT WAS MADE where context allows.
+     A claim that was true when stated but is outdated now is TRUE, with the
+     explanation saying it is outdated — never FALSE.
+  3. QUALIFIERS BIND: dates, named entities and scope words (all / most / only /
+     first / never) are part of the assertion. If one is wrong, the claim is FALSE
+     even when the rest is right — an event misdated by a year is FALSE, not
+     PARTIALLY_TRUE. A figure that is close but not exact is PARTIALLY_TRUE; a
+     figure wrong enough to change the point is FALSE."""
 
 
-# ── retry decorator (no external deps) ─────────────────────────────────────
+# retry decorator (no external deps)
 
 def _is_rate_limit_error(exc: Exception) -> bool:
     """Detect OpenAI / generic 429 rate-limit errors across SDK versions."""
     msg = str(exc).lower()
     if "rate_limit" in msg or "rate limit" in msg or "429" in msg:
         return True
-    # OpenAI SDK >= 1.x exposes status_code on RateLimitError
     status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
     if status == 429 or status == "rate_limit_exceeded":
         return True
@@ -70,7 +60,6 @@ def _is_rate_limit_error(exc: Exception) -> bool:
 
 def _parse_retry_after_seconds(exc: Exception) -> Optional[float]:
     """Extract a Retry-After hint from the exception, if present."""
-    # Some OpenAI errors include "Please try again in 12.3s" in the message
     import re as _re
     m = _re.search(r"try again in (\d+(?:\.\d+)?)\s*s", str(exc))
     if m:
@@ -78,7 +67,6 @@ def _parse_retry_after_seconds(exc: Exception) -> Optional[float]:
             return float(m.group(1))
         except ValueError:
             pass
-    # Or as a header
     headers = getattr(exc, "response", None)
     if headers is not None:
         try:
@@ -91,12 +79,7 @@ def _parse_retry_after_seconds(exc: Exception) -> Optional[float]:
 
 
 def _retry(max_attempts: int = 3, base_wait: float = 1.0, max_wait: float = 60.0):
-    """Simple retry with exponential backoff.
-
-    Special-cases 429 rate-limit errors: TPM windows are 60s, so on a 429 we
-    wait at least until the window rolls over (or until Retry-After tells us)
-    rather than the short exponential backoff used for transient network errors.
-    """
+    """Simple retry with exponential backoff."""
     import time, functools, random
 
     def decorator(fn):
@@ -109,8 +92,6 @@ def _retry(max_attempts: int = 3, base_wait: float = 1.0, max_wait: float = 60.0
                     if attempt == max_attempts:
                         raise
                     if _is_rate_limit_error(e):
-                        # TPM windows are 60s. Use Retry-After if provided, else wait
-                        # 65s (60s window + 5s buffer) on first 429, double thereafter.
                         hint = _parse_retry_after_seconds(e)
                         wait = hint if hint else min(65 * attempt, 180)
                         logger.warning(
@@ -125,20 +106,37 @@ def _retry(max_attempts: int = 3, base_wait: float = 1.0, max_wait: float = 60.0
     return decorator
 
 
+# Zaprta množica tipov trditev
+CLAIM_TYPES = ("statistic", "historical", "scientific", "quote",
+               "policy", "health", "economic", "geographic")
+_CLAIM_TYPE_SYNONYMS = {
+    "statistical": "statistic", "statistics": "statistic", "numerical": "statistic",
+    "history": "historical", "science": "scientific", "medical": "health",
+    "quotation": "quote", "attribution": "quote", "political": "policy",
+    "politics": "policy", "legal": "policy", "law": "policy",
+    "economy": "economic", "economics": "economic", "financial": "economic",
+    "geography": "geographic", "geographical": "geographic",
+}
+
+
+def canonical_claim_type(raw, fallback: str = "statistic") -> str:
+    """Preslika tip na eno od osmih vrednosti."""
+    v = str(raw or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if v in CLAIM_TYPES:
+        return v
+    if v in _CLAIM_TYPE_SYNONYMS:
+        return _CLAIM_TYPE_SYNONYMS[v]
+    return fallback if fallback in CLAIM_TYPES else "statistic"
+
+
 class FactChecker:
-    """
-    Enhanced fact-check pipeline with verification mechanisms.
-    """
+    """Enhanced fact-check pipeline with verification mechanisms."""
 
     SCIENTIFIC_CLAIM_TYPES = {"scientific", "health", "medical", "statistic"}
 
-    # Postane True ob prvi napaki 429 pri Semantic Scholar in ga za preostanek
-    # zagona izloči. Ponastavi se ob vsakem novem preverjanju dejstev.
     _scholar_rate_limited = False
 
-    # ── Engine routing by claim type ─────────────────────────────────────
-    # Grok išče tudi po omrežju X, kar pri dolgo uveljavljenih dejstvih dodaja
-    # predvsem šum.
+    # Engine routing by claim type
     GROK_SKIP_TYPES = {"scientific", "health", "medical", "historical", "geographic"}
 
     def __init__(self):
@@ -148,26 +146,24 @@ class FactChecker:
         self.client = OpenAI(api_key=api_key)
         self.cache = get_cache()
 
-        # Optional: Perplexity client
         self._perplexity_client: Optional[OpenAI] = None
         pplx_key = os.getenv("PERPLEXITY_API_KEY")
         if pplx_key and cfg("fact_checking.engines.perplexity", False):
             self._perplexity_client = OpenAI(api_key=pplx_key, base_url="https://api.perplexity.ai")
 
-        # Optional: Grok (xAI) client — web search + X/Twitter search + rhetoric detection
         self._grok_client: Optional[OpenAI] = None
         grok_key = os.getenv("XAI_API_KEY")
         if grok_key and cfg("fact_checking.engines.grok", False):
             self._grok_client = OpenAI(api_key=grok_key, base_url="https://api.x.ai/v1")
 
-    # ── VERDICT HELPERS ────────────────────────────────────────────────────
+    # VERDICT HELPERS
 
     @classmethod
     def _get_verdict_meta(cls, verdict: str) -> dict:
         """Get translated verdict metadata."""
         return get_verdict_label(verdict or "UNVERIFIABLE")
 
-    # ── UTILITY ─────────────────────────────────────────────────────────────
+    # UTILITY
 
     @staticmethod
     def _extract_domain(url: str) -> str:
@@ -182,7 +178,6 @@ class FactChecker:
         suffix_pattern = r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*([kmb])\b'
         numbers = []
 
-        # First handle explicit suffixes like "5k", "3.2m", "1b"
         for num_str, suffix in re.findall(suffix_pattern, text.lower()):
             try:
                 cleaned = num_str.replace(',', '')
@@ -191,7 +186,6 @@ class FactChecker:
             except Exception:
                 continue
 
-        # Then handle spelled-out multipliers and plain numbers
         for match in re.findall(pattern, text.lower()):
             try:
                 cleaned = match.replace(',', '')
@@ -211,12 +205,10 @@ class FactChecker:
                 continue
         return numbers
 
-    # ── CLAIM DECOMPOSITION (break complex claims into atomic parts) ────────
+    # CLAIM DECOMPOSITION (break complex claims into atomic parts)
 
     def decompose_claims(self, claims: List[Dict]) -> List[Dict]:
-        """Break complex multi-part claims into atomic verifiable sub-claims.
-        E.g. 'Slovenia joined EU and NATO in 2004' → two separate claims.
-        Returns the expanded list with parent references."""
+        """Break complex multi-part claims into atomic verifiable sub-claims."""
         if not cfg("fact_checking.claim_decomposition", True):
             return claims
 
@@ -228,7 +220,6 @@ class FactChecker:
             logger.info("   Decomposition cache hit (%d claims)", len(cached))
             return cached
 
-        # Build a batch of claims for the LLM
         claims_text = "\n".join(
             f"{i+1}. [{c.get('claim_type', 'unknown')}] \"{c.get('exact_claim', '')}\""
             for i, c in enumerate(claims)
@@ -277,7 +268,7 @@ Return ONLY valid JSON:
             original_count = len(claims)
 
             for entry in decomposed_list:
-                orig_idx = entry.get("original_index", 1) - 1  # 1-indexed → 0-indexed
+                orig_idx = entry.get("original_index", 1) - 1
                 if orig_idx < 0 or orig_idx >= len(claims):
                     continue
 
@@ -285,22 +276,21 @@ Return ONLY valid JSON:
                 sub_claims = entry.get("sub_claims", [])
 
                 if len(sub_claims) <= 1:
-                    # Not decomposed — keep original
                     expanded.append(original)
                 else:
-                    # Decomposed — create sub-claims with parent reference
                     for sc in sub_claims:
                         sub = {
                             **original,
                             "exact_claim": sc.get("exact_claim", original["exact_claim"]),
-                            "claim_type": sc.get("claim_type", original.get("claim_type", "unknown")),
+                            "claim_type": canonical_claim_type(
+                                sc.get("claim_type"),
+                                fallback=original.get("claim_type", "statistic")),
                             "context": sc.get("context", original.get("context", "")),
                             "parent_claim": original["exact_claim"],
                             "_decomposed": True,
                         }
                         expanded.append(sub)
 
-            # Ensure we didn't lose any claims
             seen_indices = {(e.get("original_index", 1) - 1) for e in decomposed_list}
             for i, claim in enumerate(claims):
                 if i not in seen_indices:
@@ -320,7 +310,7 @@ Return ONLY valid JSON:
             logger.warning("   Claim decomposition failed: %s — using original claims", e)
             return claims
 
-    # ── SCIENTIFIC LITERATURE SEARCH ────────────────────────────────────────
+    # SCIENTIFIC LITERATURE SEARCH
 
     @staticmethod
     def _pubmed_search(query: str, max_results: int = 5) -> List[Dict]:
@@ -367,14 +357,7 @@ Return ONLY valid JSON:
 
     @staticmethod
     def _semantic_scholar_search(query: str, max_results: int = 5) -> List[Dict]:
-        """Semantic Scholar without a key is rate limited hard.
-
-        On one run it answered 429 to nearly every request and contributed no
-        papers at all, while each attempt still cost a second of waiting on a
-        claim that had four other academic sources. Once it has refused for rate
-        limiting, it stays out for the rest of the run and is recorded among the
-        collectors that did not run.
-        """
+        """Semantic Scholar without a key is rate limited hard."""
         if FactChecker._scholar_rate_limited:
             return []
         results = []
@@ -466,27 +449,22 @@ Return ONLY valid JSON:
             logger.warning("OpenAlex search failed: %s", e)
         return results
 
-    # ── WIKIDATA SPARQL SEARCH ─────────────────────────────────────────────
+    # WIKIDATA SPARQL SEARCH
 
     @staticmethod
     def _wikidata_search(claim: str, max_results: int = 5) -> List[Dict]:
-        """Search Wikidata for structured facts — dates, numbers, relationships.
-        Uses the wbsearchentities API + SPARQL for property lookup.
-        Free, no API key required."""
+        """Search Wikidata for structured facts — dates, numbers, relationships."""
         results = []
         if not cfg("fact_checking.engines.wikidata", True):
             return results
 
-        # Step 1: Extract key entities from the claim for search
-        # Heuristic: capitalized words (supports Unicode for non-English text) and numbers
         import re as _re
-        # Match capitalized sequences (Unicode-aware) — works for English, Slovenian, etc.
         entities = _re.findall(r'\b[A-ZÀ-ŽА-Я][a-zà-žа-я]+(?:\s+[A-ZÀ-ŽА-Я][a-zà-žа-я]+)*\b', claim)
 
         if not entities:
             return results
 
-        for entity_name in entities[:3]:  # Search top 3 entities
+        for entity_name in entities[:3]:
             try:
                 params = urllib.parse.urlencode({
                     "action": "wbsearchentities",
@@ -508,7 +486,6 @@ Return ONLY valid JSON:
                     if not entity_id:
                         continue
 
-                    # Step 2: Fetch key properties via SPARQL
                     sparql_query = f"""
                     SELECT ?propLabel ?valLabel WHERE {{
                       wd:{entity_id} ?prop ?val .
@@ -537,7 +514,6 @@ Return ONLY valid JSON:
                                 properties[prop_label] = val_label
 
                         if properties:
-                            # Build a fact summary
                             fact_lines = [f"{k}: {v}" for k, v in list(properties.items())[:10]]
                             results.append({
                                 "entity_id": entity_id,
@@ -550,7 +526,6 @@ Return ONLY valid JSON:
                                 "database": "wikidata",
                             })
                     except Exception:
-                        # SPARQL failed but entity search worked
                         results.append({
                             "entity_id": entity_id,
                             "entity": label,
@@ -573,7 +548,7 @@ Return ONLY valid JSON:
 
         return results[:max_results]
 
-    # ── CROSSREF API SEARCH ──────────────────────────────────────────────────
+    # CROSSREF API SEARCH
 
     @staticmethod
     def _crossref_search(query: str, max_results: int = 5) -> List[Dict]:
@@ -603,7 +578,6 @@ Return ONLY valid JSON:
                 title_list = item.get("title", [])
                 title = title_list[0] if title_list else "Unknown"
 
-                # Get year from published-print or published-online
                 date_parts = (
                     item.get("published-print", {}).get("date-parts", [[]])
                     or item.get("published-online", {}).get("date-parts", [[]])
@@ -615,7 +589,6 @@ Return ONLY valid JSON:
                 citations = item.get("is-referenced-by-count", 0)
 
                 abstract = item.get("abstract", "")
-                # CrossRef abstracts often have JATS XML tags — strip them
                 if abstract:
                     abstract = re.sub(r"<[^>]+>", "", abstract)[:600]
 
@@ -680,13 +653,7 @@ Return ONLY valid JSON:
 
     @_retry(max_attempts=2)
     def _perplexity_find_batch(self, claims_batch: List[Dict]) -> Dict[str, Optional[Dict]]:
-        """Search for up to five claims in a single Perplexity call.
-
-        Perplexity is a FINDER, not a judge. It is asked for findings and
-        citations, never for a verdict, because only one step in this pipeline
-        decides — `_judge_claim`. Keeping the finders silent on the verdict is
-        what makes their material combinable instead of competing.
-        """
+        """Search for up to five claims in a single Perplexity call."""
         if not self._perplexity_client or not claims_batch:
             return {}
 
@@ -719,8 +686,6 @@ Return ONLY valid JSON:
             text = response.choices[0].message.content
             citations = list(getattr(response, "citations", []) or [])
 
-            # Odgovor pokriva ves paket, zato ga je treba razrezati po trditvah.
-            # Sicer bi razsodnik sodil o tujem gradivu.
             sections = self._split_numbered_sections(text, batch_size)
             if sections is None:
                 logger.warning(
@@ -732,8 +697,8 @@ Return ONLY valid JSON:
             for i, c in enumerate(claims_batch):
                 claim_text = c.get("exact_claim", "")
                 results[claim_text] = {
-                    "findings": sections[i] if sections else "",
-                    "citations": citations,
+                    "findings": sections[i],
+                    "citations": self._cited_in(sections[i], citations),
                     "search_method": "perplexity_sonar_pro_batch",
                 } if sections else None
             return results
@@ -744,7 +709,7 @@ Return ONLY valid JSON:
     @_retry(max_attempts=2)
     def _perplexity_find(self, claim: str, claim_type: str,
                          _prefetched: Optional[Dict] = None) -> Optional[Dict]:
-        """Perplexity for one claim. Returns findings and citations, no verdict."""
+        """Perplexity for one claim."""
         if _prefetched and claim in _prefetched:
             return _prefetched[claim]
 
@@ -775,19 +740,21 @@ Return ONLY valid JSON:
             logger.warning("      [Perplexity] Failed: %s", e)
             return None
 
-    # ── PRIPIS BESEDILA PRAVI TRDITVI ────────────────────────────────────
+    # PRIPIS BESEDILA PRAVI TRDITVI
+
+    @staticmethod
+    def _cited_in(section: str, citations: List[str]) -> List[str]:
+        """Povezave, na katere se razdelek sklicuje z [n] (štetje od 1)."""
+        picked: List[str] = []
+        for m in re.finditer(r"\[(\d+)\]", section or ""):
+            n = int(m.group(1))
+            if 1 <= n <= len(citations) and citations[n - 1] not in picked:
+                picked.append(citations[n - 1])
+        return picked
 
     @staticmethod
     def _split_numbered_sections(text: str, count: int) -> Optional[List[str]]:
-        """Cut a numbered batch answer into one section per claim.
-
-        The batch prompt asks for "a numbered list matching the claims above",
-        so item i belongs to claim i. The markers 1..count must appear in that
-        order; anything else (a missing item, a renumbered list, a stray "2." in
-        prose) returns None, and the caller then casts no verdicts at all. A
-        section assigned to the wrong claim is worse than no section: it does
-        not merely lose a vote, it invents one.
-        """
+        """Cut a numbered batch answer into one section per claim."""
         if not text or count <= 0:
             return None
         starts: List[int] = []
@@ -803,18 +770,11 @@ Return ONLY valid JSON:
         bounds = starts + [len(text)]
         return [text[bounds[i]:bounds[i + 1]].strip() for i in range(count)]
 
-    # ── GROK (xAI) — WEB + X/TWITTER SEARCH ──────────────────────────────
+    # GROK (xAI) — WEB + X/TWITTER SEARCH
 
     @_retry(max_attempts=2)
     def _grok_find(self, claim: str, claim_type: str, claim_context: str = "") -> Optional[Dict]:
-        """Search the web and X for material on a claim. Returns findings, no verdict.
-
-        Args:
-            claim_context: a one-sentence note on what was being argued when the
-                claim was made. Used so the search ALSO samples sources from the
-                speaker's own tradition, not only opposing ones. It is keyed on
-                the claim's subject matter, never on who said it.
-        """
+        """Search the web and X for material on a claim."""
         if not self._grok_client:
             return None
 
@@ -881,7 +841,38 @@ Return ONLY valid JSON:
             logger.warning("      [Grok] Search failed: %s", e)
             return None
 
+    def _english_keywords(self, claim: str) -> Optional[str]:
+        """Angleške ključne besede za trditev, zapisano v drugem jeziku."""
+        key = f"kw_en:{hashlib.sha256(claim.encode()).hexdigest()[:16]}"
+        cached = self.cache.get(key)
+        if cached:
+            return cached
+        try:
+            model = cfg("fact_checking.decompose_model", "gpt-4.1-nano")
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[{"role": "system", "content":
+                           "Translate the claim into 3 to 6 English search keywords for "
+                           "a scholarly database. Keep names, numbers and years. Return "
+                           "only the keywords separated by spaces."},
+                          {"role": "user", "content": claim}],
+                **sampling_kwargs(model, 0.0),
+            )
+            words = (response.choices[0].message.content or "").strip()
+            words = " ".join(re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", words)[:6])
+            if words:
+                self.cache.set(key, words)
+                return words
+        except Exception as e:
+            logger.warning("      [SciSearch] keyword translation failed: %s", e)
+        return None
+
     def _build_science_query(self, claim: str) -> str:
+        if (re.search(r"[^\x00-\x7f]", claim or "")
+                or cfg("pipeline.language", "en").lower() != "en"):
+            translated = self._english_keywords(claim)
+            if translated:
+                return translated
         stop_words = {
             "the", "a", "an", "is", "are", "was", "were", "has", "have", "had",
             "that", "this", "with", "from", "for", "and", "but", "or", "not",
@@ -970,20 +961,12 @@ Return ONLY valid JSON:
         self.cache.set(cache_key, result)
         return result
 
-    # ── SPLETNO ISKANJE ─────────────────────────────────────────────────────
+    # SPLETNO ISKANJE
 
     @_retry()
     def _web_search_find(self, claim: str, claim_type: str,
                          claim_context: str = "") -> Optional[Dict]:
-        """Search the live web for material on a claim. Returns findings, no verdict.
-
-        This used to be the step that produced the verdict, and everything the
-        other collectors had found was pasted into its prompt so that it could
-        weigh that material too. It no longer judges: it searches, reports what
-        it found, and hands the result to `_judge_claim` alongside every other
-        collector's material. Nothing a collector finds is now weighed by
-        another collector.
-        """
+        """Search the live web for material on a claim."""
         ctx_hash = hashlib.sha256((claim_context or "").encode()).hexdigest()[:6]
         cache_key = f"web:find:{hashlib.sha256(claim.encode()).hexdigest()[:16]}:{ctx_hash}"
         cached = self.cache.get(cache_key)
@@ -1062,7 +1045,7 @@ Return ONLY valid JSON:
             logger.warning("      [WebSearch] Failed: %s", e)
             return None
 
-    # ── VERIFICATION CHECKS ─────────────────────────────────────────────────
+    # VERIFICATION CHECKS
 
     @staticmethod
     def _compute_evidence_metrics(sources: List[Dict]) -> Dict:
@@ -1078,29 +1061,20 @@ Return ONLY valid JSON:
         }
 
     def _finalise_result(self, result: Dict) -> Dict:
-        """Prešteje vire in pripne oznako razsodbe. Razsodbe ne spremeni."""
+        """Prešteje vire in pripne oznako razsodbe."""
         result["evidence_metrics"] = self._compute_evidence_metrics(result.get("sources", []))
         result["verdict_label"] = self._get_verdict_meta(
             (result.get("verdict") or "UNVERIFIABLE").upper())["label"]
         return result
 
-    # ── ZBIRANJE GRADIVA ────────────────────────────────────────────────────
+    # ZBIRANJE GRADIVA
 
     def _gather_evidence(self, claim_data: Dict,
                          _perplexity_prefetched: Optional[Dict] = None) -> Dict:
-        """Run every routed collector and return the material they found.
-
-        No collector issues a verdict here. Which collectors run is decided by
-        the claim's type alone, and what comes back is evidence rather than
-        opinions. None of it is shown to another collector. The whole set goes
-        to `_judge_claim` at once.
-        """
+        """Run every routed collector and return the material they found."""
         claim = claim_data["exact_claim"]
         claim_type = (claim_data.get("claim_type") or "unknown")
 
-        # What was being argued when the claim was made. It comes from the
-        # transcript and says nothing about WHO the speaker is: source balance
-        # is keyed on the claim's subject matter, never on the person.
         ctx = (claim_data.get("context") or "").strip()
         claim_context = f"Stated while arguing: {ctx}" if ctx else ""
 
@@ -1111,7 +1085,7 @@ Return ONLY valid JSON:
             "skipped": {},
         }
 
-        # ── znanstvene zbirke — samo za znanstvene tipe
+        # znanstvene zbirke — samo za znanstvene tipe
         if claim_type.lower() not in self.SCIENTIFIC_CLAIM_TYPES:
             ev["skipped"]["science"] = f"claim type '{claim_type}'"
         else:
@@ -1121,7 +1095,7 @@ Return ONLY valid JSON:
             if FactChecker._scholar_rate_limited:
                 ev["skipped"]["semantic_scholar"] = "rate limited"
 
-        # ── Wikidata — brezplačen vir, teče pri vsaki trditvi
+        # Wikidata — brezplačen vir, teče pri vsaki trditvi
         try:
             ct = claim_type.lower()
             wants_wikidata = (
@@ -1138,7 +1112,7 @@ Return ONLY valid JSON:
         except Exception:
             ev["wikidata"] = []
 
-        # ── Google Fact Check — brezplačen vir, teče pri vseh prednostih
+        # Google Fact Check — brezplačen vir, teče pri vseh prednostih
         if cfg("fact_checking.engines.google_factcheck", True):
             ev["factchecks"] = self._google_factcheck_search(
                 self._build_science_query(claim), max_results=3) or []
@@ -1147,11 +1121,15 @@ Return ONLY valid JSON:
         else:
             ev["skipped"]["google_factcheck"] = "disabled"
 
-        # ── Perplexity — paketno, teče pri vseh prednostih
+        # Perplexity — paketno, teče pri vseh prednostih
         ev["perplexity"] = self._perplexity_find(
             claim, claim_type, _prefetched=_perplexity_prefetched)
+        if ev["perplexity"] is None:
+            ev["skipped"]["perplexity"] = (
+                "disabled" if not self._perplexity_client
+                else "no answer, or the batch answer could not be split per claim")
 
-        # ── Grok — usmerjen po tipu trditve
+        # Grok — usmerjen po tipu trditve
         routed_out = (
             cfg("fact_checking.engine_routing", True)
             and claim_type.lower() in self.GROK_SKIP_TYPES
@@ -1162,24 +1140,20 @@ Return ONLY valid JSON:
         else:
             ev["grok"] = self._grok_find(claim, claim_type, claim_context=claim_context)
 
-        # ── spletno iskanje — najdražji zbiralec, teče pri vsaki trditvi
+        # spletno iskanje — najdražji zbiralec, teče pri vsaki trditvi
         ev["web"] = self._web_search_find(claim, claim_type, claim_context=claim_context)
+        if ev["web"] is None:
+            ev["skipped"]["web_search"] = (
+                "disabled" if not cfg("fact_checking.engines.web_search", True)
+                else "search failed")
 
         return ev
 
     @staticmethod
     def _collect_sources(ev: Dict) -> List[Dict]:
-        """Sestavi seznam virov iz tega, kar so vrnili zbiralci.
-
-        Mesta se polnijo izmenično, po eno od vsakega zbiralca na krog. Deset
-        člankov iste založbe je manj različnih domen kot razpršen nabor, domene
-        pa so tisto, kar koda prešteje.
-        """
+        """Sestavi seznam virov iz tega, kar so vrnili zbiralci."""
         cap = int(cfg("fact_checking.max_sources_per_claim", 10))
 
-        # Each collector's own results, best first, in the order the collector
-        # itself ranked them. Collectors that were routed out or found nothing
-        # contribute an empty queue and simply never get a turn.
         queues: List[List[Dict]] = [
             [{"title": s.get("title", "Unknown"), "url": s.get("url", ""),
               "date": s.get("date", "Unknown"),
@@ -1223,9 +1197,6 @@ Return ONLY valid JSON:
             for qi, q in enumerate(queues):
                 if len(sources) >= cap:
                     break
-                # On its turn a collector advances to its next unseen page. A
-                # page another collector already contributed does not cost it
-                # its turn, it simply moves on to the next one it holds.
                 while cursors[qi] < len(q):
                     entry = q[cursors[qi]]
                     cursors[qi] += 1
@@ -1236,10 +1207,10 @@ Return ONLY valid JSON:
                         placed = True
                         break
             if not placed:
-                break   # every collector is spent
+                break
         return sources
 
-    # ── ENA RAZSODBA ────────────────────────────────────────────────────────
+    # ENA RAZSODBA
 
     def _judge_prompt(self, claim: str, claim_type: str, ev: Dict,
                       sources: List[Dict]) -> str:
@@ -1338,12 +1309,7 @@ Return ONLY valid JSON:
 
     def _judge_claim(self, claim: str, claim_type: str, ev: Dict,
                      sources: List[Dict]) -> Dict:
-        """One call decides the verdict over all gathered material.
-
-        This is the only place in fact-checking where a verdict is produced.
-        The judge does not search, so its answer is a reading of a fixed,
-        recorded evidence set rather than of whatever it happened to find.
-        """
+        """One call decides the verdict over all gathered material."""
         from debate_analyzer import TruncatedJSONError, create_provider
 
         provider_name = cfg("fact_checking.judge_provider", "anthropic")
@@ -1353,11 +1319,6 @@ Return ONLY valid JSON:
         logger.info("      [Judge] %s/%s deciding over %d sources...",
                     provider_name, model, len(sources))
 
-        # A cut-off answer is not a wrong answer, it is an unfinished one, so it
-        # is worth asking again with room to finish. Every analysis pass already
-        # does this; the judge used to call the provider directly and turned one
-        # truncated reply straight into ERROR, which then dropped the claim out
-        # of every count that follows.
         budget = int(cfg("fact_checking.judge_max_tokens", 4096))
         cap = int(cfg("fact_checking.judge_max_tokens_cap", 16384))
         attempts = max(1, int(cfg("fact_checking.judge_max_attempts", 3)))
@@ -1380,6 +1341,11 @@ Return ONLY valid JSON:
                     break
                 budget = min(budget * 2, cap)
                 logger.warning("      [Judge] answer was cut off, retrying with %d tokens", budget)
+            except json.JSONDecodeError as e:
+                last_exc = e
+                if attempt >= attempts:
+                    break
+                logger.warning("      [Judge] answer was not valid JSON, asking again")
             except Exception as e:
                 last_exc = e
                 break
@@ -1392,8 +1358,6 @@ Return ONLY valid JSON:
 
         verdict = self._one_verdict(parsed.get("verdict"))
 
-        # Številka mimo seznama se zavrže. Neomenjen vir ostane brez oznake in
-        # se v seštevek ne šteje.
         per_source: Dict[int, str] = {}
         for item in (parsed.get("sources") or []):
             if not isinstance(item, dict):
@@ -1430,12 +1394,7 @@ Return ONLY valid JSON:
 
     @staticmethod
     def _count_source_verdicts(sources: List[Dict]) -> Dict[str, int]:
-        """Tally the labelled sources across the same five verdicts.
-
-        This is a count of what the material says, not a vote that decides
-        anything. The judge's own verdict is allowed to differ from the
-        majority here, and the explanation is where it says why.
-        """
+        """Tally the labelled sources across the same five verdicts."""
         tally = {v: 0 for v in ("TRUE", "PARTIALLY_TRUE", "MISLEADING",
                                 "FALSE", "UNVERIFIABLE")}
         for s in sources:
@@ -1444,15 +1403,10 @@ Return ONLY valid JSON:
                 tally[v] += 1
         return tally
 
-    # ── PREVERJANJE ENE TRDITVE ─────────────────────────────────────────────
+    # PREVERJANJE ENE TRDITVE
 
     def verify_claim(self, claim_data: Dict, _perplexity_prefetched: Optional[Dict] = None) -> Dict:
-        """Collect the material, then judge it once.
-
-        The two steps are deliberately separate. Collecting is mechanical and
-        leaves a record of what was retrieved. Judging is one nominal decision
-        over exactly that record, and nothing afterwards changes it.
-        """
+        """Collect the material, then judge it once."""
         claim = claim_data["exact_claim"]
         claim_type = claim_data.get("claim_type", "unknown")
 
@@ -1462,13 +1416,12 @@ Return ONLY valid JSON:
         sources = self._collect_sources(ev)
         result = self._judge_claim(claim, claim_type, ev, sources)
 
-        # Ob napaki razsojanja ostane seznam virov tak, kot ga je sestavila koda.
         result.setdefault("sources", sources)
         result["search_method"] = "collect_then_judge"
         merged = {**claim_data, **result, "fact_checked": result["verdict"] != "ERROR"}
         return self._finalise_result(merged)
 
-    # ── PARALLEL VERIFICATION ───────────────────────────────────────────────
+    # PARALLEL VERIFICATION
 
     def verify_claims_parallel(self, claims: List[Dict]) -> List[Dict]:
         max_workers = cfg("fact_checking.parallel_workers", 5)
@@ -1476,7 +1429,6 @@ Return ONLY valid JSON:
 
         logger.info("   Checking %d claims with %d parallel workers...", total, max_workers)
 
-        # Pre-fetch Perplexity results in batches of 5
         perplexity_prefetched = {}
         if self._perplexity_client:
             batch_size = cfg("fact_checking.perplexity_batch_size", 5)
@@ -1515,15 +1467,10 @@ Return ONLY valid JSON:
 
         return [r for r in results if r is not None]
 
-    # ── MAIN PIPELINE ───────────────────────────────────────────────────────
+    # MAIN PIPELINE
 
     def fact_check_arguments(self, speakers: Dict, transcript: str = "") -> Dict:
-        """Preveri premise izluščenih argumentov.
-
-        Vhod je seznam argumentov, zato vsaka razsodba nosi arg_id premise, iz
-        katere izhaja. Premisa je modelova ubeseditev povedanega in ne dobesedni
-        navedek, zato razsodba velja za premiso, kot je izpisana.
-        """
+        """Preveri premise izluščenih argumentov."""
         logger.info("[3] Fact-checking argument premises...")
         FactChecker._scholar_rate_limited = False
         claims = self.extract_claims_from_arguments(speakers)
@@ -1535,12 +1482,7 @@ Return ONLY valid JSON:
         return self._verify_claim_set(claims)
 
     def extract_claims_from_arguments(self, speakers: Dict) -> List[Dict]:
-        """Pick the premises that assert something checkable.
-
-        One call over the argument list — a few thousand characters — instead of
-        one over the whole transcript. Premises that are purely normative
-        ("screens should be banned") are not claims and are dropped here.
-        """
+        """Pick the premises that assert something checkable."""
         blocks: List[str] = []
         known_ids: set = set()
         for speaker, data in (speakers or {}).items():
@@ -1608,8 +1550,6 @@ Return ONLY valid JSON: {"claims": [...]}"""
             logger.error("   Claim extraction from arguments failed: %s", e)
             return []
 
-        # Drop anything that points at an argument we do not have: a claim we
-        # cannot attach is exactly what this rewrite set out to remove.
         clean: List[Dict] = []
         for c in claims:
             if not isinstance(c, dict) or not str(c.get("exact_claim") or "").strip():
@@ -1617,6 +1557,7 @@ Return ONLY valid JSON: {"claims": [...]}"""
             if str(c.get("arg_id") or "") not in known_ids:
                 logger.info("   Dropping claim with unknown arg_id %r", c.get("arg_id"))
                 continue
+            c["claim_type"] = canonical_claim_type(c.get("claim_type"))
             clean.append(c)
 
         logger.info("   Found %d checkable claims across %d arguments",
@@ -1625,12 +1566,7 @@ Return ONLY valid JSON: {"claims": [...]}"""
         return clean
 
     def _verify_claim_set(self, claims: List[Dict]) -> Dict:
-        """Razgradi sestavljene trditve in preveri vse.
-
-        Zgornje meje števila trditev ni. Vsaka bi morala odločiti, katere
-        odpadejo, seznam pa nastaja po govorcih, zato je rez po vrsti praznil
-        drugega govorca prvega.
-        """
+        """Razgradi sestavljene trditve in preveri vse."""
         claims = self.decompose_claims(claims)
 
         parallel_workers = cfg("fact_checking.parallel_workers", 5)
@@ -1652,8 +1588,6 @@ Return ONLY valid JSON: {"claims": [...]}"""
                      summary["verdict_breakdown"].get("MISLEADING", 0))
 
         return {
-            # Vsaka trditev se preveri zase. Isto dejstvo v dveh argumentih se
-            # preveri dvakrat in vsak govorec obdrži svojo.
             "total_claims": len(fact_checks),
             "fact_checks": fact_checks,
             "summary": summary,
@@ -1690,12 +1624,6 @@ Return ONLY valid JSON: {"claims": [...]}"""
 
         total = len(fact_checks)
 
-        # Razsodbe se preštejejo po govorcih in skupno, v številko pa se ne
-        # zlijejo. Delež točnosti je zahteval, da neresnični trditvi pripišemo
-        # 0,0, delno resnični 0,6 in zavajajoči 0,25, torej uteži, ki jih iz
-        # gradiva ni mogoče utemeljiti, imenovalec pa je izpustil nepreverljive
-        # trditve, zato je ena sama odpoved razsodnika odstotek postavila na
-        # peščico trditev in ga prikazala enako, kot bi stal na vseh.
         by_speaker: Dict[str, Dict[str, int]] = {}
         for fc in fact_checks:
             speaker = (fc.get("speaker") or "").strip()

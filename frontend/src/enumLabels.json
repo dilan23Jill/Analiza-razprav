@@ -157,28 +157,6 @@
       "en": "weak reasoning"
     }
   },
-  "argument_type": {
-    "factual": {
-      "sl": "dejstveni",
-      "en": "factual"
-    },
-    "normative": {
-      "sl": "normativni",
-      "en": "normative"
-    },
-    "causal": {
-      "sl": "vzročni",
-      "en": "causal"
-    },
-    "definitional": {
-      "sl": "definicijski",
-      "en": "definitional"
-    },
-    "debatable": {
-      "sl": "spor",
-      "en": "debatable"
-    }
-  },
   "rebuttal_type": {
     "direct_contradiction": {
       "sl": "neposredno nasprotovanje",

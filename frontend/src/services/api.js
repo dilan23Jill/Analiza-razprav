@@ -1,9 +1,3 @@
-/**
- * API service — connects React frontend to FastAPI backend.
- *
- * In dev mode Vite proxies /api/* -> localhost:8000/*
- * In production set VITE_API_URL to the real backend URL.
- */
 
 import { API_BASE } from './apiBase'
 
@@ -13,15 +7,6 @@ function getToken() {
   return localStorage.getItem('da_token') || ''
 }
 
-/**
- * Turn any FastAPI / fetch error body into a human-readable string.
- * FastAPI returns `detail` in several shapes:
- *   • a plain string                         → use as-is
- *   • an object  { message: "..." }          → use .message
- *   • a 422 validation array [{loc,msg,...}] → join the msg fields
- * Without this, `new Error(detail)` on an array/object stringifies to the
- * dreaded "[object Object]".
- */
 function extractErrorMessage(body, status) {
   const detail = body?.detail ?? body?.message ?? body
   if (typeof detail === 'string') return detail
@@ -59,7 +44,7 @@ async function request(path, options = {}) {
   return res.json()
 }
 
-// ── Auth ──────────────────────────────────────────────────────
+// Auth
 
 export async function registerUser(username, email, password) {
   return request('/auth/register', {
@@ -75,13 +60,8 @@ export async function loginUser(login, password) {
   })
 }
 
-// ── Analysis jobs ──────────────────────────────────────────
+// Analysis jobs
 
-/**
- * Probe a YouTube URL to get its duration and metadata (without downloading).
- * Used to auto-size the trim slider so the user doesn't have to guess.
- * @returns {Promise<{duration:number,title:string,uploader:string,thumbnail:string,is_live:boolean,video_id:string}>}
- */
 export async function probeYoutube(url) {
   return request('/probe-youtube', {
     method: 'POST',
@@ -141,7 +121,7 @@ export async function getMyJobs() {
   return request('/jobs')
 }
 
-// ── Saved debates (DB) ────────────────────────────────────
+// Saved debates (DB)
 
 export async function listDebates(limit = 20, offset = 0, search = '', mode = '') {
   const params = new URLSearchParams({ limit, offset })
@@ -154,11 +134,6 @@ export async function deleteDebate(debateId) {
   return request(`/debates/${debateId}`, { method: 'DELETE' })
 }
 
-/**
- * Re-run the analysis of a saved debate using its existing transcript —
- * no download, no transcription. Returns a JobStatus ({ job_id, ... });
- * the result is saved as a NEW debate entry.
- */
 export async function rerunDebate(debateId, mode = '', language = '') {
   const body = {}
   if (mode) body.mode = mode
@@ -169,11 +144,6 @@ export async function rerunDebate(debateId, mode = '', language = '') {
   })
 }
 
-/**
- * Re-run ONLY the fact-checking of a saved debate, in place. The arguments,
- * fallacies and rebuttals stay as they are; the sources and the verdicts are
- * refreshed. Returns a JobStatus.
- */
 export async function recheckDebate(debateId) {
   return request(`/debates/${debateId}/recheck`, { method: 'POST' })
 }
@@ -182,20 +152,6 @@ export async function getDebate(debateId) {
   return request(`/debates/${debateId}`)
 }
 
-/**
- * Apply edits to a debate. `operations` is an ordered array of:
- *   { op: "rename_speaker",     payload: { from_name, to_name } }
- *   { op: "edit_argument",      payload: { speaker, index, fields: {...} } }
- *   { op: "delete_argument",    payload: { speaker, index } }
- *   { op: "add_argument",       payload: { speaker, argument: {...} } }
- *   { op: "edit_speaker_meta",  payload: { speaker, fields: {position?, conclusions?, ...} } }
- *   { op: "edit_summary",       payload: { summary } }
- *   { op: "edit_metadata",      payload: { fields: { topic? } } }
- *   { op: "add_fallacy",       payload: { fallacy: { speaker, type, evidence, explanation?, target_arg_id? } } }
- *   { op: "edit_fallacy",      payload: { index, fields: { type?, evidence?, explanation? } } }
- *   { op: "delete_fallacy",    payload: { index } }
- * Returns: { status, applied, operations }
- */
 export async function editDebate(debateId, operations) {
   return request(`/debates/${debateId}`, {
     method: 'PATCH',
@@ -203,12 +159,8 @@ export async function editDebate(debateId, operations) {
   })
 }
 
-// ── PDF export ─────────────────────────────────────────────
+// PDF export
 
-/**
- * Download a debate analysis as a PDF (authenticated). Triggers a browser
- * download with the given filename.
- */
 export async function downloadDebatePdf(debateId, filename = 'debate.pdf') {
   const token = getToken()
   const res = await fetch(`${BASE}/debates/${debateId}/pdf`, {
@@ -231,7 +183,7 @@ export async function downloadDebatePdf(debateId, filename = 'debate.pdf') {
   URL.revokeObjectURL(url)
 }
 
-// ── Health ─────────────────────────────────────────────────
+// Health
 
 export async function healthCheck() {
   return request('/health')

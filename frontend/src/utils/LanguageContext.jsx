@@ -3,14 +3,12 @@ import enumLabels from '../enumLabels.json'
 
 const translations = {
   sl: {
-    // Nav
     myAnalyses: 'Moje analize',
     newAnalysis: 'Nova analiza',
     login: 'Prijava',
     register: 'Registracija',
     logout: 'Odjava',
 
-    // HomePage
     completedAnalyses: 'Opravljene analize',
     analysisCount: (n) => `${n} ${n === 1 ? 'analiza' : 'analiz'} v bazi`,
     searchPlaceholder: 'Iskanje po temi, govorcih...',
@@ -26,7 +24,6 @@ const translations = {
     deleteConfirm: 'Ali ste prepričani, da želite izbrisati to analizo?',
     delete: 'Izbriši',
 
-    // DebateViewPage
     back: 'Nazaj',
     analysis: 'Analiza',
     whatDoesAnalysisMean: 'Kaj pomeni analiza?',
@@ -36,7 +33,6 @@ const translations = {
     report: 'Poročilo',
     analysisNotFound: 'Analiza ni najdena',
     backToList: 'Nazaj na seznam',
-    // PDF export
     exportPdf: 'Izvozi PDF',
     exporting: 'Izvažam…',
     diarizationNote: 'Govorci so samodejno zaznani — če je kateri napačno pripisan, ga popravi prek „Uredi".',
@@ -49,7 +45,6 @@ const translations = {
     moderatorShowQuestions: 'Pokaži vprašanja moderatorja',
     moderatorNotScored: 'Moderator ni debater: ni ocenjen in ne nastopa med govorci. Prikaz je zgolj informativen.',
 
-    // FactCheckPanel
     checked: 'Preverjeno',
     verdictsBySpeaker: 'Razsodbe po govorcih',
     true_: 'Resnično',
@@ -61,7 +56,6 @@ const translations = {
     sourceCount: 'Virov',
     independentDomains: 'Neodvisnih domen',
 
-    // Report tab
     reportNotAvailable: 'Poročilo ni na voljo',
     claimSpeaker: 'Govorec',
     reportOverview: 'Pregled poročila',
@@ -72,14 +66,12 @@ const translations = {
     misleading: 'Zavajajoče',
     unverifiableShort: 'Nepreverljivo',
 
-    // Verdicts
     TRUE: 'RESNIČNO',
     FALSE: 'NERESNIČNO',
     PARTIALLY_TRUE: 'DELNO RESNIČNO',
     MISLEADING: 'ZAVAJAJOČE',
     UNVERIFIABLE: 'NEPREVERJIVO',
 
-    // LoginPage
     loginTitle: 'Prijava',
     loginSubtitle: 'Prijavi se za dostop do svojih analiz',
     usernameOrEmail: 'Uporabniško ime ali email',
@@ -89,7 +81,6 @@ const translations = {
     noAccount: 'Nimaš računa?',
     loginError: 'Napaka pri prijavi',
 
-    // RegisterPage
     registerTitle: 'Registracija',
     registerSubtitle: 'Ustvari račun za shranjevanje analiz',
     username: 'Uporabniško ime',
@@ -102,7 +93,6 @@ const translations = {
     haveAccount: 'Že imaš račun?',
     registerError: 'Napaka pri registraciji',
 
-    // AnalyzePage
     newAnalysisTitle: 'Nova analiza',
     newAnalysisSubtitle: 'Vnesi YouTube URL ali naloži video/audio datoteko za analizo',
     source: 'Vir',
@@ -145,7 +135,6 @@ const translations = {
     probeFailedHint: 'Dolžine videa ni bilo mogoče zaznati — drsnik bo deloval ročno.',
     minutesShort: 'min',
 
-    // JobStatusPage
     jobStatusTitle: 'Analiza v teku',
     jobIdLabel: 'ID naloge',
     jobStepLoading: 'Nalaganje konfiguracije',
@@ -165,27 +154,22 @@ const translations = {
     analysisRunning: 'Analiza teče',
     clickToView: 'Klikni za ogled',
 
-    // TimeRangeSlider
     trimClip: 'Izreži del posnetka',
     resetTrim: 'Ponastavi',
     trimEnd: 'konec',
     trimLength: 'Dolžina',
     trimLengthLabel: 'Dolžina:',
 
-    // DebateViewPage
     editDebate: 'Uredi',
     editDebateTitle: 'Uredi imena, argumente, povzetek',
 
-    // HomePage errors
     loadDebatesError: 'Nalaganje analiz ni uspelo. Poskusi znova.',
     deleteDebateError: 'Brisanje ni uspelo.',
 
-    // Error boundary
     errorBoundaryTitle: 'Nekaj je šlo narobe',
     errorBoundaryMessage: 'Osveži stran ali poskusi znova pozneje.',
     errorBoundaryReload: 'Osveži stran',
 
-    // HomePage tutorial
     tutorialButton: 'Kako deluje?',
     tutorialTitle: 'Kako uporabljati Debate Analyzer',
     tutorialClose: 'Zapri',
@@ -196,23 +180,19 @@ const translations = {
     tutorialStep3Title: '3. Preglej rezultate',
     tutorialStep3Text: 'Odpri analizo in preglej časovnico argumentov, preverjanje dejstev z viri in celostno poročilo s presojami za vsako trditev.',
 
-    // AppGuideModal
     guideCloseLabel: 'Zapri pomoč',
     guideHowItWorks: 'Vodnik',
     guideTitle: 'Kako brati to analizo',
     guideClose: 'Zapri',
 
-    // 1. Kaj app naredi
     guideWhatAppDoes: 'Kaj app naredi',
     guideWhatAppDoesText: 'Iz posnetka ali transkripta izlušči glavne argumente, premise, protiargumente, preveri dejanske trditve in pri debatah primerja govorce. Rezultat ni absolutna resnica — je strukturirana analiza, ki jo lahko po potrebi popraviš.',
 
-    // 2. Kako brati argumente
     guideHowToReadNodes: 'Kako brati argumente',
     guideNodeLine1: 'Vsak okvirček je en argument — popolna veriga sklepanja (premise → razlog → zaključek).',
     guideNodeLine2: 'Ko ga odpreš, vidiš premise, oponentov odziv in povezane fact-checke.',
     guideNodeLine3: 'Barva in poudarki opozarjajo, kje je argument močan ali problematičen.',
 
-    // 3. Razsodbe fact-checka
     guideVerdictsTitle: 'Razsodbe fact-checka',
     guideVerdictTrue: 'Točno',
     guideVerdictTrueDesc: 'Trditev je preverljivo točna z zanesljivimi viri.',
@@ -225,29 +205,24 @@ const translations = {
     guideVerdictUnverifiable: 'Nepreverljivo',
     guideVerdictUnverifiableDesc: 'Ni dovolj zanesljivih virov za sodbo (mnenje, predikcija, debatna pozicija).',
 
-    // 4. Perspektiva virov
     guideSourcesTitle: 'Uravnoteženi viri',
     guideSourcesDesc: 'Pri vsaki trditvi iščemo vire iz različnih perspektiv. Če nekdo zagovarja katoliško stališče, pogledamo tudi katoliške vire — ne samo nasprotnih.',
     guideSourceAligned: 'Iz govorčeve tradicije',
     guideSourceNeutral: 'Neodvisni / mainstream',
     guideSourceOpposing: 'Iz nasprotnega tabora',
 
-    // 5. Načini analize
     guideModesTitle: 'Načini analize',
     guideModeSoloTitle: 'Solo',
     guideModeSoloDesc: 'En primarni govorec — govor, intervju, predavanje ali reakcijski video.',
     guideModeDebateTitle: 'Razprava',
     guideModeDebateDesc: 'Debata ena na ena: natanko dva debaterja z nasprotujočima stališčema. Moderator se ne šteje med debaterja — zabeleži se posebej in ni ocenjen. Če posnetek vsebuje več kot dva debaterja, se analiza ustavi z opozorilom.',
 
-    // 6. Edit
     guideEditTitle: 'Lahko urejaš analizo',
     guideEditDesc: 'Klikni "Uredi" zgoraj desno na strani analize. Lahko preimenuješ govorce, popraviš ali izbrišeš argumente, dodaš nove, urediš povzetek in temo.',
 
-    // Footer disclaimer
     guideImportantNote: 'Dobro je vedeti',
     guideImportantNoteText: 'Analiza je AI-generirana in ima lahko napake. Preveri pomembne trditve sam, popravi argumente prek "Uredi", in ne vzemi nobene ocene kot dokončne sodbe.',
 
-    // ArgumentNode
     argSpeaker: 'Govorec',
     argCloseLabel: 'Zapri podrobnosti argumenta',
     argPremises: 'Premise',
@@ -276,7 +251,7 @@ const translations = {
     argDebatablePoints: 'Sporne točke',
     fallacyAdd: 'Dodaj spregledano zmoto',
     fallacyPickType: 'Izberi vrsto zmote…',
-    fallacyQuotePlaceholder: 'Dobesedni citat iz prepisa, na katerem zmota temelji',
+    fallacyQuotePlaceholder: 'Stališče ali premisa argumenta, v kateri je napaka',
     fallacyAddSave: 'Dodaj',
     fallacyAddHint: 'Kategorijo (formalna, neformalna, šibko sklepanje) določi ime zmote — enako kot pri samodejni zaznavi.',
     fallacyDeleteTitle: 'Odstrani to zmoto',
@@ -289,24 +264,20 @@ const translations = {
     reviewConfirm: 'Drži',
     reviewDismiss: 'Ne drži',
 
-    // SpeakerTimeline
     stPosition: 'Pozicija',
     stConclusions: 'Zaključki',
     stEvasions: 'Izogibanja',
     stQuestionAsked: 'Vprašanje',
     stUnsupportedClaims: 'Nepodprte trditve',
 
-    // Tooltip opisi (kratki)
   },
   en: {
-    // Nav
     myAnalyses: 'My Analyses',
     newAnalysis: 'New Analysis',
     login: 'Login',
     register: 'Register',
     logout: 'Logout',
 
-    // HomePage
     completedAnalyses: 'Completed Analyses',
     analysisCount: (n) => `${n} ${n === 1 ? 'analysis' : 'analyses'} in database`,
     searchPlaceholder: 'Search by topic, speakers...',
@@ -322,7 +293,6 @@ const translations = {
     deleteConfirm: 'Are you sure you want to delete this analysis?',
     delete: 'Delete',
 
-    // DebateViewPage
     back: 'Back',
     analysis: 'Analysis',
     whatDoesAnalysisMean: 'What does the analysis mean?',
@@ -332,7 +302,6 @@ const translations = {
     report: 'Report',
     analysisNotFound: 'Analysis not found',
     backToList: 'Back to list',
-    // PDF export
     exportPdf: 'Export PDF',
     exporting: 'Exporting…',
     diarizationNote: 'Speakers are auto-detected — if any are mislabeled, correct them via “Edit”.',
@@ -345,7 +314,6 @@ const translations = {
     moderatorShowQuestions: 'Show moderator questions',
     moderatorNotScored: 'The moderator is not a debater: they are never scored and never listed among the speakers. This panel is informational only.',
 
-    // FactCheckPanel
     checked: 'Checked',
     verdictsBySpeaker: 'Verdicts by speaker',
     true_: 'True',
@@ -357,7 +325,6 @@ const translations = {
     sourceCount: 'Sources',
     independentDomains: 'Independent domains',
 
-    // Report tab
     reportNotAvailable: 'Report not available',
     claimSpeaker: 'Speaker',
     reportOverview: 'Report Overview',
@@ -368,14 +335,12 @@ const translations = {
     misleading: 'Misleading',
     unverifiableShort: 'Unverifiable',
 
-    // Verdicts
     TRUE: 'TRUE',
     FALSE: 'FALSE',
     PARTIALLY_TRUE: 'PARTIALLY TRUE',
     MISLEADING: 'MISLEADING',
     UNVERIFIABLE: 'UNVERIFIABLE',
 
-    // LoginPage
     loginTitle: 'Login',
     loginSubtitle: 'Sign in to access your analyses',
     usernameOrEmail: 'Username or email',
@@ -385,7 +350,6 @@ const translations = {
     noAccount: "Don't have an account?",
     loginError: 'Login failed',
 
-    // RegisterPage
     registerTitle: 'Register',
     registerSubtitle: 'Create an account to save your analyses',
     username: 'Username',
@@ -398,7 +362,6 @@ const translations = {
     haveAccount: 'Already have an account?',
     registerError: 'Registration failed',
 
-    // AnalyzePage
     newAnalysisTitle: 'New Analysis',
     newAnalysisSubtitle: 'Enter a YouTube URL or upload a video/audio file for analysis',
     source: 'Source',
@@ -441,7 +404,6 @@ const translations = {
     probeFailedHint: 'Could not detect video length — slider will work manually.',
     minutesShort: 'min',
 
-    // JobStatusPage
     jobStatusTitle: 'Analysis in progress',
     jobIdLabel: 'Job ID',
     jobStepLoading: 'Loading configuration',
@@ -461,27 +423,22 @@ const translations = {
     analysisRunning: 'Analysis running',
     clickToView: 'Click to view',
 
-    // TimeRangeSlider
     trimClip: 'Trim clip',
     resetTrim: 'Reset',
     trimEnd: 'end',
     trimLength: 'Length',
     trimLengthLabel: 'Length:',
 
-    // DebateViewPage
     editDebate: 'Edit',
     editDebateTitle: 'Edit names, arguments, summary',
 
-    // HomePage errors
     loadDebatesError: 'Failed to load analyses. Please try again.',
     deleteDebateError: 'Failed to delete analysis.',
 
-    // Error boundary
     errorBoundaryTitle: 'Something went wrong',
     errorBoundaryMessage: 'Reload the page or try again later.',
     errorBoundaryReload: 'Reload',
 
-    // HomePage tutorial
     tutorialButton: 'How does it work?',
     tutorialTitle: 'How to use Debate Analyzer',
     tutorialClose: 'Close',
@@ -492,23 +449,19 @@ const translations = {
     tutorialStep3Title: '3. Review results',
     tutorialStep3Text: 'Open the analysis and review the argument timeline, fact-checking with sources, and the full report with verdicts for each claim.',
 
-    // AppGuideModal
     guideCloseLabel: 'Close help',
     guideHowItWorks: 'Guide',
     guideTitle: 'How to read this analysis',
     guideClose: 'Close',
 
-    // 1. What the app does
     guideWhatAppDoes: 'What the app does',
     guideWhatAppDoesText: 'Extracts main arguments, premises, and counterarguments from a recording or transcript, verifies factual claims, and (for debates) compares speakers. The result is not absolute truth — it is a structured analysis you can edit if needed.',
 
-    // 2. How to read arguments
     guideHowToReadNodes: 'How to read arguments',
     guideNodeLine1: 'Each card is one argument — a complete chain of reasoning (premises → reasoning → conclusion).',
     guideNodeLine2: 'When you open it you see premises, the opponent response, and related fact-checks.',
     guideNodeLine3: 'Color and emphasis indicate where an argument is strong or problematic.',
 
-    // 3. Fact-check verdicts
     guideVerdictsTitle: 'Fact-check verdicts',
     guideVerdictTrue: 'True',
     guideVerdictTrueDesc: 'Claim is verifiably accurate against reliable sources.',
@@ -521,29 +474,24 @@ const translations = {
     guideVerdictUnverifiable: 'Unverifiable',
     guideVerdictUnverifiableDesc: 'Not enough reliable sources to judge (opinion, prediction, debate position).',
 
-    // 4. Source perspectives
     guideSourcesTitle: 'Balanced sources',
     guideSourcesDesc: 'For every claim we look for sources from different perspectives. If someone defends a Catholic position, we also consult Catholic sources — not only opposing ones.',
     guideSourceAligned: "From speaker's tradition",
     guideSourceNeutral: 'Independent / mainstream',
     guideSourceOpposing: 'From opposing camp',
 
-    // 5. Analysis modes
     guideModesTitle: 'Analysis modes',
     guideModeSoloTitle: 'Solo',
     guideModeSoloDesc: 'One primary speaker — speech, interview, lecture, or reaction video.',
     guideModeDebateTitle: 'Debate',
     guideModeDebateDesc: 'One-on-one debate: exactly two debaters with opposing positions. A moderator does not count as a debater — they are recorded separately and never scored. If the recording contains more than two debaters, the analysis stops with a warning.',
 
-    // 6. Edit
     guideEditTitle: 'You can edit the analysis',
     guideEditDesc: 'Click "Edit" in the top right of the analysis page. You can rename speakers, edit or delete arguments, add new ones, edit the summary and topic.',
 
-    // Footer disclaimer
     guideImportantNote: 'Good to know',
     guideImportantNoteText: 'The analysis is AI-generated and may contain mistakes. Verify important claims yourself, fix arguments via "Edit", and do not take any score as a final judgment.',
 
-    // ArgumentNode
     argSpeaker: 'Speaker',
     argCloseLabel: 'Close argument details',
     argPremises: 'Premises',
@@ -572,7 +520,7 @@ const translations = {
     argDebatablePoints: 'Debatable points',
     fallacyAdd: 'Add a missed fallacy',
     fallacyPickType: 'Pick a fallacy type…',
-    fallacyQuotePlaceholder: 'Verbatim quote from the transcript the fallacy rests on',
+    fallacyQuotePlaceholder: 'The position or premise of the argument that carries the flaw',
     fallacyAddSave: 'Add',
     fallacyAddHint: 'The category (formal, informal, weak reasoning) follows from the name — the same rule as for automatic detection.',
     fallacyDeleteTitle: 'Remove this fallacy',
@@ -585,29 +533,17 @@ const translations = {
     reviewConfirm: 'Correct',
     reviewDismiss: 'Not correct',
 
-    // SpeakerTimeline
     stPosition: 'Position',
     stConclusions: 'Conclusions',
     stEvasions: 'Evasions',
     stQuestionAsked: 'Question',
     stUnsupportedClaims: 'Unsupported claims',
 
-    // Tooltip descriptions (short)
   },
 }
 
 const LanguageContext = createContext()
 
-/**
- * Human-readable name for a categorical value the model returned.
- *
- *   tv('fallacy', 'straw_man')  → 'slamnati mož'
- *
- * Reads the SAME file as the Python back end (enumLabels.json), so the
- * interface, the text report and the PDF cannot drift apart. Values stay
- * English everywhere in the data — only the display is translated.
- * An unknown value degrades to itself with underscores turned into spaces.
- */
 function makeTv(lang) {
   return function tv(group, value) {
     if (value === null || value === undefined) return ''

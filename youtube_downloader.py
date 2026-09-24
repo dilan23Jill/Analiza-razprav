@@ -1,6 +1,4 @@
-"""
-YouTube audio downloader.
-"""
+"""YouTube audio downloader."""
 
 import importlib.util
 import json as _json
@@ -19,14 +17,7 @@ def is_valid_youtube_url(url: str) -> bool:
 
 
 def get_youtube_metadata(url: str, timeout: int = 25) -> dict:
-    """Probe a YouTube URL for metadata WITHOUT downloading the media.
-
-    Returns a dict with keys: duration (seconds, int), title, uploader,
-    thumbnail, is_live (bool). Empty/zero values indicate the field
-    couldn't be retrieved.
-
-    Raises ValueError for invalid URL, RuntimeError for network/yt-dlp errors.
-    """
+    """Probe a YouTube URL for metadata WITHOUT downloading the media."""
     if not is_valid_youtube_url(url):
         raise ValueError(f"Invalid YouTube URL: {url}")
 
@@ -148,10 +139,6 @@ def _friendly_download_error(stderr: str, stdout: str) -> str:
         return "yt-dlp is not installed in the active Python environment."
 
     if "403" in lowered and "forbidden" in lowered:
-        # Deliberately points at the NIGHTLY channel, not at `pip install -U`.
-        # YouTube changes URL signing more often than yt-dlp cuts a stable
-        # release, so the newest stable can be weeks old and still broken —
-        # which is exactly the case this message was first written for.
         return (
             "YouTube je zavrnil prenos (HTTP 403). Najpogostejši vzrok je "
             "zastarel yt-dlp: YouTube občasno spremeni podpisovanje naslovov "

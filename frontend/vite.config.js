@@ -6,7 +6,6 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
-    // Vite 6 blokira neznane hoste — dovoli ngrok domene za javni tunel.
     allowedHosts: ['.ngrok-free.app', '.ngrok.app', '.ngrok-free.dev', '.ngrok.io'],
     proxy: {
       '/api': {

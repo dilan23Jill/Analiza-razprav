@@ -17,7 +17,6 @@ export default function App() {
   const { lang, setLang, t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Close mobile menu on navigation
   const closeMenu = () => setMenuOpen(false)
 
   if (loading) {
@@ -30,7 +29,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-dark-900 overflow-x-hidden">
-      {/* ── NAV ──────────────────────────────────────────── */}
       <nav className="border-b border-white/[0.06] bg-dark-900/70 backdrop-blur-xl sticky top-0 z-50 shadow-soft">
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group" onClick={closeMenu}>
@@ -40,9 +38,7 @@ export default function App() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            {/* Language + theme switchers */}
             <LangSwitcher lang={lang} setLang={setLang} />
             <ThemeSwitcher />
 
@@ -80,7 +76,6 @@ export default function App() {
             )}
           </div>
 
-          {/* Mobile: lang switcher + hamburger */}
           <div className="flex items-center gap-3 md:hidden">
             <ThemeSwitcher />
             <LangSwitcher lang={lang} setLang={setLang} />
@@ -103,7 +98,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Mobile menu dropdown */}
         {menuOpen && (
           <div className="md:hidden border-t border-white/10 bg-dark-900/95 backdrop-blur-sm px-4 py-3 space-y-1 animate-fade-in">
             {user ? (
@@ -143,14 +137,11 @@ export default function App() {
         )}
       </nav>
 
-      {/* ── CONTENT ──────────────────────────────────────── */}
       <main className="relative z-10 max-w-[1500px] mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <Routes>
-          {/* Public routes */}
           <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
 
-          {/* Protected routes */}
           <Route path="/" element={user ? <HomePage /> : <Navigate to="/login" />} />
           <Route path="/analyze" element={user ? <AnalyzePage /> : <Navigate to="/login" />} />
           <Route
@@ -169,9 +160,6 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* Floating bubble — surfaces any active analysis on every page so the
-          user can navigate freely (browse, start a new one, check from phone)
-          and always click back to the running job. */}
       <RunningJobBubble />
     </div>
   )
@@ -189,13 +177,11 @@ function ThemeSwitcher() {
       className="p-1.5 rounded-lg bg-dark-600/30 text-white/60 hover:text-white/90 hover:bg-dark-600/60 transition-colors"
     >
       {light ? (
-        /* luna — klik preklopi na temno */
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       ) : (
-        /* sonce — klik preklopi na svetlo */
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" />

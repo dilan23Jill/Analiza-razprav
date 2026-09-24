@@ -55,7 +55,6 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div className="animate-fade-in">
           <h1 className="text-xl sm:text-2xl font-bold text-gradient">{t.completedAnalyses}</h1>
@@ -88,7 +87,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Mode filter */}
       <div className="flex gap-1 mb-4 bg-dark-600/30 rounded-lg p-1 w-fit overflow-x-auto">
         {[
           { key: '', label: t.all },
@@ -110,7 +108,6 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Search */}
       <form onSubmit={handleSearch} className="mb-6">
         <div className="relative">
           <input
@@ -133,7 +130,6 @@ export default function HomePage() {
         </div>
       </form>
 
-      {/* Debate list */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="loader-dots"><span /><span /><span /></div>
@@ -153,7 +149,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tutorial modal */}
       {tutorialOpen && <TutorialModal t={t} onClose={() => setTutorialOpen(false)} />}
     </div>
   )
@@ -255,9 +250,7 @@ function DebateCard({ debate, onDelete, t }) {
         </div>
 
         <div className="ml-2 sm:ml-4 flex-shrink-0 flex flex-col items-end gap-2">
-          {/* Accuracy badge */}
 
-          {/* Delete button */}
           <button
             type="button"
             onClick={(e) => onDelete(debate.id, e)}
@@ -273,7 +266,6 @@ function DebateCard({ debate, onDelete, t }) {
   )
 }
 
-/** Processing time: seconds are unreadable past a minute — 3077 → "51 min". */
 function formatDuration(seconds) {
   const total = Math.round(Number(seconds) || 0)
   if (total < 60) return `${total} s`

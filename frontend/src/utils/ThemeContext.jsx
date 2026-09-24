@@ -1,16 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
-/**
- * Svetla/temna tema.
- *
- * Barve niso zapisane tukaj, temveč v CSS spremenljivkah (index.css). Ta
- * kontekst samo doda ali odstrani razred `light` na elementu <html>, kar
- * preklopi celoten nabor spremenljivk naenkrat. Tailwindovi razredi
- * (bg-dark-900, text-white/70 ...) ostanejo nespremenjeni.
- *
- * Izbira se shrani v localStorage. Kadar je uporabnik še ni izbral, se
- * uporabi nastavitev operacijskega sistema.
- */
 
 const ThemeContext = createContext(null)
 const STORAGE_KEY = 'theme'
@@ -20,8 +9,6 @@ function initialTheme() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === 'light' || saved === 'dark') return saved
   } catch {
-    // localStorage je lahko onemogočen (zasebno okno, strogi piškotki) —
-    // takrat pade nazaj na sistemsko nastavitev in ne shranjuje.
   }
   if (typeof window !== 'undefined' && window.matchMedia) {
     return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
@@ -37,12 +24,9 @@ export function ThemeProvider({ children }) {
     try {
       localStorage.setItem(STORAGE_KEY, theme)
     } catch {
-      // brez shranjevanja: izbira velja do osvežitve strani
     }
   }, [theme])
 
-  // Kadar uporabnik teme še ni izbral sam, sledi sistemski nastavitvi tudi,
-  // če jo med uporabo spremeni.
   useEffect(() => {
     if (!window.matchMedia) return
     let chosen = false
