@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+from prompt_loader import load_prompt
 import os
 import re
 import time
@@ -160,95 +161,20 @@ def _recording_rules(mode: str = "debate_1v1") -> str:
     """Pravila o tem, kdo v posnetku šteje za udeleženca."""
     is_single_speaker = mode in ("solo", "reaction")
     single_speaker_rule = (
-        "SINGLE-SPEAKER MODE (CRITICAL): This analysis covers ONE primary speaker who is "
-        "either (a) presenting their own arguments, (b) responding to external criticism / "
-        "content (a video being reacted to, an article, a tweet, a prior statement), or "
-        "(c) a mix of both. The unifying frame: a single person is reasoning out loud.\n"
-        "\n"
-        "PRIMARY SPEAKER:\n"
-        "  • Identify the one person whose argumentation we judge — usually the host/uploader/"
-        "creator/reactor/interviewee. They are the person DELIVERING analysis or opinion.\n"
-        "  • Extract arguments ONLY for the primary speaker. Other voices are CONTEXT, not "
-        "content.\n"
-        "  • Add ONLY the primary speaker to `speakers`. Do NOT add interviewers, hosts, "
-        "audience members, original-content speakers, or any other voice as a separate speaker.\n"
-        "\n"
-        "RESPONDING TO EXTERNAL CONTENT: If the speaker is reacting to a video, article "
-        "or post, use it as CONTEXT only — do NOT extract the original creator's arguments "
-        "as if they were a participant in this recording. The same applies to an "
-        "interviewer's questions: fold the question's substance into the speaker's answer "
-        "so the extracted argument stands on its own.\n"
-        "\n"
-        "PRESENTATION OF OTHERS' ARGUMENTS (philosophers, thinkers, prior figures):\n"
-        "  • A speaker may PRESENT or EXPLAIN arguments from someone else (Aquinas's Five Ways, "
-        "Kant's categorical imperative, Marx's theory of surplus value, etc.). Treat presented "
-        "arguments AS IF the speaker is arguing them — they chose to present, so they own the "
-        "presentation. Attribute to the primary speaker, NOT the historical figure.\n"
-        "  • The speaker's own commentary on top of a presented argument is a separate "
-        "argument.\n"
-        "\n"
-        "VOICES THAT ARE NOT THE PRIMARY SPEAKER (interviewer, host, audience, original-content "
-        "speaker, off-camera crew, brief interjections): treat exactly like a moderator. CONTEXT, "
-        "not content. Use to interpret responses; do NOT extract their words as arguments. "
-        "If irrelevant chatter (heckles, technical asides) "
-        "that the primary speaker doesn't engage with, IGNORE entirely.\n"
+        load_prompt("1_izluscanje/pravila_en_govorec.txt")
         if is_single_speaker else ""
     )
 
     is_debate = mode == "debate" or mode == "debate_1v1"
     debate_rule = (
-        "DEBATE MODE — EXACTLY TWO DEBATERS (1v1, CRITICAL):\n"
-        "This system analyses ONLY one-on-one debates: exactly TWO debaters holding "
-        "opposing positions. A moderator, host, interviewer or audience member is NOT a "
-        "debater and does not count toward the two (see the moderator rule below).\n"
-        "\n"
-        "RULES:\n"
-        "  • `speakers` must contain EXACTLY the two debaters — never more, never fewer.\n"
-        "  • A purely defensive participant (only rebuts, builds no own case) IS one of the "
-        "two debaters — give them an entry with an empty `arguments` list.\n"
-        "  • Map rebuttals only between these two (A→B and B→A).\n"
-        "  • If the recording genuinely has THREE OR MORE people actively defending distinct "
-        "positions, do NOT pick two arbitrarily and do NOT merge them. Instead return the two "
-        "most active as `speakers` AND set `metadata.too_many_debaters` to true, listing every "
-        "detected debater in `metadata.detected_debaters`. The pipeline stops the analysis and "
-        "tells the user — a wrong guess is worse than a clear refusal.\n"
-        "  • If only ONE person argues (no opponent), set `metadata.too_few_debaters` to true — "
-        "that recording belongs in solo mode.\n"
+        load_prompt("1_izluscanje/pravila_razprava.txt")
         if is_debate else ""
     )
 
     return (
         single_speaker_rule
         + debate_rule
-        +         "WHO COUNTS AS A PARTICIPANT:\n"
-        "0. MODERATOR RULE (only applies if a moderator is present): Some debates include a moderator "
-        "whose role is to ask questions, introduce topics, and facilitate — NOT to argue a position. "
-        "A moderator is recognizable because they almost exclusively ask questions, summarize, or hand off — "
-        "and never defend a stance of their own. "
-        "MANY DEBATES HAVE NO MODERATOR — do not force anyone into this role if everyone is actively debating. "
-        "\n"
-        "  IF a moderator IS present, treat them as CONTEXT, NOT CONTENT:\n"
-        "    • DO use their questions, sub-questions, and summaries to UNDERSTAND what each debater "
-        "is responding to. A debater's short answer (\"yes\", \"obviously\", \"that's exactly my point\") "
-        "is only meaningful given the question that preceded it — fold that question into the debater's "
-        "extracted argument so it stands on its own.\n"
-        "    • DO use moderator summaries (\"so you're saying X\") as a BRIDGE: if debater B then responds, "
-        "they are engaging with debater A's argument (channeled through the moderator), not the moderator.\n"
-        "    • DO NOT add the moderator to `speakers` and DO NOT extract their own arguments. "
-        "A moderator is not a debater.\n"
-        "    • Moderator questions are FACILITATION, not rebuttals — never list them as rebuttals or "
-        "as evasion targets between debaters.\n"
-        "    • DO record the moderator separately in `metadata.moderator` (see the output schema): "
-        "their name, how many questions they asked, the questions themselves, and whether they "
-        "pushed one side harder than the other. This is REPORTING, not scoring — the reader "
-        "should be able to see how much the moderator shaped the exchange.\n"
-        "  If there is NO moderator, set `metadata.moderator.present` to false and ignore the rest.\n"
-        "0b. INCIDENTAL VOICES (audience, off-camera crew, brief unnamed interjections): "
-        "Same principle. If a random voice says something IRRELEVANT to the debate (heckles, technical chatter, "
-        "asides), IGNORE it completely — do not extract it, do not flag it, do not add the speaker. "
-        "If a non-debater voice raises a SUBSTANTIVE point that the actual debaters then engage with, "
-        "treat that voice exactly like a moderator: context only, no own arguments — "
-        "but use what they said to interpret the debaters' responses.\n"
+        + load_prompt("1_izluscanje/pravila_udelezenci.txt")
     )
 
 
@@ -257,15 +183,7 @@ def _recording_rules(mode: str = "debate_1v1") -> str:
 def _system_extraction(mode: str = "debate_1v1") -> str:
     """Korak 1: iz prepisa naredi seznam argumentov."""
     return (
-        "You are extracting arguments from a recording, not judging them.\n"
-        "\n"
-        "Extract what each speaker ACTUALLY argued, whatever the topic. Do not omit an "
-        "argument because you disagree with its conclusion, do not restate it in a weaker "
-        "form than the speaker gave it, and do not add reasoning the speaker did not offer. "
-        "Political, religious and ideological positions are extracted exactly like any other.\n"
-        "\n"
-        "Return ONLY valid JSON — no markdown, no commentary outside JSON.\n"
-        "\n"
+        load_prompt("1_izluscanje/sistemski.txt")
         + _recording_rules(mode)
         + t("llm.language_instruction")
     )
@@ -274,35 +192,7 @@ def _system_extraction(mode: str = "debate_1v1") -> str:
 def _system_fallacies() -> str:
     """Korak 2: poimenuj zmote v sklepanju."""
     return (
-        "You are an expert debate analyst with deep knowledge of argumentation theory, "
-        "logic, rhetoric, and REAL-WORLD debate dynamics.\n"
-        "Be rigorous, neutral, structured and precise. Here 'neutral' means UNBIASED: "
-        "report what you find exactly where you find it, without softening it to keep the "
-        "sides looking balanced and without declaring an overall winner.\n"
-        "DESCRIBE, DO NOT GRADE: work strictly from what was actually said in THIS recording. "
-        "Do NOT let your own views on the TOPIC (political, religious, ideological, moral) "
-        "influence what you report. Your subject is HOW the speakers reasoned, not whether "
-        "their position is true, and you do not rate anyone's case or rank the speakers.\n"
-        "\n"
-        "HOW STRICTLY TO JUDGE:\n"
-        "1. CONSERVATIVE FALLACY DETECTION: Not every sharp remark or mild insult is an ad "
-        "hominem fallacy. In real debates, speakers use colorful language, sarcasm, and pointed "
-        "remarks — these are rhetorical tools, not fallacies, UNLESS the speaker uses them AS A "
-        "SUBSTITUTE for addressing the argument. A true ad hominem attacks the PERSON instead of "
-        "the ARGUMENT. A speaker who says 'that's ridiculous' and then explains why is NOT "
-        "committing a fallacy. Flag a fallacy only when you can point to the premise that "
-        "carries it and name the structural failure. A case that can honestly be read either "
-        "way is reported as ambiguous, with both readings in the explanation: neither "
-        "silently dropped nor asserted as certain.\n"
-        "2. A POSITION IS NOT A FALLACY: defending a contested moral, political or value "
-        "position is the debate itself. Only how the reasoning for it is built can be "
-        "defective.\n"
-        "3. DEBATE DYNAMICS: Real debates involve pressure tactics, persistence, emotional "
-        "moments and strategic behaviour. Analyse these as what they are — debate techniques — "
-        "not as logical errors. A speaker who is passionate is not necessarily committing an "
-        "appeal to emotion fallacy.\n"
-        "\n"
-        "Return ONLY valid JSON — no markdown, no commentary outside JSON."
+        load_prompt("2_zmote/sistemski.txt")
         + t("llm.language_instruction")
     )
 
@@ -310,24 +200,7 @@ def _system_fallacies() -> str:
 def _system_rebuttal() -> str:
     """Korak 4: preslikaj zavrnitve in izogibanja."""
     return (
-        "You are an expert debate analyst with deep knowledge of argumentation theory, "
-        "logic, rhetoric, and REAL-WORLD debate dynamics.\n"
-        "Be rigorous, neutral, structured and precise. Here 'neutral' means UNBIASED: "
-        "report what you find exactly where you find it, without softening it to keep the "
-        "sides looking balanced and without declaring an overall winner.\n"
-        "DESCRIBE, DO NOT GRADE: work strictly from what was actually said in THIS recording. "
-        "Do NOT let your own views on the TOPIC (political, religious, ideological, moral) "
-        "influence what you report. Your subject is HOW the speakers reasoned, not whether "
-        "their position is true, and you do not rate anyone's case or rank the speakers.\n"
-        "\n"
-        "WHAT COUNTS AS EVASION:\n"
-        "Pay close attention to when a speaker AVOIDS answering a direct question. If someone "
-        "asks a question and the other person deflects, changes the subject, or gives a "
-        "non-answer, this is a significant debate behaviour. When a speaker repeats the same "
-        "question multiple times, it usually means the other side is REFUSING TO ANSWER — this "
-        "is NOT a fallacy by the questioner, it is EVASION by the non-answerer.\n"
-        "\n"
-        "Return ONLY valid JSON — no markdown, no commentary outside JSON."
+        load_prompt("4_zavrnitve/sistemski.txt")
         + t("llm.language_instruction")
     )
 
@@ -335,21 +208,7 @@ def _system_rebuttal() -> str:
 def _system_synthesis() -> str:
     """Korak 5: povzemi, kar so prejšnji koraki ugotovili."""
     return (
-        "You are an expert debate analyst with deep knowledge of argumentation theory, "
-        "logic, rhetoric, and REAL-WORLD debate dynamics.\n"
-        "Be rigorous, neutral, structured and precise. Here 'neutral' means UNBIASED: "
-        "report what you find exactly where you find it, without softening it to keep the "
-        "sides looking balanced and without declaring an overall winner.\n"
-        "DESCRIBE, DO NOT GRADE: work strictly from what was actually said in THIS recording. "
-        "Do NOT let your own views on the TOPIC (political, religious, ideological, moral) "
-        "influence what you report. Your subject is HOW the speakers reasoned, not whether "
-        "their position is true, and you do not rate anyone's case or rank the speakers.\n"
-        "\n"
-        "You are writing the summary the reader sees first. Report only what the earlier "
-        "steps found; do not introduce arguments, fallacies or verdicts that are not in "
-        "the material you were given.\n"
-        "\n"
-        "Return ONLY valid JSON — no markdown, no commentary outside JSON."
+        load_prompt("5_sinteza/sistemski.txt")
         + t("llm.language_instruction")
     )
 
@@ -403,590 +262,25 @@ def _title_hint_block(title: str) -> str:
     n = _title_argument_count(title)
     if n:
         block += (
-            f"The title announces an enumerated list of {n} items — this is the "
-            f"speaker's own enumeration, so the EXCEPTION rule applies and this is "
-            f"the one case where a count is fixed in advance. The primary "
-            f"speaker's `arguments` list MUST mirror that enumeration: exactly {n} "
-            f"main arguments, one per announced item, in the order presented. "
-            f"Locate each announced item in the transcript even when transitions "
-            f"are subtle (speakers often don't say 'reason number four'). Fold the "
-            f"intro, outro, and side comments into the relevant argument's "
-            f"premises. Add an argument beyond the {n} ONLY if the speaker makes "
-            f"a substantial, clearly independent point outside the enumeration."
+            load_prompt("1_izluscanje/naslov_nastevanje.txt").format(n=n)
         )
     else:
         block += (
-            "Use the title as context: it tells you the topic and the speaker's "
-            "likely framing. Do not invent arguments from the title alone — "
-            "extract only what the transcript supports."
+            load_prompt("1_izluscanje/naslov_kontekst.txt")
         )
     return block
 
 
 PASS_PROMPTS = {
-    "claim_extraction": """Extract EVERY argument each speaker actually makes in the transcript above.
+    "claim_extraction": load_prompt("1_izluscanje/navodilo.txt"),
 
-The transcript may contain ONE speaker (solo) or MULTIPLE speakers (debate). If solo,
-interview or reaction, include ONLY the primary speaker in `speakers` — for reactions
-that is the reactor. If the speaker presents another thinker's argument ("Aquinas
-argues that..."), attribute it to the speaker: they chose to present it.
+    "argument_structure": load_prompt("2_zmote/navodilo.txt"),
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHAT COUNTS AS AN ARGUMENT — A TEST, NOT A JUDGEMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-An argument is one connected chain: premises → reasoning → conclusion. It ends when
-the speaker moves to a different conclusion that does not rest on the same premises.
+    "rebuttal_mapping": load_prompt("4_zavrnitve/navodilo.txt"),
 
-Do NOT decide which arguments are the "main" ones. That judgement is not reproducible:
-two readings of one transcript pick different subsets, and the analysis then depends on
-which subset was picked rather than on what was said. Apply this test instead, to every
-conclusion the speaker asserts, in transcript order:
+    "synthesis": load_prompt("5_sinteza/navodilo_razprava.txt"),
 
-    Include it if — and only if — the speaker states a conclusion AND gives at least
-    TWO reasons for it in this recording.
-
-Nothing else decides inclusion: not how important the conclusion seems, not how many
-entries you already have, not how much transcript is left. A bare assertion with no
-reason is not an argument. Neither is a conclusion propped up by a single reason —
-that lone reason is almost always a reason for something larger the speaker argues,
-so attach it there as a premise instead of listing it alone.
-
-NO TARGET COUNT: none is required, expected, or inferred from the recording's length.
-If a speaker makes no complete argument, return an empty list for them — never invent
-arguments to fill space. The only thing that may fix a count is the speaker's own
-explicit enumeration (below).
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GROUPING — BY POSITION, NOT BY JUDGEMENT OF SIZE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Do not weigh "fewer, richer" against "more, smaller"; that trade-off is what makes two
-readings disagree. Group mechanically:
-
-  STEP 1. List the distinct POSITIONS this speaker defends — the top-level claims they
-          are here to establish. A position must be a claim that can be AFFIRMED OR
-          DENIED as stated ("smartphones should be banned from classrooms"). It must
-          NOT be a summary gesturing at a set of proposals ("society should take
-          deliberate steps", "there are many harms") — such a wrapper swallows several
-          real positions and hides them as premises. If your position cannot be argued
-          against as written, it is a wrapper: replace it with the actual claims.
-  STEP 2. Attach every conclusion that passed the test to the ONE position it supports.
-          Each conclusion goes to exactly one position. If a claim would fit two, the
-          positions overlap and must be merged or re-cut so nothing appears twice.
-  STEP 3. Each position becomes ONE argument: the position is the `argument` text, the
-          conclusions attached to it are its premises.
-
-MERGE into one argument:
-  • The same conclusion restated, hedged or elaborated — however far apart it sits.
-    Speakers open with a thesis and close by restating it: that is ONE argument.
-  • A series of cases, statistics or historical episodes that all answer the SAME
-    question ("Germany after the Kaiser...", "Russia after the Tsar...") — one
-    argument whose premises are those cases, not one argument per case.
-  • A stepping stone and the conclusion it exists to license — the stepping stone
-    becomes a premise. Likewise a whole CHAIN of principles that exists only to reach
-    one final thesis: record each step as a premise of that single argument.
-
-SEPARATE into distinct arguments:
-  • A different conclusion that stands on its own, on premises of its own
-  • A clear pivot: "another reason is...", "a second point is..."
-  • An item explicitly announced as a separate entry in an enumerated list
-
-EXCEPTION — EXPLICIT ENUMERATION FIXES THE COUNT: if the speaker or the video title
-announces a numbered list ("nine reasons why...", "three arguments against..."), the
-arguments MUST mirror it: one per announced item, in order. Do not merge two announced
-reasons, do not split one.
-
-COUNTER-EXCEPTION — ENUMERATED PREMISES ARE NOT ENUMERATED ARGUMENTS (CRITICAL):
-Enumeration splits arguments only when each numbered item carries its own standalone
-conclusion. A speaker enumerating the PREMISES of a single derivation ("premise one...
-premise seven... THEREFORE God exists") is building ONE argument. Test each item:
-"Does this item ALONE support the speaker's final position?"
-    → works alone       → enumeration of ARGUMENTS, split per item
-    → works only JOINTLY → ONE argument, the items are its premises
-Signals of the one-argument case: the word "premise"/"premisa", a single
-"therefore"/"torej" near the end, formal syllogistic structure, items that are
-non-conclusive statements rather than reasons-for-a-position. A 15-minute video that
-carefully builds ONE deductive argument is ONE argument with many premises — a correct
-extraction, not a lazy one. If any draft entry describes ITSELF as a premise or a step
-("this is the first premise"), you have made this mistake: merge those entries.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHAT IS NOT AN ARGUMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  • A bare assertion the speaker never justifies — a position, not an argument
-  • Asides, insults, mockery, interpersonal disputes — never arguments, and never
-    premises. If an insult comes with a substantive reason, extract only the reason.
-  • META-COMMENTARY about the argument itself: its persuasion record ("this has
-    convinced thousands"), the speaker's history of using it, self-assessment of its
-    quality ("it is undefeatable"). Test: is the conclusion about the debate's subject,
-    or about the argument's reception? If the latter, leave it out — it still informs
-    the fallacy pass, so nothing is lost.
-  • SARCASM/IRONY: extract the speaker's ACTUAL position, not the surface words.
-  • POSITION vs FACT: the position a speaker defends (moral, normative, policy) is the
-    debate itself, not an error — describe it, judge nothing here.
-
-DO NOT cap the output at an arbitrary number; do not inflate it with sub-points that
-belong inside an argument; do not split one idea because it spans many lines; do not
-collapse two distinct lines of reasoning because they sit next to each other; do not
-write an argument longer than the speaker's point requires.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ARGUMENT TEXT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Target 1–3 sentences. Sentence 1 = the conclusion the speaker is claiming. Sentences
-2–3 = the core reasoning, the "why" that links premises to conclusion. That is all.
-Paraphrase to the essence — do not quote long stretches, do not pad with examples or
-flourishes (those go in premises if they do real work, or are dropped). If the speaker
-rambles, capture the spine, not the skin. Use more sentences only when the reasoning
-genuinely needs them.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PREMISES — LOAD-BEARING MINI-ARGUMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-A premise is a statement the argument DEPENDS ON: remove it and the argument weakens
-or falls. If removing it changes nothing, it is filler — leave it out.
-
-Write each premise as a compact mini-argument when the speaker supports it:
-"claim — because/since the reason they gave" (1–2 sentences). If they assert it without
-support, record the bare claim — do NOT invent reasoning. Instead of "Meat production
-emits CO2", write "Meat production drives emissions — the speaker cites FAO data
-attributing ~15% of global greenhouse gases to livestock."
-
-EACH PREMISE MUST: directly support the conclusion; be a complete self-standing claim;
-add something the others do not already cover; pass "without this the argument would
-not work".
-
-NEVER as premises: restatements of the conclusion (circular); transitions and fillers;
-purely illustrative examples; background facts that do not feed the conclusion; vague
-gestures ("look at history") without specifics.
-
-ONE PREMISE PER REASON — NOT PER PIECE OF EVIDENCE (CRITICAL):
-The unit is a REASON, not a fact. When several figures, cases or studies support the
-SAME reason, they belong in ONE premise: state the reason, then list the evidence
-compactly inside that same string.
-
-  WRONG — four premises, one reason:
-    "Teen suicide rose 167% among girls and 91% among boys to 2020."
-    "Eating-disorder admissions in the UK rose six-fold in a decade."
-    "Self-harming among teens rose 500% in nine years."
-    "One in three British children are now short-sighted."
-  RIGHT — one premise:
-    "Children's health indicators have worsened sharply — teen suicide up 167%
-     (girls) and 91% (boys) to 2020, eating-disorder admissions six-fold in a decade,
-     self-harm up 500% in nine years, one in three now short-sighted."
-
-Keep the grouped premise telegraphic: figures preserved, narrative stripped. Lose no
-number — compress the prose around it.
-
-More than about eight premises on one argument signals that you listed EVIDENCE
-separately instead of grouping it by reason: re-read and ask of each pair, "same reason,
-different evidence?" If yes, merge. This is a check on the unit, not a quota — an
-argument genuinely resting on many independent reasons keeps them all. If the speaker
-EXPLICITLY enumerates their premises, record every announced premise that does real
-work, in order; do not compress an explicit derivation to look tidier.
-
-Extract premises faithfully, with zero editorializing. Philosophical, theological and
-scientific axioms are valid starting points, not flaws — describe what was argued;
-judgement happens in the next pass.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHO COUNTS AS A SPEAKER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Use speaker labels EXACTLY as they appear in the transcript. Never guess a real-world
-name: a person mentioned, quoted or reacted to is a third party, not the speaker.
-
-Add someone to `speakers` only if they actively defend a position. A moderator (asks
-questions, summarizes, hands off) is not one; most debates have none — do not force
-the role. A participant who only ATTACKS the opponent's case IS a debater: include them
-with `position` filled and an EMPTY `arguments` list if they make no standalone
-argument. Do not invent arguments to fill it — their rebuttals are captured later.
-
-Record the moderator in `metadata.moderator` (present, label, question count, the
-questions, whether they pressed one debater harder). This is description for the reader;
-they never enter `speakers` and are never scored. USE their words to make the debaters'
-arguments stand alone:
-  • A short reply that only makes sense given the question before it ("It absolutely
-    does.") → fold the question's substance into the argument so it is self-contained.
-  • If the moderator summarizes debater A and B engages with that summary, B is
-    responding to A — map it to A.
-  • If the moderator narrows the topic, read the answer in that narrowed scope.
-
-INCIDENTAL VOICES (audience, crew, one-off interjections): ignore chatter and heckles
-the debaters do not engage with. If a non-debater raises a substantive point the
-debaters address, treat it exactly like a moderator — context only, never in `speakers`.
-A stray "Speaker (chunk 3)" with a line or two nobody engages with is almost always a
-diarization artifact: skip it. If unsure whether someone is a participant, check whether
-they take a stance AND the debaters answer them substantively; if neither, skip.
-
-DEBATE MODE IS STRICTLY 1v1: `speakers` must hold EXACTLY the two debaters. If three or
-more genuinely defend distinct positions, set `metadata.too_many_debaters` to true and
-list them in `metadata.detected_debaters` — the pipeline will stop and tell the user
-rather than silently analysing the wrong pair. If nobody opposes the main speaker, set
-`metadata.too_few_debaters` to true.
-
-Return JSON:
-{
-  "metadata": {
-    "topic": "...",
-    "participants": {"SPEAKER": "primary_speaker|debater|moderator"},
-    "moderator": {
-      "present": false,
-      "name": "speaker label of the moderator, empty if none",
-      "question_count": 0,
-      "questions": ["each question or prompt the moderator put to a debater, verbatim or closely paraphrased"],
-      "pressed_more": "name of the debater the moderator pressed harder, or 'balanced' / 'n/a'",
-      "notes": "1 sentence — how the moderator shaped the exchange (framing, interruptions, topic changes). Empty if none."
-    },
-    "too_many_debaters": false,
-    "too_few_debaters": false,
-    "detected_debaters": ["fill ONLY when too_many_debaters is true — every person actively defending a position"]
-  },
-  "speakers": {
-    "SPEAKER_NAME": {
-      "position": "1-sentence summary of overall position",
-      "arguments": [
-        {
-          "argument": "1-3 sentences: the conclusion + the core 'why'. Direct to the point, no padding. (FINAL/FULLEST version if the speaker developed it later.)",
-          "premises": ["mini-argument: load-bearing claim — plus the speaker's own reason for it, if given", "..."]
-        }
-      ],
-      "conclusions": ["final conclusion 1"]
-    }
-  }
-}
-""",
-
-"argument_structure": """Assess each extracted argument below: does its conclusion follow from its premises,
-and does its reasoning contain a named logical fallacy?
-
-{prev_pass}
-
-HOW TO READ THE INPUT:
-Each argument carries an arg_id, the speaker, the position being defended, and the
-numbered premises given for it. Everything you need is in the argument itself — you are
-NOT looking at a transcript and you must not refer to one.
-
-EVERY judgement you return MUST name the arg_id it belongs to, exactly as written above.
-
-DO NOT REPORT ON THE EXCHANGE. You have the extracted arguments and nothing else — no
-transcript, no ordering, no record of who answered whom. Whether an argument was
-rebutted, how the speaker defended it and whether it survived cannot be read off two
-lists of arguments, and guessing it here would put an invented account of the debate
-next to a real one. A later pass reads the transcript and maps the exchange.
-
-You return ONE thing: a fallacy entry wherever the reasoning carries a NAMED defect.
-Most arguments have none, and returning none for them is the correct result. You do
-not rate arguments that are free of named defects, and you do not grade the ones that
-are not.
-
-FALLACY & ERROR DETECTION:
-Your job is to find the REAL defects in how speakers argue: every one that is there,
-and nothing that is not.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FOUNDATIONAL RULE — UNDERSTAND WHAT THE SPEAKER IS TRYING TO DO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Before flagging ANY fallacy, first answer internally:
-  "What is this speaker actually trying to say, and what argumentative move are they making?"
-
-If they are DEFENDING A POSITION that is the legitimate subject of the debate (moral,
-normative, policy, value-based), that is NOT a fallacy — that is the POINT of debating.
-A speaker saying "X is morally wrong" in a debate ABOUT X is not committing a factual
-error; they are staking their position. Judge the REASONING that supports that position,
-not the position itself.
-
-DO NOT FLAG AS FALLACY:
-- Taking a controversial moral / policy / value stance (that IS the debate)
-- Appealing to a philosophical, religious, or ethical framework as a premise (that is a
-  starting axiom, not a fallacy — even if you disagree with the framework)
-- Defending a minority or unpopular view — unpopularity ≠ fallacy
-- Strong normative claims ("we ought to...", "X is wrong") backed by a reason
-- Factual claims that the speaker happens to get wrong — those are factual errors, not
-  logical fallacies (they belong to the fact-checker, not here)
-
-ONLY FLAG A FALLACY WHEN THE ERROR IS IN THE *STRUCTURE* OF THE REASONING — the argument
-itself is malformed, regardless of whether you agree with the conclusion.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-WHAT TO LOOK FOR:
-1. STRAWMAN: Speaker misrepresents what the opponent said, then attacks the misrepresentation
-2. AD HOMINEM: Character attack IS the argument (not just insults alongside real arguments)
-3. FALSE DILEMMA: Presenting only 2 options when more exist
-4. CIRCULAR REASONING: Conclusion assumes what it's trying to prove
-5. RED HERRING: Changing the subject to avoid the point
-6. APPEAL TO AUTHORITY: "X said it, therefore it's true" without substance
-7. WHATABOUTISM / TU QUOQUE: Responding to criticism by pointing to something else
-8. CHERRY PICKING: Selectively using evidence while ignoring contradicting data
-9. SLIPPERY SLOPE: Claiming one thing will inevitably lead to extreme consequences without justification
-10. MOVING GOALPOSTS: Changing the criteria after the original point was addressed
-11. NON SEQUITUR: Conclusion doesn't follow from the reasoning given
-12. EQUIVOCATION: Using the same word with different meanings to mislead
-13. HASTY GENERALIZATION: Broad conclusion from one or two examples
-14. FALSE CAUSE (post hoc): Treating sequence or correlation as proof of causation
-15. APPEAL TO EMOTION: Emotional pressure REPLACES the argument (fear, pity, outrage with no reasoning behind it)
-16. LOADED QUESTION: Question that smuggles in an unproven accusation ("Why do you keep lying about X?")
-17. MOTTE-AND-BAILEY: Defending a bold claim, then retreating to a trivial version when challenged, as if they were the same claim
-
-WHAT IS NOT A FALLACY:
-- Defending a debate position (normative, moral, policy) — that is the debate itself
-- A factually mistaken claim — that is an error of fact, not of reasoning
-- Strong opinions backed by reasoning
-- Repetition (usually signals opponent is evading)
-- Emotional language with substance behind it
-- Sarcasm or irony (rhetorical devices, not errors)
-- Debating aggressively or persistently
-- Citing a RELEVANT expert on a question inside their expertise (legitimate evidence,
-  not appeal to authority — the fallacy needs missing substance or irrelevant authority)
-- A slippery-slope WARNING where the speaker argues the causal mechanism step by step
-  (only unjustified inevitability is fallacious)
-- An analogy that the speaker explicitly qualifies — imperfect analogies are normal
-  argumentation, not automatic false equivalence
-
-NO QUOTA — REPORT WHAT IS ACTUALLY THERE:
-A heated political debate may genuinely contain many fallacies; a careful academic
-exchange may contain none. Do not pad the list to look thorough, and do not skip
-clear cases to look charitable. Every entry must survive the question: "Can I point
-to the premise that carries it and name the structural failure?" If not, leave it out or mark
-it DEBATABLE.
-
-FALLACY NAMES — USE EXACTLY THESE (CRITICAL FOR CONSISTENCY):
-The `type` field must contain one name from this closed list, verbatim and lowercase.
-Free-form naming makes the same fallacy appear under many labels across runs
-("false cause" / "false cause post hoc" / "post hoc correlation") and destroys any
-comparison between analyses.
-
-FORMAL (errors in the shape of the inference itself):
-  affirming_the_consequent    denying_the_antecedent    undistributed_middle
-  affirming_a_disjunct        illicit_transposition     modal_scope_confusion
-
-INFORMAL (context-dependent):
-  ad_hominem              straw_man               false_dilemma
-  slippery_slope          appeal_to_authority     appeal_to_emotion
-  appeal_to_nature        appeal_to_ignorance     appeal_to_tradition
-  appeal_to_popularity    circular_reasoning      whataboutism
-  cherry_picking          loaded_question         red_herring
-  false_attribution       no_true_scotsman        moving_goalposts
-  burden_of_proof_shift   equivocation
-
-WEAK REASONING (the step holds in principle but is too loose):
-  hasty_generalization    post_hoc                false_equivalence
-  non_sequitur            composition_division    anecdotal_evidence
-
-  other
-
-Guidance for the trickier ones:
-  • post_hoc            — "A came before B, therefore A caused B"
-  • false_equivalence   — two unlike things treated as comparable
-  • cherry_picking      — selecting only the data that fits
-  • whataboutism        — deflecting criticism by pointing at the opponent
-  • equivocation        — a key term silently shifts meaning mid-argument
-  • red_herring         — an irrelevant topic introduced to divert
-  • anecdotal_evidence  — a single story offered as proof of a general rule
-  • other               — ONLY when no name above fits; then name the failure in
-                          `explanation`. Prefer a listed name over `other`.
-
-CATEGORY CALIBRATION (use consistently):
-The `category` field says WHAT KIND of failure this is. Use the grouping above:
-the name you chose already implies the category, and the two must agree.
-
-  • formal         — the error is in the SHAPE of the inference and is visible
-                     without knowing the subject matter. Requires the speaker to
-                     have stated an actual deductive step. Example: "If it rained,
-                     the ground is wet. The ground is wet, therefore it rained."
-                     Rare in speech, because speakers seldom state full syllogisms —
-                     but when someone DOES argue deductively, check the form.
-  • informal       — the step fails because of context, not shape: the appeal is
-                     irrelevant, the opponent's view is distorted, the options are
-                     falsely narrowed. The same move can be legitimate elsewhere.
-  • weak_reasoning — the inference points the right way but is too loose to carry
-                     the conclusion: too small a sample, correlation read as cause,
-                     an analogy stretched past what it supports. Not a broken
-                     argument, an overreaching one.
-
-Do NOT default to `informal`. If the speaker laid out premises and a conclusion and
-the conclusion does not follow from the form, that is `formal`. If the conclusion
-follows but is stronger than the evidence licenses, that is `weak_reasoning`.
-
-Every fallacy entry MUST point at the words that carry the flaw: put the position or
-the premise it sits in — copied from the input above — in `evidence`. Nothing to point
-at → don't flag it. Where the flaw is in a particular premise, give its number in
-`premise_index`; where it is in how the premises reach the conclusion as a whole, leave
-`premise_index` out.
-
-PART B — RHETORIC ≠ FALLACY — CLASSIFY CORRECTLY:
-These are rhetorical DEVICES. Do NOT report them as fallacies when they accompany
-real argumentation:
-  • Hyperbole and dramatic emphasis        • Rhetorical questions
-  • Analogy, metaphor, vivid imagery       • Personal anecdote used as illustration
-  • Humor, irony, sarcasm                  • Anaphora / repetition for emphasis
-  • Framing and loaded word choice         • Appeals to shared values
-The SAME move becomes a fallacy ONLY when it REPLACES the argument (e.g. emotional
-appeal with no reasoning = appeal to emotion; anecdote presented as proof of a
-general rule = hasty generalization). Ask: "If I strip this device away, is there
-still an argument left?" Yes → rhetoric, do not report it. No → consider a fallacy.
-
-Sarcasm and irony are not fallacies either: read the speaker's ACTUAL position, not
-the surface words, before deciding whether anything is wrong with the reasoning.
-
-AMBIGUOUS CASES — IMPORTANT:
-Sometimes a statement COULD be a fallacy OR a legitimate rhetorical device — it depends on interpretation.
-For example: using the Titanic to argue about patriarchy could be a "cherry-picked example" OR a "legitimate
-illustrative example" depending on context. In these cases:
-- Still include it, but say so in the explanation
-- Present BOTH interpretations: "This could be seen as [fallacy] because [...],
-  but it could also be interpreted as [legitimate use] because [...]."
-- Let the reader decide — your job is to flag it and explain both sides.
-
-Return JSON:
-{{
-  "fallacies": [
-    {{
-      "arg_id": "the arg_id of the argument this was found in, exactly as given",
-      "premise_index": 0,
-      "speaker": "...",
-      "type": "one name from the closed list above, verbatim (lowercase, underscores)",
-      "category": "formal|informal|weak_reasoning",
-      "evidence": "the position or premise that carries the flaw, copied from the input",
-      "explanation": "why this is a fallacy, OR if ambiguous: both interpretations"
-    }}
-  ]
-}}""",
-
-    "rebuttal_mapping": """Analyze the debate transcript (provided above) focusing on argumentative exchanges, rebuttals, AND evasion patterns.
-
-ARGUMENTS IDENTIFIED:
-{prev_pass}
-
-MODERATOR — CONTEXT, NOT CONTENT:
-  • Moderator questions are FACILITATION, not rebuttals. Never list them as rebuttals,
-    arguments, or as evasion targets between debaters.
-  • Do NOT flag a debater for "evading" a moderator's routine question (evasion only
-    counts between debaters — pressure from one side, dodge from the other).
-  • DO use moderator content as a BRIDGE when reading the transcript: if the moderator
-    summarizes debater A and debater B then responds, B is rebutting A (channeled
-    through the moderator). Set "by": "B", "to": "A" — not to the moderator.
-  • Use moderator sub-questions to disambiguate WHICH of A's arguments B is responding
-    to (so the rebuttal mapping is precise).
-
-INCIDENTAL VOICES (audience, off-camera crew, brief interjections):
-  • Ignore irrelevant chatter entirely.
-  • If a non-debater raises a substantive point and the debaters engage with it,
-    treat the non-debater like a moderator (bridge, not participant). Map any
-    rebuttal to the actual debater whose position is being contested, not the
-    incidental voice.
-
-Map every significant rebuttal between debaters. For each:
-- "target_arg_id": copy the arg_id of the challenged argument from ARGUMENTS IDENTIFIED, VERBATIM.
-  This links the rebuttal to the exact argument — get it right.
-- "target_claim": copy the exact argument text from ARGUMENTS IDENTIFIED that is being challenged (so it can be matched)
-- "rebuttal_content": 1-2 sentences max — just the core of the rebuttal, no long explanation
-- "response": 1 sentence — how the original speaker reacted
-
-Record what was said, not who you think won. Whether the argument survived the
-exchange is left to the reader.
-
-Rebuttal types: direct_contradiction | undermining_premise | alternative_explanation | questioning_warrant
-
-CRITICALLY — Detect EVASION and NON-ANSWERS:
-- When a direct question is asked and the speaker deflects, pivots, or gives a non-answer
-- When a speaker repeats the same question — they are NOT getting an answer (the non-answerer is evading)
-- When a speaker changes the subject instead of addressing the point raised
-
-Return JSON:
-{{
-  "rebuttals": [
-    {{
-      "by": "speaker who makes the rebuttal",
-      "to": "speaker whose argument is being rebutted",
-      "target_arg_id": "copy the arg_id of the targeted argument from ARGUMENTS IDENTIFIED (verbatim)",
-      "target_claim": "exact argument text from ARGUMENTS IDENTIFIED",
-      "rebuttal_type": "direct_contradiction|undermining_premise|alternative_explanation|questioning_warrant",
-      "rebuttal_content": "1-2 sentence rebuttal — core point only",
-      "response": "1 sentence — original speaker's reaction"
-    }}
-  ],
-  "evasions": [
-    {{
-      "evading_speaker": "who avoided answering",
-      "question_asked": "the direct question or challenge in 1 sentence",
-      "evasion_type": "deflection|topic_change|non_answer|partial_answer|talked_over",
-      "times_asked": 1,
-      "explanation": "1-2 sentences — how the speaker avoided answering"
-    }}
-  ]
-}}""",
-
-    "synthesis": """You are synthesizing a complete debate analysis from multiple specialized analyses.
-
-CLAIM EXTRACTION: {claims_pass}
-REBUTTALS: {rebuttal_pass}
-FALLACIES: {fallacy_pass}
-FACT-CHECK DATA: {fact_check_data}
-
-This is a 1v1 debate: EXACTLY TWO debaters, taken from the claim extraction. A
-moderator, host or audience member is not one of them.
-
-CRITICAL RULES:
-- MODERATOR EXCLUSION: If a moderator was present, EXCLUDE them entirely from the
-  per-speaker evaluation. The moderator is NOT a debater and must NEVER be assessed
-  alongside the two debaters. Their influence on the exchange is reported separately
-  in `moderator_influence`.
-- NO VERDICT: Do NOT declare a winner and do NOT rank the debaters. Never state that
-  one side "won", "dominated", "prevailed" or "made the stronger case", and never
-  award a category to either debater. Describe what each side argued and how they
-  argued it, and leave the conclusion to the reader. Do NOT rate the quality of
-  anyone's case. This applies to EVERY field below, including `summary`.
-- DEFENSIVE ROLES ARE LEGITIMATE: A debater may contribute mainly by DEFENCE — making
-  few (or even zero) own arguments while dismantling the opponent's case. Describe
-  that as what it is. Do NOT treat a low own-argument count as a shortcoming.
-- EVASION PATTERNS: Record who avoided answering direct questions from the OTHER
-  debater, as the rebuttal pass listed them. Report the dodge, do not grade it.
-- DEBATABLE CLAIMS: Not everything is TRUE/FALSE — acknowledge legitimately debatable
-  positions.
-- FALLACIES: report them exactly as the fallacy pass listed them. Do not add, drop
-  or re-grade any.
-
-Return JSON:
-{{
-  "comparative_evaluation": {{
-    "moderator_influence":     {{"present": false, "question_count": 0, "pressed_more": "<debater|balanced|n/a>", "notes": "1-2 sentences on how the moderator's questions shaped the exchange — descriptive only, the moderator is never assessed alongside the debaters"}},
-    "per_speaker": {{
-      "<debater_name>": {{
-        "rhetorical_style": "1 sentence — HOW they argued (tone, structure, use of examples). Describe the style, do not rate it.",
-        "factual_accuracy": "1 sentence restating what the fact-check data says about their claims"
-      }}
-    }},
-  }},
-  "summary": "4-6 sentence account: the main clash points, what each debater argued and what they rested it on, evasion patterns, and which questions were left open. DESCRIBE, do not judge — no winner, no ranking, no 'stronger case', no 'strengths and weaknesses', no overall verdict."
-}}
-
-NOTES ON moderator_influence FIELD:
-  • present: true only if an actual moderator / host / interviewer facilitated the debate
-  • question_count: how many questions or prompts they put to the debaters
-  • pressed_more: the debater who faced the tougher questioning, or "balanced" when even
-  • notes: descriptive only — e.g. "framed every question around cost, which favoured X's
-    prepared material" or "interrupted Y twice mid-answer". NEVER assess the moderator
-    alongside the debaters and never count their questions as rebuttals.""",
-
-    "synthesis_single_speaker": """You are synthesizing a complete analysis of a single speaker.
-
-The recording is a SINGLE-SPEAKER piece — solo speech, lecture, op-ed, interview,
-OR a reaction/commentary video where the speaker is responding to external content.
-The unifying frame: ONE person making arguments.
-
-ARGUMENT EXTRACTION:    {claims_pass}
-FALLACIES:              {fallacy_pass}
-FACT-CHECK DATA:        {fact_check_data}
-
-There is NO opponent in this recording, so there is nothing to compare against.
-Describe what the speaker argued. Do NOT rate how good it was.
-
-Return JSON:
-{{
-  "single_speaker_evaluation": {{
-    "unsupported_claims": ["a claim the speaker asserted without giving any reason or evidence for it, in their own words"]
-  }},
-  "summary": "4-6 sentence descriptive account: what the speaker argues, which positions they take and what they rest them on. No rating, no verdict, no 'strong' or 'weak'."
-}}""",
+    "synthesis_single_speaker": load_prompt("5_sinteza/navodilo_en_govorec.txt"),
 }
 
 

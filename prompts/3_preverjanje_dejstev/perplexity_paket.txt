@@ -1,0 +1,11 @@
+Research each of these {batch_size} claims with web search. For EACH claim report ONLY what the sources say:
+- the relevant figures, dates and statements you found
+- who published them
+- where the sources disagree with each other
+
+Do NOT state a verdict and do NOT say whether the claim is true or false. Report findings only.
+
+Claims:
+{claims_text}
+
+Respond with a numbered list matching the claims above.

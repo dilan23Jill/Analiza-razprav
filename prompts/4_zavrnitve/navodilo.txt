@@ -1,0 +1,63 @@
+Analyze the debate transcript (provided above) focusing on argumentative exchanges, rebuttals, AND evasion patterns.
+
+ARGUMENTS IDENTIFIED:
+{prev_pass}
+
+MODERATOR — CONTEXT, NOT CONTENT:
+  • Moderator questions are FACILITATION, not rebuttals. Never list them as rebuttals,
+    arguments, or as evasion targets between debaters.
+  • Do NOT flag a debater for "evading" a moderator's routine question (evasion only
+    counts between debaters — pressure from one side, dodge from the other).
+  • DO use moderator content as a BRIDGE when reading the transcript: if the moderator
+    summarizes debater A and debater B then responds, B is rebutting A (channeled
+    through the moderator). Set "by": "B", "to": "A" — not to the moderator.
+  • Use moderator sub-questions to disambiguate WHICH of A's arguments B is responding
+    to (so the rebuttal mapping is precise).
+
+INCIDENTAL VOICES (audience, off-camera crew, brief interjections):
+  • Ignore irrelevant chatter entirely.
+  • If a non-debater raises a substantive point and the debaters engage with it,
+    treat the non-debater like a moderator (bridge, not participant). Map any
+    rebuttal to the actual debater whose position is being contested, not the
+    incidental voice.
+
+Map every significant rebuttal between debaters. For each:
+- "target_arg_id": copy the arg_id of the challenged argument from ARGUMENTS IDENTIFIED, VERBATIM.
+  This links the rebuttal to the exact argument — get it right.
+- "target_claim": copy the exact argument text from ARGUMENTS IDENTIFIED that is being challenged (so it can be matched)
+- "rebuttal_content": 1-2 sentences max — just the core of the rebuttal, no long explanation
+- "response": 1 sentence — how the original speaker reacted
+
+Record what was said, not who you think won. Whether the argument survived the
+exchange is left to the reader.
+
+Rebuttal types: direct_contradiction | undermining_premise | alternative_explanation | questioning_warrant
+
+CRITICALLY — Detect EVASION and NON-ANSWERS:
+- When a direct question is asked and the speaker deflects, pivots, or gives a non-answer
+- When a speaker repeats the same question — they are NOT getting an answer (the non-answerer is evading)
+- When a speaker changes the subject instead of addressing the point raised
+
+Return JSON:
+{{
+  "rebuttals": [
+    {{
+      "by": "speaker who makes the rebuttal",
+      "to": "speaker whose argument is being rebutted",
+      "target_arg_id": "copy the arg_id of the targeted argument from ARGUMENTS IDENTIFIED (verbatim)",
+      "target_claim": "exact argument text from ARGUMENTS IDENTIFIED",
+      "rebuttal_type": "direct_contradiction|undermining_premise|alternative_explanation|questioning_warrant",
+      "rebuttal_content": "1-2 sentence rebuttal — core point only",
+      "response": "1 sentence — original speaker's reaction"
+    }}
+  ],
+  "evasions": [
+    {{
+      "evading_speaker": "who avoided answering",
+      "question_asked": "the direct question or challenge in 1 sentence",
+      "evasion_type": "deflection|topic_change|non_answer|partial_answer|talked_over",
+      "times_asked": 1,
+      "explanation": "1-2 sentences — how the speaker avoided answering"
+    }}
+  ]
+}}

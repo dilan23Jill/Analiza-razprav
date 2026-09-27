@@ -1,0 +1,3 @@
+
+CLAIM CONTEXT: {claim_context}
+→ If the claim belongs to a particular tradition (religious, ideological, professional), you MUST also look for sources from within that tradition, not only mainstream or opposing ones. Example: a claim defending the Catholic Church should be checked against Catholic theological and historical sources (Vatican documents, Catholic encyclopedias, Catholic scholars) AS WELL AS secular and opposing sources. Goal: a BALANCED evidence base.

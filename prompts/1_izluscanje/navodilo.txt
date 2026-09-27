@@ -1,0 +1,229 @@
+Extract EVERY argument each speaker actually makes in the transcript above.
+
+The transcript may contain ONE speaker (solo) or MULTIPLE speakers (debate). If solo,
+interview or reaction, include ONLY the primary speaker in `speakers` — for reactions
+that is the reactor. If the speaker presents another thinker's argument ("Aquinas
+argues that..."), attribute it to the speaker: they chose to present it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT COUNTS AS AN ARGUMENT — A TEST, NOT A JUDGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+An argument is one connected chain: premises → reasoning → conclusion. It ends when
+the speaker moves to a different conclusion that does not rest on the same premises.
+
+Do NOT decide which arguments are the "main" ones. That judgement is not reproducible:
+two readings of one transcript pick different subsets, and the analysis then depends on
+which subset was picked rather than on what was said. Apply this test instead, to every
+conclusion the speaker asserts, in transcript order:
+
+    Include it if — and only if — the speaker states a conclusion AND gives at least
+    TWO reasons for it in this recording.
+
+Nothing else decides inclusion: not how important the conclusion seems, not how many
+entries you already have, not how much transcript is left. A bare assertion with no
+reason is not an argument. Neither is a conclusion propped up by a single reason —
+that lone reason is almost always a reason for something larger the speaker argues,
+so attach it there as a premise instead of listing it alone.
+
+NO TARGET COUNT: none is required, expected, or inferred from the recording's length.
+If a speaker makes no complete argument, return an empty list for them — never invent
+arguments to fill space. The only thing that may fix a count is the speaker's own
+explicit enumeration (below).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GROUPING — BY POSITION, NOT BY JUDGEMENT OF SIZE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Do not weigh "fewer, richer" against "more, smaller"; that trade-off is what makes two
+readings disagree. Group mechanically:
+
+  STEP 1. List the distinct POSITIONS this speaker defends — the top-level claims they
+          are here to establish. A position must be a claim that can be AFFIRMED OR
+          DENIED as stated ("smartphones should be banned from classrooms"). It must
+          NOT be a summary gesturing at a set of proposals ("society should take
+          deliberate steps", "there are many harms") — such a wrapper swallows several
+          real positions and hides them as premises. If your position cannot be argued
+          against as written, it is a wrapper: replace it with the actual claims.
+  STEP 2. Attach every conclusion that passed the test to the ONE position it supports.
+          Each conclusion goes to exactly one position. If a claim would fit two, the
+          positions overlap and must be merged or re-cut so nothing appears twice.
+  STEP 3. Each position becomes ONE argument: the position is the `argument` text, the
+          conclusions attached to it are its premises.
+
+MERGE into one argument:
+  • The same conclusion restated, hedged or elaborated — however far apart it sits.
+    Speakers open with a thesis and close by restating it: that is ONE argument.
+  • A series of cases, statistics or historical episodes that all answer the SAME
+    question ("Germany after the Kaiser...", "Russia after the Tsar...") — one
+    argument whose premises are those cases, not one argument per case.
+  • A stepping stone and the conclusion it exists to license — the stepping stone
+    becomes a premise. Likewise a whole CHAIN of principles that exists only to reach
+    one final thesis: record each step as a premise of that single argument.
+
+SEPARATE into distinct arguments:
+  • A different conclusion that stands on its own, on premises of its own
+  • A clear pivot: "another reason is...", "a second point is..."
+  • An item explicitly announced as a separate entry in an enumerated list
+
+EXCEPTION — EXPLICIT ENUMERATION FIXES THE COUNT: if the speaker or the video title
+announces a numbered list ("nine reasons why...", "three arguments against..."), the
+arguments MUST mirror it: one per announced item, in order. Do not merge two announced
+reasons, do not split one.
+
+COUNTER-EXCEPTION — ENUMERATED PREMISES ARE NOT ENUMERATED ARGUMENTS (CRITICAL):
+Enumeration splits arguments only when each numbered item carries its own standalone
+conclusion. A speaker enumerating the PREMISES of a single derivation ("premise one...
+premise seven... THEREFORE God exists") is building ONE argument. Test each item:
+"Does this item ALONE support the speaker's final position?"
+    → works alone       → enumeration of ARGUMENTS, split per item
+    → works only JOINTLY → ONE argument, the items are its premises
+Signals of the one-argument case: the word "premise"/"premisa", a single
+"therefore"/"torej" near the end, formal syllogistic structure, items that are
+non-conclusive statements rather than reasons-for-a-position. A 15-minute video that
+carefully builds ONE deductive argument is ONE argument with many premises — a correct
+extraction, not a lazy one. If any draft entry describes ITSELF as a premise or a step
+("this is the first premise"), you have made this mistake: merge those entries.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT IS NOT AN ARGUMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • A bare assertion the speaker never justifies — a position, not an argument
+  • Asides, insults, mockery, interpersonal disputes — never arguments, and never
+    premises. If an insult comes with a substantive reason, extract only the reason.
+  • META-COMMENTARY about the argument itself: its persuasion record ("this has
+    convinced thousands"), the speaker's history of using it, self-assessment of its
+    quality ("it is undefeatable"). Test: is the conclusion about the debate's subject,
+    or about the argument's reception? If the latter, leave it out — it still informs
+    the fallacy pass, so nothing is lost.
+  • SARCASM/IRONY: extract the speaker's ACTUAL position, not the surface words.
+  • POSITION vs FACT: the position a speaker defends (moral, normative, policy) is the
+    debate itself, not an error — describe it, judge nothing here.
+
+DO NOT cap the output at an arbitrary number; do not inflate it with sub-points that
+belong inside an argument; do not split one idea because it spans many lines; do not
+collapse two distinct lines of reasoning because they sit next to each other; do not
+write an argument longer than the speaker's point requires.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ARGUMENT TEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Target 1–3 sentences. Sentence 1 = the conclusion the speaker is claiming. Sentences
+2–3 = the core reasoning, the "why" that links premises to conclusion. That is all.
+Paraphrase to the essence — do not quote long stretches, do not pad with examples or
+flourishes (those go in premises if they do real work, or are dropped). If the speaker
+rambles, capture the spine, not the skin. Use more sentences only when the reasoning
+genuinely needs them.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PREMISES — LOAD-BEARING MINI-ARGUMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A premise is a statement the argument DEPENDS ON: remove it and the argument weakens
+or falls. If removing it changes nothing, it is filler — leave it out.
+
+Write each premise as a compact mini-argument when the speaker supports it:
+"claim — because/since the reason they gave" (1–2 sentences). If they assert it without
+support, record the bare claim — do NOT invent reasoning. Instead of "Meat production
+emits CO2", write "Meat production drives emissions — the speaker cites FAO data
+attributing ~15% of global greenhouse gases to livestock."
+
+EACH PREMISE MUST: directly support the conclusion; be a complete self-standing claim;
+add something the others do not already cover; pass "without this the argument would
+not work".
+
+NEVER as premises: restatements of the conclusion (circular); transitions and fillers;
+purely illustrative examples; background facts that do not feed the conclusion; vague
+gestures ("look at history") without specifics.
+
+ONE PREMISE PER REASON — NOT PER PIECE OF EVIDENCE (CRITICAL):
+The unit is a REASON, not a fact. When several figures, cases or studies support the
+SAME reason, they belong in ONE premise: state the reason, then list the evidence
+compactly inside that same string.
+
+  WRONG — four premises, one reason:
+    "Teen suicide rose 167% among girls and 91% among boys to 2020."
+    "Eating-disorder admissions in the UK rose six-fold in a decade."
+    "Self-harming among teens rose 500% in nine years."
+    "One in three British children are now short-sighted."
+  RIGHT — one premise:
+    "Children's health indicators have worsened sharply — teen suicide up 167%
+     (girls) and 91% (boys) to 2020, eating-disorder admissions six-fold in a decade,
+     self-harm up 500% in nine years, one in three now short-sighted."
+
+Keep the grouped premise telegraphic: figures preserved, narrative stripped. Lose no
+number — compress the prose around it.
+
+More than about eight premises on one argument signals that you listed EVIDENCE
+separately instead of grouping it by reason: re-read and ask of each pair, "same reason,
+different evidence?" If yes, merge. This is a check on the unit, not a quota — an
+argument genuinely resting on many independent reasons keeps them all. If the speaker
+EXPLICITLY enumerates their premises, record every announced premise that does real
+work, in order; do not compress an explicit derivation to look tidier.
+
+Extract premises faithfully, with zero editorializing. Philosophical, theological and
+scientific axioms are valid starting points, not flaws — describe what was argued;
+judgement happens in the next pass.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHO COUNTS AS A SPEAKER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Use speaker labels EXACTLY as they appear in the transcript. Never guess a real-world
+name: a person mentioned, quoted or reacted to is a third party, not the speaker.
+
+Add someone to `speakers` only if they actively defend a position. A moderator (asks
+questions, summarizes, hands off) is not one; most debates have none — do not force
+the role. A participant who only ATTACKS the opponent's case IS a debater: include them
+with `position` filled and an EMPTY `arguments` list if they make no standalone
+argument. Do not invent arguments to fill it — their rebuttals are captured later.
+
+Record the moderator in `metadata.moderator` (present, label, question count, the
+questions, whether they pressed one debater harder). This is description for the reader;
+they never enter `speakers` and are never scored. USE their words to make the debaters'
+arguments stand alone:
+  • A short reply that only makes sense given the question before it ("It absolutely
+    does.") → fold the question's substance into the argument so it is self-contained.
+  • If the moderator summarizes debater A and B engages with that summary, B is
+    responding to A — map it to A.
+  • If the moderator narrows the topic, read the answer in that narrowed scope.
+
+INCIDENTAL VOICES (audience, crew, one-off interjections): ignore chatter and heckles
+the debaters do not engage with. If a non-debater raises a substantive point the
+debaters address, treat it exactly like a moderator — context only, never in `speakers`.
+A stray "Speaker (chunk 3)" with a line or two nobody engages with is almost always a
+diarization artifact: skip it. If unsure whether someone is a participant, check whether
+they take a stance AND the debaters answer them substantively; if neither, skip.
+
+DEBATE MODE IS STRICTLY 1v1: `speakers` must hold EXACTLY the two debaters. If three or
+more genuinely defend distinct positions, set `metadata.too_many_debaters` to true and
+list them in `metadata.detected_debaters` — the pipeline will stop and tell the user
+rather than silently analysing the wrong pair. If nobody opposes the main speaker, set
+`metadata.too_few_debaters` to true.
+
+Return JSON:
+{
+  "metadata": {
+    "topic": "...",
+    "participants": {"SPEAKER": "primary_speaker|debater|moderator"},
+    "moderator": {
+      "present": false,
+      "name": "speaker label of the moderator, empty if none",
+      "question_count": 0,
+      "questions": ["each question or prompt the moderator put to a debater, verbatim or closely paraphrased"],
+      "pressed_more": "name of the debater the moderator pressed harder, or 'balanced' / 'n/a'",
+      "notes": "1 sentence — how the moderator shaped the exchange (framing, interruptions, topic changes). Empty if none."
+    },
+    "too_many_debaters": false,
+    "too_few_debaters": false,
+    "detected_debaters": ["fill ONLY when too_many_debaters is true — every person actively defending a position"]
+  },
+  "speakers": {
+    "SPEAKER_NAME": {
+      "position": "1-sentence summary of overall position",
+      "arguments": [
+        {
+          "argument": "1-3 sentences: the conclusion + the core 'why'. Direct to the point, no padding. (FINAL/FULLEST version if the speaker developed it later.)",
+          "premises": ["mini-argument: load-bearing claim — plus the speaker's own reason for it, if given", "..."]
+        }
+      ],
+      "conclusions": ["final conclusion 1"]
+    }
+  }
+}

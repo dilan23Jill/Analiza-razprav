@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+from prompt_loader import load_prompt
 import os
 import re
 import urllib.parse
@@ -22,27 +23,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # MERILA ZA RAZSODBO
-VERDICT_RULES = """VERDICT DEFINITIONS — apply consistently:
-  • TRUE            — core assertion accurate as stated (minor rounding tolerated)
-  • PARTIALLY_TRUE  — right direction, but a figure is off by more than rounding
-                      without changing the point, or important qualifying context
-                      is missing
-  • MISLEADING      — contains technically true elements but creates a FALSE overall
-                      impression (framing, cherry-picked baseline, critical omission)
-  • FALSE           — core assertion contradicted by reliable sources
-  • UNVERIFIABLE    — no adequate sources either way (do NOT guess)
-
-HOW TO JUDGE — three rules, applied in this order:
-  1. WHAT IS CLAIMED: read the claim by the impression it leaves on a listener,
-     not only its literal phrasing. This decides WHAT is being asserted.
-  2. WHEN: verify that assertion AS OF THE TIME IT WAS MADE where context allows.
-     A claim that was true when stated but is outdated now is TRUE, with the
-     explanation saying it is outdated — never FALSE.
-  3. QUALIFIERS BIND: dates, named entities and scope words (all / most / only /
-     first / never) are part of the assertion. If one is wrong, the claim is FALSE
-     even when the rest is right — an event misdated by a year is FALSE, not
-     PARTIALLY_TRUE. A figure that is close but not exact is PARTIALLY_TRUE; a
-     figure wrong enough to change the point is FALSE."""
+VERDICT_RULES = load_prompt("3_preverjanje_dejstev/merila_razsodbe.txt")
 
 
 # retry decorator (no external deps)
@@ -227,28 +208,7 @@ class FactChecker:
 
         lang_instruction = t("llm.language_instruction")
 
-        prompt = f"""Analyze each claim below and determine if it contains MULTIPLE independent
-verifiable facts. If a claim makes 2+ distinct factual assertions, decompose it into atomic
-sub-claims that can each be verified independently.
-
-RULES:
-- Only decompose claims that CLEARLY contain multiple independent facts
-- Each sub-claim must be self-contained and verifiable on its own
-- Keep simple claims unchanged (output them as-is)
-- Preserve the speaker, claim_type, and context from the original
-- Add "parent_claim" field referencing the original text when decomposing
-
-Return ONLY valid JSON:
-{{"decomposed": [
-  {{"original_index": 1, "sub_claims": [
-    {{"exact_claim": "atomic claim 1", "claim_type": "...", "context": "..."}},
-    {{"exact_claim": "atomic claim 2", "claim_type": "...", "context": "..."}}
-  ]}},
-  {{"original_index": 2, "sub_claims": [
-    {{"exact_claim": "unchanged simple claim", "claim_type": "...", "context": "..."}}
-  ]}}
-]}}
-{lang_instruction}"""
+        prompt = load_prompt("3_preverjanje_dejstev/razgradnja.txt").format(lang_instruction=lang_instruction)
 
         try:
             decomp_model = cfg("fact_checking.decompose_model", "gpt-4o-mini")
@@ -671,15 +631,7 @@ Return ONLY valid JSON:
                 messages=[{
                     "role": "user",
                     "content": (
-                        f"Research each of these {batch_size} claims with web search. "
-                        "For EACH claim report ONLY what the sources say:\n"
-                        "- the relevant figures, dates and statements you found\n"
-                        "- who published them\n"
-                        "- where the sources disagree with each other\n\n"
-                        "Do NOT state a verdict and do NOT say whether the claim is "
-                        "true or false. Report findings only.\n\n"
-                        f"Claims:\n{claims_text}\n\n"
-                        "Respond with a numbered list matching the claims above."
+                        load_prompt("3_preverjanje_dejstev/perplexity_paket.txt").format(batch_size=batch_size, claims_text=claims_text)
                     ),
                 }],
             )
@@ -723,11 +675,7 @@ Return ONLY valid JSON:
                 messages=[{
                     "role": "user",
                     "content": (
-                        "Research this claim with web search and report ONLY what the "
-                        "sources say: relevant figures, dates and statements, who "
-                        "published them, and where sources disagree. Do NOT state a "
-                        "verdict.\n\n"
-                        f"Claim: \"{claim}\"\nType: {claim_type}"
+                        load_prompt("3_preverjanje_dejstev/perplexity.txt").format(claim=claim, claim_type=claim_type)
                     ),
                 }],
             )
@@ -782,46 +730,11 @@ Return ONLY valid JSON:
         lang_instruction = t("llm.language_instruction")
 
         stance_block = (
-            f"\nCLAIM CONTEXT: {claim_context}\n"
-            "→ If the claim belongs to a particular tradition (religious, ideological, "
-            "professional), you MUST also look for sources from within that tradition, not "
-            "only mainstream or opposing ones. Example: a claim defending the Catholic Church "
-            "should be checked against Catholic theological and historical sources (Vatican "
-            "documents, Catholic encyclopedias, Catholic scholars) AS WELL AS secular and "
-            "opposing sources. Goal: a BALANCED evidence base.\n"
+            load_prompt("3_preverjanje_dejstev/grok_kontekst.txt").format(claim_context=claim_context)
             if claim_context else ""
         )
 
-        prompt = f"""You are a researcher with access to live web search and X (Twitter).
-Gather material on this claim. You do NOT judge it — another step does that.
-
-CLAIM: "{claim}"
-TYPE: {claim_type}{stance_block}
-INSTRUCTIONS:
-1. Search the web for authoritative sources about this claim.
-2. SOURCE BALANCE: if the claim is associated with a particular tradition (religious,
-   ideological, professional), include sources FROM that tradition AS WELL AS
-   independent and opposing ones.
-3. Search X for public discourse and expert commentary on the claim.
-4. Report the figures, dates and statements the sources give, who published them,
-   and where the sources contradict each other.
-5. Note whether a source describes the situation at the time the claim was made or
-   at some later date.
-6. Do NOT say whether the claim is true or false, and do NOT give a verdict.
-
-Return ONLY valid JSON:
-{{
-  "findings": "4-6 sentences: what the web sources and X discourse actually say, with figures and dates",
-  "web_sources": [
-    {{
-      "title": "...",
-      "url": "https://...",
-      "perspective": "speaker_aligned|neutral|opposing",
-      "relevant_quote": "..."
-    }}
-  ]
-}}
-{lang_instruction}"""
+        prompt = load_prompt("3_preverjanje_dejstev/grok.txt").format(claim=claim, claim_type=claim_type, stance_block=stance_block, lang_instruction=lang_instruction)
 
         try:
             response = self._grok_client.chat.completions.create(
@@ -852,9 +765,7 @@ Return ONLY valid JSON:
             response = self.client.chat.completions.create(
                 model=model,
                 messages=[{"role": "system", "content":
-                           "Translate the claim into 3 to 6 English search keywords for "
-                           "a scholarly database. Keep names, numbers and years. Return "
-                           "only the keywords separated by spaces."},
+                           load_prompt("3_preverjanje_dejstev/kljucne_besede.txt")},
                           {"role": "user", "content": claim}],
                 **sampling_kwargs(model, 0.0),
             )
@@ -981,43 +892,11 @@ Return ONLY valid JSON:
         stance_block = ""
         if claim_context:
             stance_block = (
-                f"\nCLAIM CONTEXT: {claim_context}\n"
-                "→ Aim for a BALANCED source set: if the claim belongs to a particular "
-                "tradition, include sources from within it AS WELL AS independent and "
-                "opposing sources. Tag each source with `perspective`: \"aligned\", "
-                "\"neutral\" or \"opposing\".\n"
+                load_prompt("3_preverjanje_dejstev/spletno_iskanje_kontekst.txt").format(claim_context=claim_context)
             )
 
         lang_instruction = t("llm.language_instruction")
-        prompt = f"""You are a researcher. Gather material on the claim below with REAL web
-search. You do NOT judge the claim — a separate step does that.
-
-CLAIM: "{claim}"
-TYPE: {claim_type}{stance_block}
-INSTRUCTIONS:
-1. Search for PRIMARY and AUTHORITATIVE sources.
-2. Find AT LEAST 2-3 INDEPENDENT sources, on different domains.
-3. For numerical claims report the EXACT figure each source gives.
-4. For quotes find the original wording and the surrounding context.
-5. Report where the sources contradict each other instead of picking a side.
-6. State, for each figure, WHICH POINT IN TIME it describes.
-7. Do NOT say whether the claim is true or false, and do NOT give a verdict.
-
-Return ONLY valid JSON:
-{{
-  "findings": "4-6 sentences: what the sources actually say, with figures and dates",
-  "sources": [
-    {{
-      "title": "Source title",
-      "url": "https://...",
-      "date": "YYYY-MM-DD or YYYY or Unknown",
-      "relevant_quote": "Key finding, verbatim where possible",
-      "source_type": "official_stat|peer_reviewed|fact_checker|news|other",
-      "perspective": "aligned|neutral|opposing"
-    }}
-  ]
-}}
-{lang_instruction}"""
+        prompt = load_prompt("3_preverjanje_dejstev/spletno_iskanje.txt").format(claim=claim, claim_type=claim_type, stance_block=stance_block, lang_instruction=lang_instruction)
 
         try:
             response = self.client.responses.create(
@@ -1267,45 +1146,7 @@ Return ONLY valid JSON:
         stance = ev.get("claim_context") or ""
         stance_line = f"\nCLAIM CONTEXT: {stance}\n" if stance else ""
 
-        return f"""You are a professional fact-checker. Every source below was retrieved by
-this system. You have NO search of your own: judge the claim on this material and on
-nothing else. If the material does not settle the claim, say UNVERIFIABLE.
-
-CLAIM: "{claim}"
-TYPE: {claim_type}{stance_line}
-{material}
-
-{VERDICT_RULES}
-
-ALSO:
-- Weigh the material by what it shows, not by how many collectors mention it. Several
-  collectors reporting the same underlying source is still one source.
-- Where the material contradicts itself, say so in the explanation rather than picking
-  the more convenient side.
-- Never invent a source or a URL. Refer to sources only by their number.
-
-THEN GO THROUGH THE SOURCE LIST ONE BY ONE. For every number in it, say which of the
-same five verdicts THAT SOURCE ON ITS OWN supports for the claim, judged only from the
-title, date and quoted text you were shown for it:
-- TRUE / PARTIALLY_TRUE / MISLEADING / FALSE — the source speaks to the claim and points
-  that way
-- UNVERIFIABLE — the source is about something else, or says too little to point either
-  way. Use this whenever you are not sure; do not guess a direction.
-Your own verdict need not match the majority. A single official statistic can outweigh
-several pages that merely repeat each other, and you should say so in the explanation
-when it does.
-
-Return ONLY valid JSON:
-{{
-  "verdict": "TRUE|PARTIALLY_TRUE|MISLEADING|FALSE|UNVERIFIABLE",
-  "explanation": "3-5 sentences with the specific figures and dates the material gives",
-  "sources": [
-    {{"n": 1, "verdict": "TRUE|PARTIALLY_TRUE|MISLEADING|FALSE|UNVERIFIABLE"}},
-    {{"n": 2, "verdict": "..."}}
-  ],
-  "correction": "If FALSE or MISLEADING: the accurate information in one sentence. Otherwise an empty string"
-}}
-{t("llm.language_instruction")}"""
+        return load_prompt("3_preverjanje_dejstev/razsodba.txt").format(claim=claim, claim_type=claim_type, stance_line=stance_line, material=material, VERDICT_RULES=VERDICT_RULES, lang_instruction=t('llm.language_instruction'))
 
     def _judge_claim(self, claim: str, claim_type: str, ev: Dict,
                      sources: List[Dict]) -> Dict:
@@ -1329,7 +1170,7 @@ Return ONLY valid JSON:
             try:
                 provider = create_provider(provider_name, model)
                 parsed = provider.call(
-                    system="You are a professional fact-checker. Return only valid JSON.",
+                    system=load_prompt("3_preverjanje_dejstev/razsodba_sistemski.txt"),
                     user=prompt,
                     temperature=0.1,
                     max_tokens=budget,
@@ -1505,29 +1346,7 @@ Return ONLY valid JSON:
         if not blocks:
             return []
 
-        prompt = """You are given the arguments already extracted from a debate, each with an
-arg_id and numbered premises. Find the premises that assert something CHECKABLE against
-outside sources and return them as claims.
-
-A premise is checkable when it states a fact about the world: a number, a date, a study, a
-measurable trend, who said or did what. A premise is NOT checkable when it states what
-ought to be done, what is right or fair, or how something feels — those are the positions
-being debated, not facts.
-
-One premise may carry SEVERAL checkable facts (several statistics in one sentence). Return
-each as its own claim, quoting that part of the premise as written. Do not invent detail
-that is not in the premise, and do not generalise it — carry over every number, date and
-scope word exactly as the premise has them.
-
-For each claim return:
-- exact_claim: the checkable assertion, in the premise's own words
-- arg_id: the arg_id it came from, EXACTLY as given
-- premise_index: the number of the premise it came from
-- speaker: the speaker of that argument
-- claim_type: one of [statistic, historical, scientific, quote, policy, health, economic, geographic]
-- context: one sentence on what the argument uses this fact for
-
-Return ONLY valid JSON: {"claims": [...]}"""
+        prompt = load_prompt("3_preverjanje_dejstev/izbira_trditev.txt")
 
         model = cfg("fact_checking.claim_extraction_model", "gpt-5.6-luna")
         payload = "\n\n".join(blocks)

@@ -1,0 +1,23 @@
+You are given the arguments already extracted from a debate, each with an
+arg_id and numbered premises. Find the premises that assert something CHECKABLE against
+outside sources and return them as claims.
+
+A premise is checkable when it states a fact about the world: a number, a date, a study, a
+measurable trend, who said or did what. A premise is NOT checkable when it states what
+ought to be done, what is right or fair, or how something feels — those are the positions
+being debated, not facts.
+
+One premise may carry SEVERAL checkable facts (several statistics in one sentence). Return
+each as its own claim, quoting that part of the premise as written. Do not invent detail
+that is not in the premise, and do not generalise it — carry over every number, date and
+scope word exactly as the premise has them.
+
+For each claim return:
+- exact_claim: the checkable assertion, in the premise's own words
+- arg_id: the arg_id it came from, EXACTLY as given
+- premise_index: the number of the premise it came from
+- speaker: the speaker of that argument
+- claim_type: one of [statistic, historical, scientific, quote, policy, health, economic, geographic]
+- context: one sentence on what the argument uses this fact for
+
+Return ONLY valid JSON: {"claims": [...]}

@@ -1,0 +1,1 @@
+Translate the claim into 3 to 6 English search keywords for a scholarly database. Keep names, numbers and years. Return only the keywords separated by spaces.

@@ -1,0 +1,51 @@
+You are synthesizing a complete debate analysis from multiple specialized analyses.
+
+CLAIM EXTRACTION: {claims_pass}
+REBUTTALS: {rebuttal_pass}
+FALLACIES: {fallacy_pass}
+FACT-CHECK DATA: {fact_check_data}
+
+This is a 1v1 debate: EXACTLY TWO debaters, taken from the claim extraction. A
+moderator, host or audience member is not one of them.
+
+CRITICAL RULES:
+- MODERATOR EXCLUSION: If a moderator was present, EXCLUDE them entirely from the
+  per-speaker evaluation. The moderator is NOT a debater and must NEVER be assessed
+  alongside the two debaters. Their influence on the exchange is reported separately
+  in `moderator_influence`.
+- NO VERDICT: Do NOT declare a winner and do NOT rank the debaters. Never state that
+  one side "won", "dominated", "prevailed" or "made the stronger case", and never
+  award a category to either debater. Describe what each side argued and how they
+  argued it, and leave the conclusion to the reader. Do NOT rate the quality of
+  anyone's case. This applies to EVERY field below, including `summary`.
+- DEFENSIVE ROLES ARE LEGITIMATE: A debater may contribute mainly by DEFENCE — making
+  few (or even zero) own arguments while dismantling the opponent's case. Describe
+  that as what it is. Do NOT treat a low own-argument count as a shortcoming.
+- EVASION PATTERNS: Record who avoided answering direct questions from the OTHER
+  debater, as the rebuttal pass listed them. Report the dodge, do not grade it.
+- DEBATABLE CLAIMS: Not everything is TRUE/FALSE — acknowledge legitimately debatable
+  positions.
+- FALLACIES: report them exactly as the fallacy pass listed them. Do not add, drop
+  or re-grade any.
+
+Return JSON:
+{{
+  "comparative_evaluation": {{
+    "moderator_influence":     {{"present": false, "question_count": 0, "pressed_more": "<debater|balanced|n/a>", "notes": "1-2 sentences on how the moderator's questions shaped the exchange — descriptive only, the moderator is never assessed alongside the debaters"}},
+    "per_speaker": {{
+      "<debater_name>": {{
+        "rhetorical_style": "1 sentence — HOW they argued (tone, structure, use of examples). Describe the style, do not rate it.",
+        "factual_accuracy": "1 sentence restating what the fact-check data says about their claims"
+      }}
+    }},
+  }},
+  "summary": "4-6 sentence account: the main clash points, what each debater argued and what they rested it on, evasion patterns, and which questions were left open. DESCRIBE, do not judge — no winner, no ranking, no 'stronger case', no 'strengths and weaknesses', no overall verdict."
+}}
+
+NOTES ON moderator_influence FIELD:
+  • present: true only if an actual moderator / host / interviewer facilitated the debate
+  • question_count: how many questions or prompts they put to the debaters
+  • pressed_more: the debater who faced the tougher questioning, or "balanced" when even
+  • notes: descriptive only — e.g. "framed every question around cost, which favoured X's
+    prepared material" or "interrupted Y twice mid-answer". NEVER assess the moderator
+    alongside the debaters and never count their questions as rebuttals.

@@ -1,0 +1,20 @@
+You are synthesizing a complete analysis of a single speaker.
+
+The recording is a SINGLE-SPEAKER piece — solo speech, lecture, op-ed, interview,
+OR a reaction/commentary video where the speaker is responding to external content.
+The unifying frame: ONE person making arguments.
+
+ARGUMENT EXTRACTION:    {claims_pass}
+FALLACIES:              {fallacy_pass}
+FACT-CHECK DATA:        {fact_check_data}
+
+There is NO opponent in this recording, so there is nothing to compare against.
+Describe what the speaker argued. Do NOT rate how good it was.
+
+Return JSON:
+{{
+  "single_speaker_evaluation": {{
+    "unsupported_claims": ["a claim the speaker asserted without giving any reason or evidence for it, in their own words"]
+  }},
+  "summary": "4-6 sentence descriptive account: what the speaker argues, which positions they take and what they rest them on. No rating, no verdict, no 'strong' or 'weak'."
+}}

@@ -1,0 +1,3 @@
+
+CLAIM CONTEXT: {claim_context}
+→ Aim for a BALANCED source set: if the claim belongs to a particular tradition, include sources from within it AS WELL AS independent and opposing sources. Tag each source with `perspective`: "aligned", "neutral" or "opposing".

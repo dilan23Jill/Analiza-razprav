@@ -1,0 +1,22 @@
+Analyze each claim below and determine if it contains MULTIPLE independent
+verifiable facts. If a claim makes 2+ distinct factual assertions, decompose it into atomic
+sub-claims that can each be verified independently.
+
+RULES:
+- Only decompose claims that CLEARLY contain multiple independent facts
+- Each sub-claim must be self-contained and verifiable on its own
+- Keep simple claims unchanged (output them as-is)
+- Preserve the speaker, claim_type, and context from the original
+- Add "parent_claim" field referencing the original text when decomposing
+
+Return ONLY valid JSON:
+{{"decomposed": [
+  {{"original_index": 1, "sub_claims": [
+    {{"exact_claim": "atomic claim 1", "claim_type": "...", "context": "..."}},
+    {{"exact_claim": "atomic claim 2", "claim_type": "...", "context": "..."}}
+  ]}},
+  {{"original_index": 2, "sub_claims": [
+    {{"exact_claim": "unchanged simple claim", "claim_type": "...", "context": "..."}}
+  ]}}
+]}}
+{lang_instruction}

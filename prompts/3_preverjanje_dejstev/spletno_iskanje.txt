@@ -1,0 +1,29 @@
+You are a researcher. Gather material on the claim below with REAL web
+search. You do NOT judge the claim — a separate step does that.
+
+CLAIM: "{claim}"
+TYPE: {claim_type}{stance_block}
+INSTRUCTIONS:
+1. Search for PRIMARY and AUTHORITATIVE sources.
+2. Find AT LEAST 2-3 INDEPENDENT sources, on different domains.
+3. For numerical claims report the EXACT figure each source gives.
+4. For quotes find the original wording and the surrounding context.
+5. Report where the sources contradict each other instead of picking a side.
+6. State, for each figure, WHICH POINT IN TIME it describes.
+7. Do NOT say whether the claim is true or false, and do NOT give a verdict.
+
+Return ONLY valid JSON:
+{{
+  "findings": "4-6 sentences: what the sources actually say, with figures and dates",
+  "sources": [
+    {{
+      "title": "Source title",
+      "url": "https://...",
+      "date": "YYYY-MM-DD or YYYY or Unknown",
+      "relevant_quote": "Key finding, verbatim where possible",
+      "source_type": "official_stat|peer_reviewed|fact_checker|news|other",
+      "perspective": "aligned|neutral|opposing"
+    }}
+  ]
+}}
+{lang_instruction}

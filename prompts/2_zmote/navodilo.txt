@@ -1,0 +1,195 @@
+Assess each extracted argument below: does its conclusion follow from its premises,
+and does its reasoning contain a named logical fallacy?
+
+{prev_pass}
+
+HOW TO READ THE INPUT:
+Each argument carries an arg_id, the speaker, the position being defended, and the
+numbered premises given for it. Everything you need is in the argument itself — you are
+NOT looking at a transcript and you must not refer to one.
+
+EVERY judgement you return MUST name the arg_id it belongs to, exactly as written above.
+
+DO NOT REPORT ON THE EXCHANGE. You have the extracted arguments and nothing else — no
+transcript, no ordering, no record of who answered whom. Whether an argument was
+rebutted, how the speaker defended it and whether it survived cannot be read off two
+lists of arguments, and guessing it here would put an invented account of the debate
+next to a real one. A later pass reads the transcript and maps the exchange.
+
+You return ONE thing: a fallacy entry wherever the reasoning carries a NAMED defect.
+Most arguments have none, and returning none for them is the correct result. You do
+not rate arguments that are free of named defects, and you do not grade the ones that
+are not.
+
+FALLACY & ERROR DETECTION:
+Your job is to find the REAL defects in how speakers argue: every one that is there,
+and nothing that is not.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FOUNDATIONAL RULE — UNDERSTAND WHAT THE SPEAKER IS TRYING TO DO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Before flagging ANY fallacy, first answer internally:
+  "What is this speaker actually trying to say, and what argumentative move are they making?"
+
+If they are DEFENDING A POSITION that is the legitimate subject of the debate (moral,
+normative, policy, value-based), that is NOT a fallacy — that is the POINT of debating.
+A speaker saying "X is morally wrong" in a debate ABOUT X is not committing a factual
+error; they are staking their position. Judge the REASONING that supports that position,
+not the position itself.
+
+DO NOT FLAG AS FALLACY:
+- Taking a controversial moral / policy / value stance (that IS the debate)
+- Appealing to a philosophical, religious, or ethical framework as a premise (that is a
+  starting axiom, not a fallacy — even if you disagree with the framework)
+- Defending a minority or unpopular view — unpopularity ≠ fallacy
+- Strong normative claims ("we ought to...", "X is wrong") backed by a reason
+- Factual claims that the speaker happens to get wrong — those are factual errors, not
+  logical fallacies (they belong to the fact-checker, not here)
+
+ONLY FLAG A FALLACY WHEN THE ERROR IS IN THE *STRUCTURE* OF THE REASONING — the argument
+itself is malformed, regardless of whether you agree with the conclusion.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT TO LOOK FOR:
+1. STRAWMAN: Speaker misrepresents what the opponent said, then attacks the misrepresentation
+2. AD HOMINEM: Character attack IS the argument (not just insults alongside real arguments)
+3. FALSE DILEMMA: Presenting only 2 options when more exist
+4. CIRCULAR REASONING: Conclusion assumes what it's trying to prove
+5. RED HERRING: Changing the subject to avoid the point
+6. APPEAL TO AUTHORITY: "X said it, therefore it's true" without substance
+7. WHATABOUTISM / TU QUOQUE: Responding to criticism by pointing to something else
+8. CHERRY PICKING: Selectively using evidence while ignoring contradicting data
+9. SLIPPERY SLOPE: Claiming one thing will inevitably lead to extreme consequences without justification
+10. MOVING GOALPOSTS: Changing the criteria after the original point was addressed
+11. NON SEQUITUR: Conclusion doesn't follow from the reasoning given
+12. EQUIVOCATION: Using the same word with different meanings to mislead
+13. HASTY GENERALIZATION: Broad conclusion from one or two examples
+14. FALSE CAUSE (post hoc): Treating sequence or correlation as proof of causation
+15. APPEAL TO EMOTION: Emotional pressure REPLACES the argument (fear, pity, outrage with no reasoning behind it)
+16. LOADED QUESTION: Question that smuggles in an unproven accusation ("Why do you keep lying about X?")
+17. MOTTE-AND-BAILEY: Defending a bold claim, then retreating to a trivial version when challenged, as if they were the same claim
+
+WHAT IS NOT A FALLACY:
+- Defending a debate position (normative, moral, policy) — that is the debate itself
+- A factually mistaken claim — that is an error of fact, not of reasoning
+- Strong opinions backed by reasoning
+- Repetition (usually signals opponent is evading)
+- Emotional language with substance behind it
+- Sarcasm or irony (rhetorical devices, not errors)
+- Debating aggressively or persistently
+- Citing a RELEVANT expert on a question inside their expertise (legitimate evidence,
+  not appeal to authority — the fallacy needs missing substance or irrelevant authority)
+- A slippery-slope WARNING where the speaker argues the causal mechanism step by step
+  (only unjustified inevitability is fallacious)
+- An analogy that the speaker explicitly qualifies — imperfect analogies are normal
+  argumentation, not automatic false equivalence
+
+NO QUOTA — REPORT WHAT IS ACTUALLY THERE:
+A heated political debate may genuinely contain many fallacies; a careful academic
+exchange may contain none. Do not pad the list to look thorough, and do not skip
+clear cases to look charitable. Every entry must survive the question: "Can I point
+to the premise that carries it and name the structural failure?" If not, leave it out or mark
+it DEBATABLE.
+
+FALLACY NAMES — USE EXACTLY THESE (CRITICAL FOR CONSISTENCY):
+The `type` field must contain one name from this closed list, verbatim and lowercase.
+Free-form naming makes the same fallacy appear under many labels across runs
+("false cause" / "false cause post hoc" / "post hoc correlation") and destroys any
+comparison between analyses.
+
+FORMAL (errors in the shape of the inference itself):
+  affirming_the_consequent    denying_the_antecedent    undistributed_middle
+  affirming_a_disjunct        illicit_transposition     modal_scope_confusion
+
+INFORMAL (context-dependent):
+  ad_hominem              straw_man               false_dilemma
+  slippery_slope          appeal_to_authority     appeal_to_emotion
+  appeal_to_nature        appeal_to_ignorance     appeal_to_tradition
+  appeal_to_popularity    circular_reasoning      whataboutism
+  cherry_picking          loaded_question         red_herring
+  false_attribution       no_true_scotsman        moving_goalposts
+  burden_of_proof_shift   equivocation
+
+WEAK REASONING (the step holds in principle but is too loose):
+  hasty_generalization    post_hoc                false_equivalence
+  non_sequitur            composition_division    anecdotal_evidence
+
+  other
+
+Guidance for the trickier ones:
+  • post_hoc            — "A came before B, therefore A caused B"
+  • false_equivalence   — two unlike things treated as comparable
+  • cherry_picking      — selecting only the data that fits
+  • whataboutism        — deflecting criticism by pointing at the opponent
+  • equivocation        — a key term silently shifts meaning mid-argument
+  • red_herring         — an irrelevant topic introduced to divert
+  • anecdotal_evidence  — a single story offered as proof of a general rule
+  • other               — ONLY when no name above fits; then name the failure in
+                          `explanation`. Prefer a listed name over `other`.
+
+CATEGORY CALIBRATION (use consistently):
+The `category` field says WHAT KIND of failure this is. Use the grouping above:
+the name you chose already implies the category, and the two must agree.
+
+  • formal         — the error is in the SHAPE of the inference and is visible
+                     without knowing the subject matter. Requires the speaker to
+                     have stated an actual deductive step. Example: "If it rained,
+                     the ground is wet. The ground is wet, therefore it rained."
+                     Rare in speech, because speakers seldom state full syllogisms —
+                     but when someone DOES argue deductively, check the form.
+  • informal       — the step fails because of context, not shape: the appeal is
+                     irrelevant, the opponent's view is distorted, the options are
+                     falsely narrowed. The same move can be legitimate elsewhere.
+  • weak_reasoning — the inference points the right way but is too loose to carry
+                     the conclusion: too small a sample, correlation read as cause,
+                     an analogy stretched past what it supports. Not a broken
+                     argument, an overreaching one.
+
+Do NOT default to `informal`. If the speaker laid out premises and a conclusion and
+the conclusion does not follow from the form, that is `formal`. If the conclusion
+follows but is stronger than the evidence licenses, that is `weak_reasoning`.
+
+Every fallacy entry MUST point at the words that carry the flaw: put the position or
+the premise it sits in — copied from the input above — in `evidence`. Nothing to point
+at → don't flag it. Where the flaw is in a particular premise, give its number in
+`premise_index`; where it is in how the premises reach the conclusion as a whole, leave
+`premise_index` out.
+
+PART B — RHETORIC ≠ FALLACY — CLASSIFY CORRECTLY:
+These are rhetorical DEVICES. Do NOT report them as fallacies when they accompany
+real argumentation:
+  • Hyperbole and dramatic emphasis        • Rhetorical questions
+  • Analogy, metaphor, vivid imagery       • Personal anecdote used as illustration
+  • Humor, irony, sarcasm                  • Anaphora / repetition for emphasis
+  • Framing and loaded word choice         • Appeals to shared values
+The SAME move becomes a fallacy ONLY when it REPLACES the argument (e.g. emotional
+appeal with no reasoning = appeal to emotion; anecdote presented as proof of a
+general rule = hasty generalization). Ask: "If I strip this device away, is there
+still an argument left?" Yes → rhetoric, do not report it. No → consider a fallacy.
+
+Sarcasm and irony are not fallacies either: read the speaker's ACTUAL position, not
+the surface words, before deciding whether anything is wrong with the reasoning.
+
+AMBIGUOUS CASES — IMPORTANT:
+Sometimes a statement COULD be a fallacy OR a legitimate rhetorical device — it depends on interpretation.
+For example: using the Titanic to argue about patriarchy could be a "cherry-picked example" OR a "legitimate
+illustrative example" depending on context. In these cases:
+- Still include it, but say so in the explanation
+- Present BOTH interpretations: "This could be seen as [fallacy] because [...],
+  but it could also be interpreted as [legitimate use] because [...]."
+- Let the reader decide — your job is to flag it and explain both sides.
+
+Return JSON:
+{{
+  "fallacies": [
+    {{
+      "arg_id": "the arg_id of the argument this was found in, exactly as given",
+      "premise_index": 0,
+      "speaker": "...",
+      "type": "one name from the closed list above, verbatim (lowercase, underscores)",
+      "category": "formal|informal|weak_reasoning",
+      "evidence": "the position or premise that carries the flaw, copied from the input",
+      "explanation": "why this is a fallacy, OR if ambiguous: both interpretations"
+    }}
+  ]
+}}

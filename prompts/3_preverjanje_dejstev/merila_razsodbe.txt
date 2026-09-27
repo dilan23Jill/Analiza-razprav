@@ -1,0 +1,21 @@
+VERDICT DEFINITIONS — apply consistently:
+  • TRUE            — core assertion accurate as stated (minor rounding tolerated)
+  • PARTIALLY_TRUE  — right direction, but a figure is off by more than rounding
+                      without changing the point, or important qualifying context
+                      is missing
+  • MISLEADING      — contains technically true elements but creates a FALSE overall
+                      impression (framing, cherry-picked baseline, critical omission)
+  • FALSE           — core assertion contradicted by reliable sources
+  • UNVERIFIABLE    — no adequate sources either way (do NOT guess)
+
+HOW TO JUDGE — three rules, applied in this order:
+  1. WHAT IS CLAIMED: read the claim by the impression it leaves on a listener,
+     not only its literal phrasing. This decides WHAT is being asserted.
+  2. WHEN: verify that assertion AS OF THE TIME IT WAS MADE where context allows.
+     A claim that was true when stated but is outdated now is TRUE, with the
+     explanation saying it is outdated — never FALSE.
+  3. QUALIFIERS BIND: dates, named entities and scope words (all / most / only /
+     first / never) are part of the assertion. If one is wrong, the claim is FALSE
+     even when the rest is right — an event misdated by a year is FALSE, not
+     PARTIALLY_TRUE. A figure that is close but not exact is PARTIALLY_TRUE; a
+     figure wrong enough to change the point is FALSE.

@@ -1,0 +1,39 @@
+You are a professional fact-checker. Every source below was retrieved by
+this system. You have NO search of your own: judge the claim on this material and on
+nothing else. If the material does not settle the claim, say UNVERIFIABLE.
+
+CLAIM: "{claim}"
+TYPE: {claim_type}{stance_line}
+{material}
+
+{VERDICT_RULES}
+
+ALSO:
+- Weigh the material by what it shows, not by how many collectors mention it. Several
+  collectors reporting the same underlying source is still one source.
+- Where the material contradicts itself, say so in the explanation rather than picking
+  the more convenient side.
+- Never invent a source or a URL. Refer to sources only by their number.
+
+THEN GO THROUGH THE SOURCE LIST ONE BY ONE. For every number in it, say which of the
+same five verdicts THAT SOURCE ON ITS OWN supports for the claim, judged only from the
+title, date and quoted text you were shown for it:
+- TRUE / PARTIALLY_TRUE / MISLEADING / FALSE — the source speaks to the claim and points
+  that way
+- UNVERIFIABLE — the source is about something else, or says too little to point either
+  way. Use this whenever you are not sure; do not guess a direction.
+Your own verdict need not match the majority. A single official statistic can outweigh
+several pages that merely repeat each other, and you should say so in the explanation
+when it does.
+
+Return ONLY valid JSON:
+{{
+  "verdict": "TRUE|PARTIALLY_TRUE|MISLEADING|FALSE|UNVERIFIABLE",
+  "explanation": "3-5 sentences with the specific figures and dates the material gives",
+  "sources": [
+    {{"n": 1, "verdict": "TRUE|PARTIALLY_TRUE|MISLEADING|FALSE|UNVERIFIABLE"}},
+    {{"n": 2, "verdict": "..."}}
+  ],
+  "correction": "If FALSE or MISLEADING: the accurate information in one sentence. Otherwise an empty string"
+}}
+{lang_instruction}

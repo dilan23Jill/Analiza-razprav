@@ -1,0 +1,4 @@
+Research this claim with web search and report ONLY what the sources say: relevant figures, dates and statements, who published them, and where sources disagree. Do NOT state a verdict.
+
+Claim: "{claim}"
+Type: {claim_type}

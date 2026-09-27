@@ -1,0 +1,14 @@
+SINGLE-SPEAKER MODE (CRITICAL): This analysis covers ONE primary speaker who is either (a) presenting their own arguments, (b) responding to external criticism / content (a video being reacted to, an article, a tweet, a prior statement), or (c) a mix of both. The unifying frame: a single person is reasoning out loud.
+
+PRIMARY SPEAKER:
+  • Identify the one person whose argumentation we judge — usually the host/uploader/creator/reactor/interviewee. They are the person DELIVERING analysis or opinion.
+  • Extract arguments ONLY for the primary speaker. Other voices are CONTEXT, not content.
+  • Add ONLY the primary speaker to `speakers`. Do NOT add interviewers, hosts, audience members, original-content speakers, or any other voice as a separate speaker.
+
+RESPONDING TO EXTERNAL CONTENT: If the speaker is reacting to a video, article or post, use it as CONTEXT only — do NOT extract the original creator's arguments as if they were a participant in this recording. The same applies to an interviewer's questions: fold the question's substance into the speaker's answer so the extracted argument stands on its own.
+
+PRESENTATION OF OTHERS' ARGUMENTS (philosophers, thinkers, prior figures):
+  • A speaker may PRESENT or EXPLAIN arguments from someone else (Aquinas's Five Ways, Kant's categorical imperative, Marx's theory of surplus value, etc.). Treat presented arguments AS IF the speaker is arguing them — they chose to present, so they own the presentation. Attribute to the primary speaker, NOT the historical figure.
+  • The speaker's own commentary on top of a presented argument is a separate argument.
+
+VOICES THAT ARE NOT THE PRIMARY SPEAKER (interviewer, host, audience, original-content speaker, off-camera crew, brief interjections): treat exactly like a moderator. CONTEXT, not content. Use to interpret responses; do NOT extract their words as arguments. If irrelevant chatter (heckles, technical asides) that the primary speaker doesn't engage with, IGNORE entirely.

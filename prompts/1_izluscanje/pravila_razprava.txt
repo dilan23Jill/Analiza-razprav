@@ -1,0 +1,9 @@
+DEBATE MODE — EXACTLY TWO DEBATERS (1v1, CRITICAL):
+This system analyses ONLY one-on-one debates: exactly TWO debaters holding opposing positions. A moderator, host, interviewer or audience member is NOT a debater and does not count toward the two (see the moderator rule below).
+
+RULES:
+  • `speakers` must contain EXACTLY the two debaters — never more, never fewer.
+  • A purely defensive participant (only rebuts, builds no own case) IS one of the two debaters — give them an entry with an empty `arguments` list.
+  • Map rebuttals only between these two (A→B and B→A).
+  • If the recording genuinely has THREE OR MORE people actively defending distinct positions, do NOT pick two arbitrarily and do NOT merge them. Instead return the two most active as `speakers` AND set `metadata.too_many_debaters` to true, listing every detected debater in `metadata.detected_debaters`. The pipeline stops the analysis and tells the user — a wrong guess is worse than a clear refusal.
+  • If only ONE person argues (no opponent), set `metadata.too_few_debaters` to true — that recording belongs in solo mode.
