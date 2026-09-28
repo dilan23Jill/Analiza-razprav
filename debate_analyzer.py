@@ -376,16 +376,40 @@ class AnthropicProvider(LLMProvider):
         if model_supports_temperature(self.model):
             request_kwargs["temperature"] = temperature
 
-        if max_tokens > _ANTHROPIC_STREAM_THRESHOLD:
-            with self.client.messages.stream(**request_kwargs) as stream:
-                response = stream.get_final_message()
-        else:
-            response = self.client.messages.create(**request_kwargs)
+        # Modeli Claude 5 lahko razmišljajo tudi brez izrecne zahteve. Razmišljanje
+        # porabi proračun izhodnih žetonov, besedila pa ne vrne, zato ga izklopimo.
+        # Če model izklopa ne sprejme, klic ponovimo brez tega parametra.
+        thinking_mode = str(cfg("analysis.anthropic_thinking", "disabled") or "").strip()
+        if thinking_mode:
+            request_kwargs["thinking"] = {"type": thinking_mode}
+
+        def _send(kwargs_: Dict[str, Any]):
+            if max_tokens > _ANTHROPIC_STREAM_THRESHOLD:
+                with self.client.messages.stream(**kwargs_) as stream:
+                    return stream.get_final_message()
+            return self.client.messages.create(**kwargs_)
+
+        try:
+            response = _send(request_kwargs)
+        except Exception as exc:
+            if "thinking" in request_kwargs and "thinking" in str(exc).lower():
+                logger.warning("   Model %s ne sprejme thinking=%s, ponavljam brez: %s",
+                               self.model, thinking_mode, str(exc)[:200])
+                request_kwargs.pop("thinking", None)
+                response = _send(request_kwargs)
+            else:
+                raise
 
         raw = ""
+        block_types = []
         for block in response.content:
+            block_types.append(getattr(block, "type", "?"))
             if hasattr(block, "text"):
                 raw += block.text
+        if not raw.strip():
+            logger.warning("   Prazen odgovor modela %s: stop_reason=%s, bloki=%s, usage=%s",
+                           self.model, getattr(response, "stop_reason", None),
+                           block_types, getattr(response, "usage", None))
 
         return _loads_llm_json(raw, stop_reason=getattr(response, "stop_reason", None))
 

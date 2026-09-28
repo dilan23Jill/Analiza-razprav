@@ -70,7 +70,7 @@ L = {
         "premises": "Premise", "premise_verdicts": "Preverjanje premis",
         "type": "Vrsta",
         "counter": "protiargument", "fallacies": "Logične napake",
-        "rebuttals": "Zavrnitve tega argumenta", "evasions": "Izogibanja odgovoru",
+        "rebuttals": "Zavrnitve tega argumenta", "evasions": "Izmikanja odgovoru",
         "question": "Vprašanje", "times_asked": "vprašano",
         "factcheck": "Preverjanje dejstev", "claim": "Trditev", "explanation": "Obrazložitev",
         "sources": "Viri", "speaker": "Govorec", "no_data": "Ni podatkov za prikaz.",

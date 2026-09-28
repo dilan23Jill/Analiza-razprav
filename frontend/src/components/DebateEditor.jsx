@@ -3,10 +3,10 @@ import { editDebate } from '../services/api'
 
 
 function btn(variant = 'subtle') {
-  const base = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors'
+  const base = 'px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors'
   if (variant === 'primary') return `${base} bg-accent-red hover:bg-brand-600 text-pure-white`
-  if (variant === 'danger')  return `${base} text-red-400 hover:bg-red-500/10 border border-red-500/30`
-  return `${base} text-white/60 hover:text-white hover:bg-white/10 border border-white/10`
+  if (variant === 'danger')  return `${base} text-pure-white bg-red-600 hover:bg-red-500 border border-red-700`
+  return `${base} text-white bg-white/10 hover:bg-white/20 border border-white/30`
 }
 
 function computeSides(analysis, draftSpeakers) {
@@ -54,7 +54,7 @@ function SpeakerNameInput({ name, onRename, t }) {
       onChange={(e) => setVal(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
-      className="flex-1 bg-dark-900/60 border border-white/10 rounded-lg px-3 py-2 text-base font-semibold text-white focus:border-amber-400/40 focus:outline-none"
+      className="flex-1 bg-dark-900/60 border border-white/25 rounded-lg px-3 py-2 text-base font-semibold text-white focus:border-amber-400/40 focus:outline-none"
       placeholder={t('Ime govorca', 'Speaker name')}
     />
   )
@@ -234,7 +234,7 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
       const cur  = speakers[sp] || {}
 
       const metaChanges = {}
-      for (const k of ['position', 'conclusions']) {
+      for (const k of ['position']) {
         if (JSON.stringify(orig[k]) !== JSON.stringify(cur[k])) metaChanges[k] = cur[k]
       }
       if (Object.keys(metaChanges).length) {
@@ -325,15 +325,15 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-black/75 backdrop-blur-md p-0 sm:p-6">
-      <div className="bg-dark-800 border border-white/10 rounded-none sm:rounded-2xl w-full sm:max-w-6xl max-h-screen sm:max-h-[94vh] flex flex-col overflow-hidden shadow-2xl shadow-black/60">
+    <div className="fixed inset-0 z-[70] flex items-stretch sm:items-center justify-center bg-black/75 backdrop-blur-md p-0 pt-16 sm:p-6 sm:pt-20">
+      <div className="bg-dark-800 border border-white/10 rounded-none sm:rounded-2xl w-full sm:max-w-6xl max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-7rem)] flex flex-col overflow-hidden shadow-2xl shadow-black/60">
 
         <div className="flex items-center justify-between gap-3 px-5 sm:px-7 py-4 border-b border-white/10 bg-dark-700/50 shrink-0">
           <div className="min-w-0">
             <h2 className="text-white text-base sm:text-lg font-semibold truncate">
               {t('Uredi analizo', 'Edit analysis')}
             </h2>
-            <span className="text-[11px] text-white/40">
+            <span className="text-xs text-white/70">
               {operations.length > 0
                 ? t(`${operations.length} sprememb pripravljenih`, `${operations.length} pending changes`)
                 : t('Brez sprememb', 'No changes')}
@@ -351,7 +351,7 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
               onClick={onClose}
               aria-label={t('Zapri', 'Close')}
               title={t('Zapri (Esc)', 'Close (Esc)')}
-              className="flex items-center justify-center w-9 h-9 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -377,7 +377,7 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
                   className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${
                     activeSideIdx === i
                       ? `${c.badge} border-b-2`
-                      : 'text-white/50 hover:text-white/70'
+                      : 'text-white/75 hover:text-white/85'
                   }`}
                   style={activeSideIdx === i ? { borderBottomColor: 'currentColor' } : {}}
                 >
@@ -390,7 +390,7 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
 
         <div className="flex-1 overflow-y-auto">
           {sides.length === 0 ? (
-            <div className="text-white/40 text-sm p-8 text-center">
+            <div className="text-white/70 text-sm p-8 text-center">
               {t('Ni govorcev v analizi.', 'No speakers in analysis.')}
             </div>
           ) : (
@@ -434,7 +434,7 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
 
           <div className="px-5 sm:px-7 py-5 border-t border-white/10 space-y-4 bg-emerald-500/[0.02]">
             <div>
-              <label className="block text-[11px] uppercase tracking-wider text-emerald-300/70 font-semibold mb-2">
+              <label className="block text-xs uppercase tracking-wider font-bold text-emerald-300 mb-2">
                 {t('Naslov analize', 'Analysis title')}
               </label>
               <input
@@ -442,30 +442,30 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
                 placeholder={t('npr. Janez vs. Ana — Pogovor o gospodarstvu', 'e.g. Janez vs. Ana — Discussion on economy')}
-                className="w-full bg-dark-900/60 border border-white/10 rounded-lg px-3 py-2.5 text-base text-white focus:border-emerald-400/40 focus:outline-none"
+                className="w-full bg-dark-900/60 border border-white/25 font-medium rounded-lg px-3 py-2.5 text-base text-white focus:border-emerald-400/40 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-[11px] uppercase tracking-wider text-emerald-300/70 font-semibold mb-2">
+              <label className="block text-xs uppercase tracking-wider font-bold text-emerald-300 mb-2">
                 {t('Tema debate', 'Debate topic')}
               </label>
               <input
                 type="text"
                 value={(draft.metadata && draft.metadata.topic) || ''}
                 onChange={(e) => setDraft({ ...draft, metadata: { ...(draft.metadata || {}), topic: e.target.value } })}
-                className="w-full bg-dark-900/60 border border-white/10 rounded-lg px-3 py-2.5 text-base text-white focus:border-emerald-400/40 focus:outline-none"
+                className="w-full bg-dark-900/60 border border-white/25 font-medium rounded-lg px-3 py-2.5 text-base text-white focus:border-emerald-400/40 focus:outline-none"
                 placeholder={t('npr. Ali je sintetično meso etično sprejemljivo', 'e.g. Is synthetic meat ethically acceptable')}
               />
             </div>
             <div>
-              <label className="block text-[11px] uppercase tracking-wider text-emerald-300/70 font-semibold mb-2">
+              <label className="block text-xs uppercase tracking-wider font-bold text-emerald-300 mb-2">
                 {t('Skupni povzetek analize', 'Overall summary')}
               </label>
               <textarea
                 rows={6}
                 value={draft.summary || ''}
                 onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
-                className="w-full bg-dark-900/60 border border-white/10 rounded-lg px-3 py-2.5 text-sm leading-relaxed text-white focus:border-emerald-400/40 focus:outline-none resize-y"
+                className="w-full bg-dark-900/60 border border-white/25 font-medium rounded-lg px-3 py-2.5 text-sm leading-relaxed text-white focus:border-emerald-400/40 focus:outline-none resize-y"
               />
             </div>
           </div>
@@ -499,11 +499,11 @@ function SidePanel({
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-3">
           {!isSolo && (
-            <span className={`px-2.5 py-1 rounded-md text-[11px] uppercase tracking-wider font-bold border ${c.badge}`}>
+            <span className={`px-2.5 py-1 rounded-md text-xs uppercase tracking-wider font-bold border ${c.badge}`}>
               {side.label}
             </span>
           )}
-          <span className="text-[11px] text-white/40">
+          <span className="text-xs text-white/70">
             {items.length} {t('argumentov', 'arguments')}
           </span>
         </div>
@@ -514,11 +514,11 @@ function SidePanel({
             return (
               <div key={sp} className="rounded-xl border border-amber-500/15 bg-amber-500/[0.03] p-3.5 space-y-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] uppercase tracking-wider text-amber-300/70 font-semibold shrink-0">
+                  <span className="text-xs uppercase tracking-wider font-bold text-amber-200 shrink-0">
                     {t('Govorec', 'Speaker')}
                   </span>
                   <SpeakerNameInput name={sp} onRename={onRenameSpeaker} t={t} />
-                  <span className="text-[11px] text-white/30 shrink-0">
+                  <span className="text-xs text-white/60 shrink-0">
                     {(data.arguments || []).length} {t('arg.', 'args')}
                   </span>
                 </div>
@@ -526,8 +526,8 @@ function SidePanel({
                   rows={3}
                   value={data.position || ''}
                   onChange={(e) => onUpdateSpeakerMeta(sp, 'position', e.target.value)}
-                  placeholder={t('Pozicija (kratek povzetek stališča)', 'Position (brief stance summary)')}
-                  className="w-full bg-dark-900/60 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/85 focus:border-amber-400/40 focus:outline-none resize-y"
+                  placeholder={t('Stališče (povzetek v enem stavku)', 'Position (one-sentence summary)')}
+                  className="w-full bg-dark-900/60 border border-white/25 font-medium rounded-lg px-3 py-2 text-sm text-white/95 focus:border-amber-400/40 focus:outline-none resize-y"
                 />
               </div>
             )
@@ -537,16 +537,16 @@ function SidePanel({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-1">
-          <label className="text-[11px] uppercase tracking-wider text-white/50 font-semibold">
+          <label className="text-xs uppercase tracking-wider font-bold text-white/75">
             {t('Argumenti', 'Arguments')}
           </label>
-          <button onClick={onAddArgumentToSide} className="text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 transition-colors">
+          <button onClick={onAddArgumentToSide} className="text-sm font-semibold text-white px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/30 transition-colors">
             + {t('Dodaj argument', 'Add argument')}
           </button>
         </div>
 
         {items.length === 0 && (
-          <div className="text-xs text-white/30 italic py-6 text-center border border-dashed border-white/10 rounded-lg">
+          <div className="text-xs text-white/60 italic py-6 text-center border border-dashed border-white/10 rounded-lg">
             {t('Ni argumentov. Klikni "Dodaj argument" za prvega.', 'No arguments. Click "Add argument" to start.')}
           </div>
         )}
@@ -603,12 +603,12 @@ function ArgumentCard({
   return (
     <div className="bg-dark-600/50 border border-white/10 rounded-xl p-4 space-y-3 hover:border-white/20 transition-colors">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] text-white/40 font-mono">#{displayIndex}</span>
+        <span className="text-xs text-white/70 font-mono">#{displayIndex}</span>
 
         <select
           value={speaker}
           onChange={(e) => onMove(e.target.value)}
-          className={`px-2.5 py-1 rounded-md text-[11px] uppercase tracking-wider font-bold border ${speakerBadgeColor} bg-transparent appearance-none cursor-pointer hover:brightness-125`}
+          className={`px-2.5 py-1 rounded-md text-xs uppercase tracking-wider font-bold border ${speakerBadgeColor} bg-transparent appearance-none cursor-pointer hover:brightness-125`}
           title={t('Pripiši drugemu govorcu', 'Reassign to another speaker')}
         >
           {allSpeakerNames.map(sp => (
@@ -622,7 +622,7 @@ function ArgumentCard({
           <button
             onClick={onDelete}
             title={t('Izbriši argument', 'Delete argument')}
-            className="text-red-400/80 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30 hover:border-red-500/50 px-2 py-1 rounded transition-colors"
+            className="text-pure-white bg-red-600 hover:bg-red-500 px-2 py-1 rounded transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
@@ -635,21 +635,21 @@ function ArgumentCard({
         rows={5}
         value={arg.argument || ''}
         onChange={(e) => onChangeField('argument', e.target.value)}
-        className="w-full bg-dark-900/70 border border-white/10 rounded-lg px-3 py-2.5 text-[15px] leading-relaxed text-white focus:border-accent-red/40 focus:outline-none resize-y"
+        className="w-full bg-dark-900/70 border border-white/25 font-medium rounded-lg px-3 py-2.5 text-[15px] leading-relaxed text-white focus:border-accent-red/40 focus:outline-none resize-y"
         placeholder={t('Argument — popolna veriga sklepanja...', 'Argument — complete chain of reasoning...')}
       />
 
       <div className="rounded-lg border border-blue-500/10 bg-blue-500/[0.03] p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] uppercase tracking-wider text-blue-300/70 font-semibold">
+          <span className="text-xs uppercase tracking-wider font-bold text-blue-200">
             {t('Premise', 'Premises')} ({(arg.premises || []).length})
           </span>
-          <button onClick={onAddPremise} className="text-[11px] text-white/50 hover:text-white px-2 py-0.5 rounded hover:bg-white/5">
+          <button onClick={onAddPremise} className="text-xs font-semibold text-pure-white px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500">
             + {t('premisa', 'premise')}
           </button>
         </div>
         {(arg.premises || []).length === 0 && (
-          <div className="text-[11px] text-white/30 italic py-1">
+          <div className="text-xs text-white/60 italic py-1">
             {t('Brez premis', 'No premises')}
           </div>
         )}
@@ -659,11 +659,11 @@ function ArgumentCard({
               <input
                 value={p}
                 onChange={(e) => onUpdatePremise(pi, e.target.value)}
-                className="flex-1 bg-dark-900/70 border border-white/10 rounded px-2.5 py-1.5 text-[13px] text-white/85 focus:border-blue-400/40 focus:outline-none"
+                className="flex-1 bg-dark-900/70 border border-white/25 font-medium rounded px-2.5 py-1.5 text-sm text-white/95 focus:border-blue-400/40 focus:outline-none"
               />
               <button
                 onClick={() => onRemovePremise(pi)}
-                className="text-red-400/50 hover:text-red-400 text-base px-2 hover:bg-red-500/10 rounded"
+                className="text-red-400 text-base font-bold px-2 hover:bg-red-500/25 rounded"
                 title={t('Odstrani', 'Remove')}
               >
                 ×
@@ -675,18 +675,18 @@ function ArgumentCard({
 
       <div className="rounded-lg border border-orange-500/15 bg-orange-500/[0.03] p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] uppercase tracking-wider text-orange-300/70 font-semibold">
+          <span className="text-xs uppercase tracking-wider font-bold text-orange-200">
             {t('Odbitja na ta argument', 'Rebuttals to this argument')} ({linkedRebuttals.length})
           </span>
           <button
             onClick={onAddRebuttal}
-            className="text-[11px] text-orange-200/80 hover:text-white px-2.5 py-1 rounded bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30"
+            className="text-xs font-semibold text-pure-white px-2.5 py-1 rounded bg-orange-600 hover:bg-orange-500"
           >
             + {t('Napiši rebuttal', 'Write rebuttal')}
           </button>
         </div>
         {linkedRebuttals.length === 0 && (
-          <div className="text-[11px] text-white/30 italic py-1">
+          <div className="text-xs text-white/60 italic py-1">
             {t('Brez rebuttal-a. Klikni "Napiši rebuttal" za nov vnos.', 'No rebuttals. Click "Write rebuttal" to add one.')}
           </div>
         )}
@@ -713,13 +713,13 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
   return (
     <div className="bg-dark-900/40 border border-orange-500/20 rounded-lg p-3 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] uppercase tracking-wider text-orange-300/70 font-semibold">
+        <span className="text-xs uppercase tracking-wider font-bold text-orange-200">
           {t('Rebuttal pisca:', 'Rebuttal by:')}
         </span>
         <select
           value={rebuttal.by || ''}
           onChange={(e) => onChangeField('by', e.target.value)}
-          className="bg-dark-800 border border-orange-500/30 rounded px-2 py-0.5 text-[11px] text-orange-200 font-semibold uppercase tracking-wide"
+          className="bg-dark-800 border border-orange-500/30 rounded px-2 py-0.5 text-xs text-orange-200 font-semibold uppercase tracking-wide"
         >
           {allSpeakers.map(sp => (
             <option key={sp} value={sp} className="bg-dark-800 text-white normal-case tracking-normal">
@@ -730,7 +730,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
         <select
           value={rebuttal.rebuttal_type || 'direct_contradiction'}
           onChange={(e) => onChangeField('rebuttal_type', e.target.value)}
-          className="bg-dark-900/60 border border-white/10 rounded px-2 py-0.5 text-[11px] text-white/70"
+          className="bg-dark-900/60 border border-white/10 rounded px-2 py-0.5 text-xs text-white/85"
           title={t('Tip rebuttala', 'Rebuttal type')}
         >
           <option value="direct_contradiction">direct contradiction</option>
@@ -740,7 +740,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
         </select>
         <button
           onClick={onDelete}
-          className="ml-auto text-red-400/70 hover:text-red-300 hover:bg-red-500/10 px-2 py-0.5 rounded text-[11px]"
+          className="ml-auto text-pure-white bg-red-600 hover:bg-red-500 px-2.5 py-1 rounded text-xs font-semibold"
           title={t('Izbriši', 'Delete')}
         >
           ×
@@ -752,18 +752,18 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
         value={rebuttal.rebuttal_content || ''}
         onChange={(e) => onChangeField('rebuttal_content', e.target.value)}
         placeholder={t('Vsebina rebuttala...', 'Rebuttal content...')}
-        className="w-full bg-dark-900/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-[13px] text-white/90 focus:border-orange-400/40 focus:outline-none resize-y"
+        className="w-full bg-dark-900/60 border border-white/25 font-medium rounded-lg px-2.5 py-1.5 text-sm text-white/90 focus:border-orange-400/40 focus:outline-none resize-y"
       />
 
       <div className="rounded-lg border border-purple-400/15 bg-purple-500/[0.04] p-2.5">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-purple-300/60 text-base leading-none">↳</span>
-          <span className="text-[10px] uppercase tracking-wider text-purple-300/70 font-semibold">
+          <span className="text-purple-200 text-base leading-none">↳</span>
+          <span className="text-xs uppercase tracking-wider font-bold text-purple-200">
             {t('Counter-rebuttal', 'Counter-rebuttal')}
           </span>
           {originalArgumentSpeaker && (
-            <span className="text-[10px] text-white/40">
-              ({t('odgovor', 'response from')} <span className="text-purple-200/80 font-medium">{originalArgumentSpeaker}</span>)
+            <span className="text-xs text-white/70">
+              ({t('odgovor', 'response from')} <span className="text-purple-200 font-medium">{originalArgumentSpeaker}</span>)
             </span>
           )}
         </div>
@@ -772,7 +772,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
           value={rebuttal.response || ''}
           onChange={(e) => onChangeField('response', e.target.value)}
           placeholder={t('Kako se je originalni govorec odzval na ta rebuttal? (opcijsko)', "How did the original speaker respond to this rebuttal? (optional)")}
-          className="w-full bg-dark-900/60 border border-white/10 rounded px-2.5 py-1.5 text-[12px] text-white/85 focus:border-purple-400/40 focus:outline-none resize-y"
+          className="w-full bg-dark-900/60 border border-white/25 font-medium rounded px-2.5 py-1.5 text-sm text-white/95 focus:border-purple-400/40 focus:outline-none resize-y"
         />
       </div>
     </div>

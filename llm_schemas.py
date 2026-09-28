@@ -21,7 +21,6 @@ class ArgumentSchema(BaseModel):
 class SpeakerClaimsSchema(BaseModel):
     position: str = ""
     arguments: List[ArgumentSchema] = Field(default_factory=list)
-    conclusions: List[str] = Field(default_factory=list)
 
     model_config = {"extra": "allow"}
 

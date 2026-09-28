@@ -51,6 +51,7 @@ vzorci/
 
 # Diplomsko delo — pisano v Overleafu, ne sodi v repozitorij sistema
 diploma.tex
+diploma*.tex
 literatura.bib
 slike/
 *.aux
@@ -64,3 +65,16 @@ texput.log
 # Interne delovne opombe
 PROFESOR_POPRAVKI.md
 FINAL_CHECK.md
+
+
+# Testi in lokalna orodja
+tests/
+.pytest_cache/
+
+# Delovne mape in izhodi pomočnika (slike, osnutki diplome)
+Claude outputs/
+_tmp/
+_stara_koda*/
+
+# Neuporabljena privzeta Vite ikona
+frontend/public/vite.svg

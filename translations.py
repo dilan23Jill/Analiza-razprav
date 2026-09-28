@@ -41,7 +41,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "report.moderator_pressed":         {"en": "Pressed harder",
                                          "sl": "Bolj pritiskal na"},
     "report.evasions":                  {"en": "Evasions & Non-Answers",
-                                         "sl": "Izogibanja in neodgovarjanja"},
+                                         "sl": "Izmikanja in neodgovarjanja"},
     "report.question":                  {"en": "Question",
                                          "sl": "Vprašanje"},
     "report.fallacies":                 {"en": "Fallacies",

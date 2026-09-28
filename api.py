@@ -1331,7 +1331,7 @@ def _apply_edits(analysis: Dict, operations: List[EditOp]) -> Tuple[Dict, List[s
             sp = (p.get("speaker") or "").strip()
             fields = p.get("fields") or {}
             if sp in speakers and isinstance(fields, dict):
-                allowed = {"position", "conclusions"}
+                allowed = {"position"}
                 for k, v in fields.items():
                     if k in allowed:
                         speakers[sp][k] = v

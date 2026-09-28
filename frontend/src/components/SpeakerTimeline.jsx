@@ -14,7 +14,6 @@ export default function SpeakerTimeline({
   const args = speakerData.arguments || []
   const position = speakerData.position || ''
   const keyQuotes = speakerData.key_quotes || []
-  const conclusions = speakerData.conclusions || []
   const fallacies = speakerProfile?.fallacies || []
   const evasions = speakerProfile?.evasions || []
   const rebuttals = speakerProfile?.rebuttals || []
@@ -49,19 +48,6 @@ export default function SpeakerTimeline({
             <p className="text-slate-900/70 text-sm mt-2 font-medium">
               {t.stPosition}: {position}
             </p>
-          )}
-          {conclusions.length > 0 && (
-            <div className="mt-3 text-left">
-              <p className="text-slate-900/60 text-xs font-semibold mb-1">{t.stConclusions}:</p>
-              <ul className="text-slate-900/80 text-xs space-y-0.5">
-                {conclusions.map((conclusion, conclusionIndex) => (
-                  <li key={conclusionIndex} className="flex gap-1.5">
-                    <span className="text-slate-900/40">-</span>
-                    <span>{conclusion}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           )}
         </div>
       </div>

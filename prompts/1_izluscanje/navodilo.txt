@@ -222,8 +222,7 @@ Return JSON:
           "argument": "1-3 sentences: the conclusion + the core 'why'. Direct to the point, no padding. (FINAL/FULLEST version if the speaker developed it later.)",
           "premises": ["mini-argument: load-bearing claim — plus the speaker's own reason for it, if given", "..."]
         }
-      ],
-      "conclusions": ["final conclusion 1"]
+      ]
     }
   }
 }

@@ -3,7 +3,7 @@ pipeline:
   language: "sl"    # "sl" | "en"
 
   # Najdaljši posnetek, ki ga sistem sprejme
-  max_recording_minutes: 23
+  max_recording_minutes: 35
 
 transcription:
   model: "gpt-4o-transcribe-diarize"
@@ -68,6 +68,10 @@ analysis:
 
   # Prompt caching (Anthropic)
   prompt_caching: true
+
+  # Razmišljanje modelov Claude: "disabled" ga izklopi, prazno pusti privzeto.
+  # Razmišljanje porabi proračun izhodnih žetonov in lahko pusti prazen odgovor.
+  anthropic_thinking: "disabled"
 
   # Transkript budget za analizo
   transcript_token_budget_chars: 80000

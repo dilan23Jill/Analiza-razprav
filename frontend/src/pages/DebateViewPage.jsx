@@ -314,6 +314,12 @@ export default function DebateViewPage() {
               }}
             />
           ))}
+          <SynthesisPanel
+            summary={analysis.summary}
+            perSpeaker={(analysis.comparative_evaluation || {}).per_speaker}
+            speakerNames={speakerNames}
+            t={t}
+          />
         </div>
       )}
 
@@ -526,6 +532,49 @@ function _getAllSources(claim) {
 function _domainFromUrl(url) {
   try { return new URL(url).hostname.replace('www.', '') }
   catch { return url }
+}
+
+/**
+ * Sinteza (peti korak): povzetek razprave in po en stavek o načinu
+ * argumentiranja ter o razsodbah za vsakega govorca. Prikazana je pod
+ * časovnico, ker povzema vse, kar je nad njo.
+ */
+function SynthesisPanel({ summary, perSpeaker, speakerNames, t }) {
+  const per = perSpeaker && typeof perSpeaker === 'object' ? perSpeaker : {}
+  const rows = speakerNames
+    .map(name => [name, per[name] || {}])
+    .filter(([, ev]) => ev.rhetorical_style || ev.factual_accuracy)
+  if (!summary && rows.length === 0) return null
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-dark-600/30 p-5">
+      <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-3">
+        {t.synthesisTitle}
+      </h3>
+      {summary && (
+        <p className="text-sm text-white/70 leading-relaxed">{summary}</p>
+      )}
+      {rows.length > 0 && (
+        <div className="mt-4 space-y-3">
+          {rows.map(([name, ev]) => (
+            <div key={name} className="border-t border-white/5 pt-3">
+              <p className="text-sm font-semibold text-white/80 mb-1">{name}</p>
+              {ev.rhetorical_style && (
+                <p className="text-sm text-white/60">
+                  <span className="text-white/40">{t.synthesisStyle}: </span>{ev.rhetorical_style}
+                </p>
+              )}
+              {ev.factual_accuracy && (
+                <p className="text-sm text-white/60">
+                  <span className="text-white/40">{t.synthesisFacts}: </span>{ev.factual_accuracy}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function ModeratorPanel({ moderator, t, tv }) {
