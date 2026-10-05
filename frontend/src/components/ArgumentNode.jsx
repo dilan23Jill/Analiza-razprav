@@ -98,7 +98,7 @@ function ClaimSourcesModal({ claim, onClose }) {
           <p className="text-sm text-white/85 flex-1">
             {claim.exact_claim || claim.claim || ''}
           </p>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 bg-white/10 ${
+          <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-bold flex-shrink-0 bg-white/10 ${
             VERDICT_TEXT[verdict] || VERDICT_TEXT.UNVERIFIABLE
           }`}>
             {t[verdict] || verdict}
@@ -110,7 +110,7 @@ function ClaimSourcesModal({ claim, onClose }) {
         )}
 
         {labelled.length > 0 && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-[11px]">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-[0.6875rem]">
             {labelled.map(v => (
               <span key={v} className={VERDICT_TEXT[v]}>
                 {t[v] || v}: <span className="font-semibold">{tally[v]}</span>
@@ -119,7 +119,7 @@ function ClaimSourcesModal({ claim, onClose }) {
           </div>
         )}
 
-        <h6 className="text-white/40 text-[10px] uppercase tracking-wider mb-2">
+        <h6 className="text-white/40 text-[0.625rem] uppercase tracking-wider mb-2">
           {t.sources} · {sources.length}
         </h6>
         <ol className="space-y-1.5">
@@ -217,30 +217,29 @@ export default function ArgumentNode({
   )
 
   return (
-    <div className="relative w-full my-3 md:my-6 group">
-      <div className="flex items-center gap-3 md:hidden">
+    <div className="relative w-full my-3 sm:my-6 group">
+      <div className="flex items-center gap-3 sm:hidden">
         {nodeButton}
         <div className="flex-1 min-w-0">
           <ArgLabel argument={argument} onClick={onToggle} />
         </div>
       </div>
 
-      <div className="hidden md:flex items-center w-full">
-        {side === 'left' && (
-          <div className="w-[47%] pr-6 text-right">
-            <ArgLabel argument={argument} onClick={onToggle} />
-          </div>
-        )}
-        {side === 'right' && <div className="w-[47%]" />}
+      {/* Stolpca sta enako široka, zato je vozlišče točno na sredinski črti. */}
+      <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-6 w-full">
+        <div className="min-w-0 flex justify-end">
+          {side === 'left' && (
+            <ArgLabel argument={argument} onClick={onToggle} align="right" />
+          )}
+        </div>
 
         {nodeButton}
 
-        {side === 'right' && (
-          <div className="w-[47%] pl-6">
+        <div className="min-w-0">
+          {side === 'right' && (
             <ArgLabel argument={argument} onClick={onToggle} />
-          </div>
-        )}
-        {side === 'left' && <div className="w-[47%]" />}
+          )}
+        </div>
       </div>
 
       {isOpen && typeof document !== 'undefined' && createPortal(
@@ -294,13 +293,13 @@ function ArgumentModal({
         <div className="sticky top-0 z-10 border-b border-white/5 bg-dark-600/95 px-4 sm:px-5 py-3 sm:py-4 backdrop-blur">
           <div className="flex items-start justify-between gap-3 sm:gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-accent-blue">
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.25em] text-accent-blue">
                 {speakerName || t.argSpeaker}
               </p>
               <h4 className="mt-2 text-base font-semibold text-white">
                 Argument {index + 1}
                 {userAdded && (
-                  <span className="ml-2 text-[10px] font-normal text-white/40 border border-white/10 rounded px-1.5 py-0.5">
+                  <span className="ml-2 text-[0.625rem] font-normal text-white/40 border border-white/10 rounded px-1.5 py-0.5">
                     {t.argUserAdded}
                   </span>
                 )}
@@ -317,7 +316,7 @@ function ArgumentModal({
             <ol className="space-y-2">
               {premises.map((premise, premiseIndex) => (
                 <li key={premiseIndex} className="flex items-start gap-3 text-sm text-white/70">
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-accent-blue/15 text-[11px] font-semibold text-accent-blue">
+                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-accent-blue/15 text-[0.6875rem] font-semibold text-accent-blue">
                     {premiseIndex + 1}
                   </span>
                   <span className="flex-1">{premise}</span>
@@ -453,11 +452,11 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                 className="p-2.5 bg-dark-800/60 rounded-lg border border-accent-blue/20"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] text-accent-blue/60 font-semibold uppercase tracking-wider">
+                  <span className="text-[0.625rem] text-accent-blue/60 font-semibold uppercase tracking-wider">
                     {t.argRebuttalBy} ({rebuttal.by})
                   </span>
                   {rebuttal.user_added && (
-                    <span className="text-[10px] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
+                    <span className="text-[0.625rem] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
                       {t.argUserAdded}
                     </span>
                   )}
@@ -467,7 +466,7 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                 </p>
                 {rebuttal.response && (
                   <div className="mt-2 pt-2 border-t border-white/5">
-                    <div className="text-[10px] text-orange-400/70 mb-1 font-semibold uppercase tracking-wider">
+                    <div className="text-[0.625rem] text-orange-400/70 mb-1 font-semibold uppercase tracking-wider">
                       {t.argDefense}
                     </div>
                     <p className="text-white/70 text-xs leading-relaxed">
@@ -487,7 +486,7 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
             {t.argExchangeFlow}
           </h5>
           <div className="p-2.5 bg-dark-800/60 rounded-lg border border-white/5">
-            <div className="text-[10px] text-white/30 mb-1">
+            <div className="text-[0.625rem] text-white/30 mb-1">
               {critique.counter.includes('Not addressed') ? t.argNotAddressed : t.argOpponentResponse}
             </div>
             <p className="text-white/60 text-xs leading-relaxed">{critique.counter}</p>
@@ -540,14 +539,14 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
               )}
               {fallacy.category && (
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40"
+                  className="text-[0.625rem] px-1.5 py-0.5 rounded bg-white/5 text-white/40"
                   title={t[`fallacyCat_${fallacy.category}_desc`]}
                 >
                   {tv('fallacy_category', fallacy.category)}
                 </span>
               )}
               {fallacy.user_added && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40">
+                <span className="text-[0.625rem] px-1.5 py-0.5 rounded bg-white/5 text-white/40">
                   {t.argUserAdded}
                 </span>
               )}
@@ -561,18 +560,18 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                       runFallacyOp('delete_fallacy', { index: fallacy._index })
                     }
                   }}
-                  className="ml-auto w-5 h-5 rounded border border-white/15 text-white/40 text-[11px]
+                  className="ml-auto w-5 h-5 rounded border border-white/15 text-white/40 text-[0.6875rem]
                              leading-none hover:text-red-300 hover:border-red-400/50 transition-colors"
                 >×</button>
               )}
             </div>
             {fallacy.evidence && (
-              <p className="text-white/40 text-[11px] mt-1">{fallacy.evidence}</p>
+              <p className="text-white/40 text-[0.6875rem] mt-1">{fallacy.evidence}</p>
             )}
             <p className="text-white/50 text-xs mt-1">{fallacy.explanation}</p>
             {canEdit && (
               <div className="flex items-center gap-1.5 mt-2">
-                <span className="text-[10px] text-white/30 mr-0.5">{t.reviewPrompt}</span>
+                <span className="text-[0.625rem] text-white/30 mr-0.5">{t.reviewPrompt}</span>
                 {[['confirmed', t.reviewConfirm, 'text-green-300 border-green-400/50 bg-green-500/15'],
                   ['dismissed', t.reviewDismiss, 'text-red-300 border-red-400/50 bg-red-500/15']]
                   .map(([val, lbl, active]) => (
@@ -581,7 +580,7 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                     type="button"
                     disabled={savingReview !== null}
                     onClick={() => reviewFallacy(fallacy._index, val, fallacy.review || null)}
-                    className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${
+                    className={`text-[0.625rem] px-2 py-0.5 rounded border transition-colors ${
                       fallacy.review === val ? active
                         : 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'}`}
                   >{lbl}</button>
@@ -609,7 +608,7 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                   <button
                     type="button"
                     onClick={() => setAddingFallacy(true)}
-                    className="text-[11px] text-white/40 hover:text-purple-300 border border-white/10
+                    className="text-[0.6875rem] text-white/40 hover:text-purple-300 border border-white/10
                                hover:border-purple-400/40 rounded px-2 py-1 transition-colors"
                   >+ {t.fallacyAdd}</button>
                 ) : (
@@ -636,17 +635,17 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                         type="button"
                         disabled={busyFallacy || !newFallacyType || !newFallacyQuote.trim()}
                         onClick={addFallacy}
-                        className="text-[11px] px-2 py-1 rounded border border-purple-400/40 text-purple-300
+                        className="text-[0.6875rem] px-2 py-1 rounded border border-purple-400/40 text-purple-300
                                    disabled:opacity-40 hover:bg-purple-500/10 transition-colors"
                       >{t.fallacyAddSave}</button>
                       <button
                         type="button"
                         onClick={() => { setAddingFallacy(false); setNewFallacyType(''); setNewFallacyQuote('') }}
-                        className="text-[11px] px-2 py-1 rounded border border-white/15 text-white/50
+                        className="text-[0.6875rem] px-2 py-1 rounded border border-white/15 text-white/50
                                    hover:text-white/80 transition-colors"
                       >{t.rerunCancelBtn}</button>
                     </div>
-                    <p className="text-[10px] text-white/30 mt-1.5">{t.fallacyAddHint}</p>
+                    <p className="text-[0.625rem] text-white/30 mt-1.5">{t.fallacyAddHint}</p>
                   </div>
                 )}
               </div>
@@ -674,14 +673,14 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
   )
 }
 
-function ArgLabel({ argument, onClick }) {
+function ArgLabel({ argument, onClick, align = 'left' }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="text-left group/label cursor-pointer"
+      className={`${align === 'right' ? 'text-right' : 'text-left'} max-w-full group/label cursor-pointer`}
     >
-      <p className="text-white/80 text-sm group-hover/label:text-white transition-colors leading-snug">
+      <p className="text-white/80 text-sm group-hover/label:text-white transition-colors leading-snug break-words [overflow-wrap:anywhere]">
         {argument.argument}
       </p>
     </button>
@@ -706,14 +705,14 @@ function FactClaimMini({ claim }) {
         <p className="text-white/60 text-xs flex-1">
           {claim.exact_claim || claim.claim || ''}
         </p>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
+        <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
           verdictColors[verdict] || verdictColors.UNVERIFIABLE
         }`}>
           {verdict}
         </span>
       </div>
       {claim.explanation && (
-        <p className="text-white/40 text-[11px] mt-1">{claim.explanation}</p>
+        <p className="text-white/40 text-[0.6875rem] mt-1">{claim.explanation}</p>
       )}
       {sources.length > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
@@ -723,7 +722,7 @@ function FactClaimMini({ claim }) {
               href={source.url || source}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] text-accent-blue hover:text-blue-300 underline underline-offset-2"
+              className="text-[0.625rem] text-accent-blue hover:text-blue-300 underline underline-offset-2"
             >
               {source.title || extractDomain(source.url || source)}
             </a>

@@ -218,7 +218,7 @@ export default function FactCheckPanel({ factCheck }) {
                               }`} />
                               <span className="truncate">{displayTitle}</span>
                               {src.source_verdict && (
-                                <span className={`text-[10px] flex-shrink-0 ${
+                                <span className={`text-[0.625rem] flex-shrink-0 ${
                                   SOURCE_TEXT[src.source_verdict] || 'text-white/40'
                                 }`}>
                                   {t[src.source_verdict] || src.source_verdict}
@@ -263,7 +263,7 @@ function StatCard({ label, value, color = 'text-white', tip }) {
   return (
     <div className="bg-dark-600/50 border border-white/5 rounded-xl px-4 py-3 text-center">
       <div className={`text-xl font-bold ${color}`}>{value}</div>
-      <div className="text-[10px] text-white/30 mt-0.5 uppercase tracking-wider inline-flex items-center gap-2">
+      <div className="text-[0.625rem] text-white/30 mt-0.5 uppercase tracking-wider inline-flex items-center gap-2">
         {tip && <InfoTooltip text={tip} />}
         <span>{label}</span>
       </div>
@@ -293,7 +293,7 @@ function VerdictBadge({ verdict, t }) {
   }
 
   return (
-    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+    <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-bold ${
       colors[verdict] || colors.UNVERIFIABLE
     }`}>
       {t[verdict] || verdict}

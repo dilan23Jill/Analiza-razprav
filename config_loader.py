@@ -92,3 +92,8 @@ def job_overrides(**overrides: Any) -> Iterator[None]:
         yield
     finally:
         _local.overrides = prev
+
+
+def current_overrides() -> dict:
+    """Nastavitve opravila v trenutni niti, za prenos v vzporedne niti."""
+    return dict(getattr(_local, "overrides", {}) or {})

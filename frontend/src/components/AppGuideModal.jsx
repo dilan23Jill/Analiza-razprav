@@ -27,7 +27,7 @@ export default function AppGuideModal({ open, onClose }) {
         <div className="sticky top-0 z-10 border-b border-white/10 bg-dark-700/95 px-5 sm:px-7 py-4 backdrop-blur-md">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent-red">
+              <p className="text-[0.625rem] font-bold uppercase tracking-[0.3em] text-accent-red">
                 {t.guideHowItWorks}
               </p>
               <h2 className="mt-1.5 text-lg sm:text-xl font-semibold text-white">
@@ -125,7 +125,7 @@ function Step({ n, accent = 'red', title, children }) {
         <span className={`flex shrink-0 w-7 h-7 items-center justify-center rounded-full ring-1 ${a.ring} ${a.bg} ${a.text} text-xs font-bold`}>
           {n}
         </span>
-        <h3 className="text-sm sm:text-[15px] font-semibold text-white">{title}</h3>
+        <h3 className="text-sm sm:text-[0.9375rem] font-semibold text-white">{title}</h3>
       </div>
       <div className="pl-10 text-white/70">{children}</div>
     </section>
@@ -152,7 +152,7 @@ const VERDICT_COLORS = {
 function VerdictRow({ color = 'slate', label, desc }) {
   return (
     <div className="flex items-start gap-3 rounded-lg bg-white/[0.02] border border-white/5 p-2.5">
-      <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold border ${VERDICT_COLORS[color]}`}>
+      <span className={`shrink-0 px-2 py-0.5 rounded text-[0.625rem] uppercase tracking-wider font-semibold border ${VERDICT_COLORS[color]}`}>
         {label}
       </span>
       <span className="text-xs text-white/65 leading-relaxed">{desc}</span>

@@ -236,7 +236,7 @@ function DebateCard({ debate, onDelete, t }) {
             </span>
             <span className="whitespace-nowrap">{date}</span>
             {(debate.speaker_names || debate.speakers) && (
-              <span className="truncate max-w-[120px] sm:max-w-none">{t.speakers}: {debate.speaker_names || debate.speakers}</span>
+              <span className="truncate max-w-[7.5rem] sm:max-w-none">{t.speakers}: {debate.speaker_names || debate.speakers}</span>
             )}
             {debate.duration_sec && (
               <span className="whitespace-nowrap">{formatDuration(debate.duration_sec)} {t.processing}</span>

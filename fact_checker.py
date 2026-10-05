@@ -1019,7 +1019,7 @@ class FactChecker:
         else:
             ev["grok"] = self._grok_find(claim, claim_type, claim_context=claim_context)
 
-        # spletno iskanje — najdražji zbiralec, teče pri vsaki trditvi
+        # spletno iskanje — najdražji iskalni modul, teče pri vsaki trditvi
         ev["web"] = self._web_search_find(claim, claim_type, claim_context=claim_context)
         if ev["web"] is None:
             ev["skipped"]["web_search"] = (
@@ -1030,7 +1030,7 @@ class FactChecker:
 
     @staticmethod
     def _collect_sources(ev: Dict) -> List[Dict]:
-        """Sestavi seznam virov iz tega, kar so vrnili zbiralci."""
+        """Sestavi seznam virov iz tega, kar so vrnili iskalni moduli."""
         cap = int(cfg("fact_checking.max_sources_per_claim", 10))
 
         queues: List[List[Dict]] = [
@@ -1283,13 +1283,21 @@ class FactChecker:
                 except Exception as e:
                     logger.warning("   [Perplexity batch] Failed: %s", e)
 
+        # Nastavitve opravila (npr. jezik analize) veljajo le za nit, ki jih je
+        # nastavila, zato jih prenesemo v vsako vzporedno nit posebej.
+        from config_loader import current_overrides, job_overrides
+        overrides = current_overrides()
+
+        def _verify(claim_data):
+            with job_overrides(**overrides):
+                return self.verify_claim(claim_data,
+                                         _perplexity_prefetched=perplexity_prefetched)
+
         results = [None] * total
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {}
             for i, claim_data in enumerate(claims):
-                future = executor.submit(self.verify_claim, claim_data,
-                                         _perplexity_prefetched=perplexity_prefetched,
-)
+                future = executor.submit(_verify, claim_data)
                 futures[future] = i
 
             for future in as_completed(futures):

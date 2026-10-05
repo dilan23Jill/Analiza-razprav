@@ -30,10 +30,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-dark-900 overflow-x-hidden">
       <nav className="border-b border-white/[0.06] bg-dark-900/70 backdrop-blur-xl sticky top-0 z-50 shadow-soft">
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+        <div className="max-w-[93.75rem] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group" onClick={closeMenu}>
             <img src="/icon.svg" alt="DA" className="logo-glow w-8 h-8 rounded-lg ring-1 ring-white/10 group-hover:ring-accent-red/40 transition-all" />
-            <span className="text-base sm:text-lg font-semibold text-gradient">
+            <span className="whitespace-nowrap text-base sm:text-lg font-semibold text-gradient">
               Debate Analyzer
             </span>
           </Link>
@@ -137,7 +137,7 @@ export default function App() {
         )}
       </nav>
 
-      <main className="relative z-10 max-w-[1500px] mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <main className="relative z-10 max-w-[93.75rem] mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
@@ -224,7 +224,7 @@ function NavLink({ to, current, children }) {
   return (
     <Link
       to={to}
-      className={`nav-underline text-sm font-medium transition-colors ${
+      className={`nav-underline whitespace-nowrap text-sm font-medium transition-colors ${
         active
           ? 'nav-active text-accent-red'
           : 'text-white/60 hover:text-white'

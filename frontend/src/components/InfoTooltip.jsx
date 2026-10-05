@@ -56,7 +56,7 @@ export default function InfoTooltip({ text, className = '' }) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [show])
 
-  const arrowBase = 'absolute w-0 h-0 border-t-[6px] border-b-[6px] border-t-transparent border-b-transparent'
+  const arrowBase = 'absolute w-0 h-0 border-t-[0.375rem] border-b-[0.375rem] border-t-transparent border-b-transparent'
 
   return (
     <span
@@ -66,7 +66,7 @@ export default function InfoTooltip({ text, className = '' }) {
       onMouseLeave={() => setShow(false)}
       onClick={(e) => { e.stopPropagation(); setShow(s => !s) }}
     >
-      <span className="cursor-help inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white/15 text-white/50 text-[9px] font-bold leading-none hover:bg-white/25 hover:text-white/70 transition-colors">
+      <span className="cursor-help inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white/15 text-white/50 text-[0.5625rem] font-bold leading-none hover:bg-white/25 hover:text-white/70 transition-colors">
         ?
       </span>
 
@@ -80,18 +80,18 @@ export default function InfoTooltip({ text, className = '' }) {
             zIndex: 99999,
             boxShadow: '0 8px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)',
           }}
-          className="px-3 py-2 rounded-lg bg-pure-white text-gray-800 text-[11px] leading-relaxed whitespace-normal min-w-[180px] max-w-[260px] border border-gray-200 pointer-events-none"
+          className="px-3 py-2 rounded-lg bg-pure-white text-gray-800 text-[0.6875rem] leading-relaxed whitespace-normal min-w-[11.25rem] max-w-[16.25rem] border border-gray-200 pointer-events-none"
         >
           {text}
           {pos.arrow === 'right' && (
             <span
-              className={`${arrowBase} border-l-[6px] border-l-white`}
+              className={`${arrowBase} border-l-[0.375rem] border-l-white`}
               style={{ position: 'absolute', top: '50%', left: '100%', transform: 'translateY(-50%)' }}
             />
           )}
           {pos.arrow === 'left' && (
             <span
-              className={`${arrowBase} border-r-[6px] border-r-white`}
+              className={`${arrowBase} border-r-[0.375rem] border-r-white`}
               style={{ position: 'absolute', top: '50%', right: '100%', transform: 'translateY(-50%)' }}
             />
           )}

@@ -190,7 +190,7 @@ export default function AnalyzePage() {
               <span className="relative w-6 h-6 border-2 border-accent-red border-t-transparent rounded-full animate-spin" />
             </span>
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-accent-red font-bold mb-1.5">
+              <div className="text-[0.625rem] uppercase tracking-[0.2em] text-accent-red font-bold mb-1.5">
                 {t.analysisInProgress}
               </div>
               <h2 className="text-white text-base sm:text-lg font-semibold mb-1.5">
@@ -200,7 +200,7 @@ export default function AnalyzePage() {
                 {t.blockingHint}
               </p>
               <div className="bg-dark-900/40 border border-white/10 rounded-lg px-3 py-2 mb-4">
-                <div className="text-[10px] uppercase tracking-wider text-white/40 mb-0.5">
+                <div className="text-[0.625rem] uppercase tracking-wider text-white/40 mb-0.5">
                   {t.currentStep}
                 </div>
                 <div className="text-sm text-white/85 truncate">

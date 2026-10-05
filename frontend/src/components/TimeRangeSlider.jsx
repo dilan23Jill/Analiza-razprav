@@ -115,7 +115,7 @@ export default function TimeRangeSlider({
         </span>
         <div className="flex items-center gap-2">
           {totalLabel && (
-            <span className="text-[10px] text-white/40 font-mono">{totalLabel}</span>
+            <span className="text-[0.625rem] text-white/40 font-mono">{totalLabel}</span>
           )}
           {!isFullRange && (
             <button type="button" onClick={reset}
@@ -127,11 +127,11 @@ export default function TimeRangeSlider({
       </div>
 
       <div className="flex items-center justify-center gap-3 mb-3">
-        <div className="bg-dark-600 border border-white/10 rounded-lg px-3 py-1.5 min-w-[64px] text-center">
+        <div className="bg-dark-600 border border-white/10 rounded-lg px-3 py-1.5 min-w-[4rem] text-center">
           <span className="text-white text-sm font-mono">{secondsToHMS(startSec)}</span>
         </div>
         <span className="text-white/30 text-xs">—</span>
-        <div className="bg-dark-600 border border-white/10 rounded-lg px-3 py-1.5 min-w-[64px] text-center">
+        <div className="bg-dark-600 border border-white/10 rounded-lg px-3 py-1.5 min-w-[4rem] text-center">
           <span className="text-white text-sm font-mono">
             {endPct >= 100 ? t.trimEnd : secondsToHMS(endSec)}
           </span>
@@ -159,7 +159,7 @@ export default function TimeRangeSlider({
 
         <div className="absolute left-0 right-0 top-7">
           {markers.map(pct => (
-            <span key={pct} className="absolute text-[10px] text-white/15 -translate-x-1/2"
+            <span key={pct} className="absolute text-[0.625rem] text-white/15 -translate-x-1/2"
               style={{ left: `${pct}%` }}>
               {secondsToHMS(Math.round((pct / 100) * maxSec))}
             </span>
@@ -187,7 +187,7 @@ export default function TimeRangeSlider({
 
       {!knownDuration && (
         <div className="flex items-center justify-end mt-4 gap-1">
-          <span className="text-[10px] text-white/20 mr-1">
+          <span className="text-[0.625rem] text-white/20 mr-1">
             {t.trimLengthLabel}
           </span>
           {[
@@ -199,7 +199,7 @@ export default function TimeRangeSlider({
           ].map(({ val, label }) => (
             <button key={val} type="button"
               onClick={() => { setManualMax(val); reset() }}
-              className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
+              className={`px-2 py-0.5 rounded text-[0.625rem] transition-colors ${
                 manualMax === val ? 'bg-red-500/20 text-red-400' : 'text-white/20 hover:text-white/40'
               }`}>
               {label}

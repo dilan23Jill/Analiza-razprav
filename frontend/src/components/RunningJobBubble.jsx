@@ -45,7 +45,7 @@ export default function RunningJobBubble() {
       </span>
 
       <span className="flex-1 min-w-0">
-        <span className="block text-[10px] uppercase tracking-wider text-accent-red font-semibold">
+        <span className="block text-[0.625rem] uppercase tracking-wider text-accent-red font-semibold">
           {t.analysisRunning}
           {activeJobs.length > 1 && (
             <span className="ml-1 text-white/40 font-normal normal-case tracking-normal">

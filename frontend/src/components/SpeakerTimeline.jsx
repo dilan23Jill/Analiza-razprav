@@ -40,21 +40,21 @@ export default function SpeakerTimeline({
   return (
     <div className="relative border border-accent-blue/30 rounded-2xl p-3 sm:p-6 bg-dark-800/30 animate-fade-in">
       <div className="flex justify-center mb-6 sm:mb-8">
-        <div className="bg-accent-pink/90 rounded-xl px-4 sm:px-10 py-4 sm:py-5 text-center max-w-2xl w-full sm:w-auto">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-wide">
+        <div className="bg-accent-red/15 border-2 border-accent-red/60 shadow-soft rounded-xl px-4 sm:px-10 py-4 sm:py-5 text-center max-w-2xl w-full sm:w-auto">
+          <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide break-words">
             {speakerName.toUpperCase()}
           </h2>
           {position && (
-            <p className="text-slate-900/70 text-sm mt-2 font-medium">
+            <p className="text-white/70 text-sm mt-2 font-medium break-words">
               {t.stPosition}: {position}
             </p>
           )}
         </div>
       </div>
 
-      <div className="relative flex flex-col items-stretch md:items-center">
-        <div className="hidden md:block absolute left-1/2 -translate-x-px top-0 bottom-0 w-0.5 bg-accent-red/60" />
-        <div className="md:hidden absolute left-5 top-0 bottom-0 w-0.5 bg-accent-red/60" />
+      <div className="relative flex flex-col items-stretch sm:items-center">
+        <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-0.5 bg-accent-red/60" />
+        <div className="sm:hidden absolute left-5 -translate-x-1/2 top-0 bottom-0 w-0.5 bg-accent-red/60" />
 
         {args.map((arg, index) => {
           const argumentId = `${speakerName}:${index}`

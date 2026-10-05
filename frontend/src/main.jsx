@@ -7,7 +7,10 @@ import { ThemeProvider } from './utils/ThemeContext'
 import { ActiveJobsProvider } from './hooks/ActiveJobsContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import App from './App'
+import { installUiZoom } from './utils/uiZoom'
 import './index.css'
+
+installUiZoom()
 
 function LocalizedErrorBoundary({ children }) {
   const { t } = useLanguage()

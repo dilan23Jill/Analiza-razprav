@@ -635,7 +635,7 @@ function ArgumentCard({
         rows={5}
         value={arg.argument || ''}
         onChange={(e) => onChangeField('argument', e.target.value)}
-        className="w-full bg-dark-900/70 border border-white/25 font-medium rounded-lg px-3 py-2.5 text-[15px] leading-relaxed text-white focus:border-accent-red/40 focus:outline-none resize-y"
+        className="w-full bg-dark-900/70 border border-white/25 font-medium rounded-lg px-3 py-2.5 text-[0.9375rem] leading-relaxed text-white focus:border-accent-red/40 focus:outline-none resize-y"
         placeholder={t('Argument — popolna veriga sklepanja...', 'Argument — complete chain of reasoning...')}
       />
 

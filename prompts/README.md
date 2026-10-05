@@ -9,6 +9,6 @@ nadomesti z dejanskimi podatki. Pri slovenski analizi je vsakemu pozivu dodano
 |---|---|
 | `1_izluscanje/` | izluščanje argumentov: sistemski poziv, pravila o udeležencih, navodilo, namig iz naslova posnetka |
 | `2_zmote/` | zaznava logičnih zmot |
-| `3_preverjanje_dejstev/` | izbira trditev, razgradnja, zbiralci (splet, Grok, Perplexity), razsodba in merila razsodbe |
+| `3_preverjanje_dejstev/` | izbira trditev, razgradnja, iskalni moduli (splet, Grok, Perplexity), razsodba in merila razsodbe |
 | `4_zavrnitve/` | preslikava odgovorov in izmikanj |
 | `5_sinteza/` | sinteza (razprava in en govorec) |
