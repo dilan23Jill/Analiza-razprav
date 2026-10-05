@@ -994,6 +994,18 @@ def _drop_thin_arguments(claims_result: Dict) -> Dict:
             "arguments_before": before, "arguments_after": after}
 
 
+def _moderator_questions_key(count: int) -> str:
+    """Translation key with the correct Slovenian number form (1, 2, 3-4, 5+)."""
+    rest = abs(count) % 100
+    if rest == 1:
+        return "report.moderator_questions_1"
+    if rest == 2:
+        return "report.moderator_questions_2"
+    if rest in (3, 4):
+        return "report.moderator_questions_34"
+    return "report.moderator_questions"
+
+
 def _merge_moderator_info(pass1: Optional[Dict], synthesis: Optional[Dict]) -> Dict:
     """Combine what pass 1 observed about the moderator with the synthesis' read of how
     they shaped the exchange.
@@ -1010,8 +1022,10 @@ def _merge_moderator_info(pass1: Optional[Dict], synthesis: Optional[Dict]) -> D
     count = max(count, len(questions))
 
     pressed = str(p1.get("pressed_more") or sy.get("pressed_more") or "").strip()
-    notes = " ".join(x for x in (str(p1.get("notes") or "").strip(),
-                                 str(sy.get("notes") or "").strip()) if x).strip()
+    # One description only: the synthesis describes the moderator's influence on the
+    # exchange; the pass-1 note is the fallback. Joining both repeated the same content.
+    notes = (str(sy.get("notes") or "").strip()
+             or str(p1.get("notes") or "").strip())
 
     return {
         "present": present,
@@ -1157,9 +1171,10 @@ def render_text_report(analysis: Dict, fact_check_data: Optional[Dict] = None) -
     mod = analysis.get("moderator") or {}
     if mod.get("present"):
         lines.append("")
+        count = int(mod.get("question_count") or 0)
         lines.append(f"**{t('report.moderator')}**: {mod.get('name') or '?'} — "
-                     f"{mod.get('question_count', 0)} {t('report.moderator_questions')}")
-        if mod.get("pressed_more"):
+                     f"{count} {t(_moderator_questions_key(count))}")
+        if mod.get("pressed_more") and mod["pressed_more"] != "n/a":
             pressed = mod["pressed_more"]
             pressed_txt = (label("pressed_more", pressed)
                            if pressed in ("balanced", "n/a") else pressed)

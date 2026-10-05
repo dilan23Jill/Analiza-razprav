@@ -300,7 +300,12 @@ export default function DebateViewPage() {
           {speakerNames.length >= 2 && (
             <p className="text-white/30 text-xs -mt-2">{t.diarizationNote}</p>
           )}
-          <ModeratorPanel moderator={analysis.moderator} t={t} tv={tv} />
+          <ModeratorPanel
+            moderator={analysis.moderator}
+            influence={analysis.comparative_evaluation?.moderator_influence}
+            t={t}
+            tv={tv}
+          />
           {speakerNames.map(name => (
             <SpeakerTimeline
               key={name}
@@ -577,30 +582,45 @@ function SynthesisPanel({ summary, perSpeaker, speakerNames, t }) {
   )
 }
 
-function ModeratorPanel({ moderator, t, tv }) {
+// Slovenska oblika samostalnika po številu: 1, 2, 3-4, 5 in več.
+function moderatorQuestionsLabel(count, t) {
+  const rest = Math.abs(count) % 100
+  if (rest === 1) return t.moderatorQuestions1
+  if (rest === 2) return t.moderatorQuestions2
+  if (rest === 3 || rest === 4) return t.moderatorQuestions34
+  return t.moderatorQuestions
+}
+
+function ModeratorPanel({ moderator, influence, t, tv }) {
   if (!moderator || !moderator.present) return null
 
   const questions = Array.isArray(moderator.questions) ? moderator.questions : []
   const count = moderator.question_count || questions.length
-  const pressed = ['balanced', 'n/a'].includes(moderator.pressed_more)
+  // "n/a" pomeni, da moderator ni izpraševal nobenega debaterja: oznaka se ne prikaže.
+  const showPressed = !!moderator.pressed_more && moderator.pressed_more !== 'n/a'
+  const pressed = moderator.pressed_more === 'balanced'
     ? tv('pressed_more', moderator.pressed_more)
     : moderator.pressed_more
+  // En opis: najprej opis vpliva iz sinteze, sicer zapis iz prvega koraka. Starejše
+  // analize imajo v moderator.notes oba stavka zlepljena skupaj.
+  const notes = (influence && typeof influence.notes === 'string' && influence.notes.trim())
+    || moderator.notes
 
   return (
     <div className="rounded-lg border border-white/10 bg-dark-600/30 p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
         <span className="text-sm font-semibold text-white/80">{t.moderatorTitle}</span>
         {moderator.name && <span className="text-sm text-white/60">{moderator.name}</span>}
-        <span className="text-xs text-white/40">{count} {t.moderatorQuestions}</span>
-        {moderator.pressed_more && (
+        <span className="text-xs text-white/40">{count} {moderatorQuestionsLabel(count, t)}</span>
+        {showPressed && (
           <span className="text-xs text-white/40">
             {t.moderatorPressed}: {pressed}
           </span>
         )}
       </div>
 
-      {moderator.notes && (
-        <p className="text-sm text-white/50 mb-2">{moderator.notes}</p>
+      {notes && (
+        <p className="text-sm text-white/50 mb-2">{notes}</p>
       )}
 
       {questions.length > 0 && (

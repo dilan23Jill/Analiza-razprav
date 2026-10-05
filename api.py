@@ -431,10 +431,10 @@ def _apply_speaker_names(analysis: Dict, fact_check: Dict, speaker_names: str) -
             for i, (_, new) in enumerate(pairs)]
     _apply_edits(analysis, ops)
 
-    mapping = dict(pairs)
-    for f in (fact_check.get("fact_checks") or []) if isinstance(fact_check, dict) else []:
-        if f.get("speaker") in mapping:
-            f["speaker"] = mapping[f["speaker"]]
+    if isinstance(fact_check, dict):
+        for op_obj in ops:
+            _rename_everywhere(fact_check, op_obj.payload["from_name"],
+                               op_obj.payload["to_name"])
     logger.info("Applied speaker names: %s",
                 ", ".join(f"{o} -> {n}" for o, n in pairs))
 
@@ -1271,6 +1271,54 @@ def _fallacy_category(ftype: str) -> str:
     return _NAME_TO_CATEGORY.get(ftype, "informal")
 
 
+def _rename_in_text(text: str, old: str, new: str) -> str:
+    """Replace a speaker name in free text, as a whole word only ("Speaker 3" does not
+    match inside "Speaker 30").
+    """
+    pattern = re.compile(r"(?<!\w)" + re.escape(old) + r"(?!\w)")
+    return pattern.sub(lambda _m: new, text)
+
+
+def _rename_everywhere(obj: Any, old: str, new: str) -> Any:
+    """Replace a speaker name in every string and dict key of a nested structure.
+
+    Identifiers (key "id" or ending in "_id", e.g. arg_id "Speaker 3#0") are left as
+    they are, because the client links arguments, fallacies and claims through them.
+    Dict key order is preserved.
+    """
+    if isinstance(obj, dict):
+        items = list(obj.items())
+        keys = {k for k, _ in items}
+        obj.clear()
+        for key, value in items:
+            if not (isinstance(key, str) and (key == "id" or key.endswith("_id"))):
+                value = _rename_everywhere(value, old, new)
+            if key == old and new not in keys:
+                key = new
+            obj[key] = value
+        return obj
+    if isinstance(obj, list):
+        for i, item in enumerate(obj):
+            obj[i] = _rename_everywhere(item, old, new)
+        return obj
+    if isinstance(obj, str):
+        return _rename_in_text(obj, old, new)
+    return obj
+
+
+def _rename_pairs(operations: List[EditOp]) -> List[Tuple[str, str]]:
+    """Speaker renames in a list of edit ops, in the order _apply_edits applies them."""
+    pairs: List[Tuple[str, str]] = []
+    for op_obj in operations:
+        if op_obj.op != "rename_speaker":
+            continue
+        p = op_obj.payload or {}
+        old, new = (p.get("from_name") or "").strip(), (p.get("to_name") or "").strip()
+        if old and new and old != new:
+            pairs.append((old, new))
+    return pairs
+
+
 def _apply_edits(analysis: Dict, operations: List[EditOp]) -> Tuple[Dict, List[str]]:
     """Apply a list of edit ops to the analysis dict."""
     speakers = analysis.setdefault("speakers", {})
@@ -1326,6 +1374,9 @@ def _apply_edits(analysis: Dict, operations: List[EditOp]) -> Tuple[Dict, List[s
             for f in (fc.get("fact_checks") or []) if isinstance(fc, dict) else []:
                 if f.get("speaker") == old:
                     f["speaker"] = new
+
+            # The name also appears in free text: explanations, evasions, synthesis.
+            _rename_everywhere(analysis, old, new)
 
         elif op == "edit_speaker_meta":
             sp = (p.get("speaker") or "").strip()
@@ -1530,6 +1581,25 @@ async def edit_debate(debate_id: str, body: EditRequest, request: Request):
     )
     if not ok:
         raise HTTPException(status_code=500, detail="Failed to persist edits")
+
+    # Fact-checks and the text report are stored apart from the analysis, so a
+    # speaker rename is applied to them separately.
+    renames = _rename_pairs(body.operations)
+    if renames:
+        fact_check = debate.get("fact_check_json")
+        report = debate.get("report_text") or ""
+        for old, new in renames:
+            if isinstance(fact_check, (dict, list)):
+                _rename_everywhere(fact_check, old, new)
+            report = _rename_in_text(report, old, new)
+        from database import update_debate_fact_check
+        update_debate_fact_check(
+            debate_id,
+            fact_check_json=(json.dumps(fact_check, ensure_ascii=False)
+                             if isinstance(fact_check, (dict, list)) else fact_check),
+            report_text=report,
+        )
+
     logger.info("User %s edited debate %s: %s", user["username"], debate_id, ", ".join(applied) or "no-op")
     return {"status": "ok", "applied": applied, "operations": len(body.operations)}
 
