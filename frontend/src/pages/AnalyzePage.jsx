@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { submitAnalysis, submitUploadAnalysis, probeYoutube } from '../services/api'
 import { useLanguage } from '../utils/LanguageContext'
 import TimeRangeSlider from '../components/TimeRangeSlider'
-import { useAuth } from '../services/auth'
 import { useActiveJobs } from '../hooks/ActiveJobsContext'
 
 const YT_URL_RE = /^https?:\/\/((www\.)?youtube\.com\/watch\?v=[\w-]{11}|youtu\.be\/[\w-]{11}|(www\.)?youtube\.com\/shorts\/[\w-]{11})/
@@ -12,7 +11,6 @@ export default function AnalyzePage() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const { t } = useLanguage()
-  const { user } = useAuth()
   const { primaryActiveJob: runningJob, initialLoading: checkingJobs } = useActiveJobs()
 
   const [inputType, setInputType] = useState('youtube')
@@ -122,9 +120,7 @@ export default function AnalyzePage() {
       }
       navigate(`/job/${job.job_id}`)
     } catch (err) {
-      if (err.status === 403) {
-        setError(t.noCreditsError)
-      } else if (err.status === 429) {
+      if (err.status === 429) {
         setError(t.rateLimitError)
       } else {
         setError(err.message || t.submitError)
@@ -161,26 +157,6 @@ export default function AnalyzePage() {
       <p className="text-white/40 text-sm mb-6 sm:mb-8">
         {t.newAnalysisSubtitle}
       </p>
-
-      {user && (
-        <div className="mb-6 p-3 rounded-lg bg-dark-600/50 border border-white/5 text-sm">
-          {user.is_admin ? (
-            <div>
-              <span className="text-green-400 font-semibold">Admin</span>
-              <span className="text-white/30 ml-1">({t.unlimited})</span>
-            </div>
-          ) : (
-            <div>
-              <span className="text-white/40">{t.credits}: </span>
-              <span className={`font-semibold ${
-                user.credits > 0 ? 'text-green-400' : 'text-red-400'
-              }`}>
-                {user.credits}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
 
       {runningJob ? (
         <div className="rounded-2xl bg-gradient-to-br from-accent-red/15 to-orange-500/10 border border-accent-red/40 p-6 sm:p-8">

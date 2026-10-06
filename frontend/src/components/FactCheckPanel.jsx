@@ -72,7 +72,7 @@ export default function FactCheckPanel({ factCheck }) {
   const claims = getFactCheckClaims(factCheck)
   const summary = factCheck.summary || {}
   const verdictBreakdown = summary.verdict_breakdown || {}
-  const VERDICTS = ['TRUE', 'PARTIALLY_TRUE', 'MISLEADING', 'FALSE', 'UNVERIFIABLE']
+  const VERDICTS = ['TRUE', 'PARTIALLY_TRUE', 'MISLEADING', 'FALSE', 'UNVERIFIABLE', 'ERROR']
   const bySpeaker = Object.entries(summary.verdicts_by_speaker || {})
 
   return (
@@ -116,8 +116,10 @@ export default function FactCheckPanel({ factCheck }) {
           FALSE: 'bg-red-500',
           UNVERIFIABLE: 'bg-gray-500',
         }
-        const total = Object.values(verdictBreakdown).reduce((a, b) => a + b, 0)
+        // Deleži so računani brez trditev, pri katerih razsodba ni uspela.
+        const total = VRSTNI_RED.reduce((a, v) => a + (verdictBreakdown[v] || 0), 0)
         const prisotne = VRSTNI_RED.filter((v) => (verdictBreakdown[v] || 0) > 0)
+        const errors = verdictBreakdown.ERROR || 0
 
         return (
           <div className="space-y-2">
@@ -146,6 +148,13 @@ export default function FactCheckPanel({ factCheck }) {
                   </span>
                 </span>
               ))}
+              {errors > 0 && (
+                <span className="flex items-center gap-1.5 text-xs text-white/60">
+                  <span className="h-2.5 w-2.5 rounded-full border border-dashed border-white/40" />
+                  {t.verdictErrorCount}
+                  <span className="text-white/40">{errors}</span>
+                </span>
+              )}
             </div>
           </div>
         )
@@ -181,7 +190,12 @@ export default function FactCheckPanel({ factCheck }) {
 
               {isExpanded && (
                 <div className="px-3 sm:px-5 pb-4 pt-1 border-t border-white/5 animate-fade-in">
-                  {claim.explanation && (
+                  {verdict === 'ERROR' ? (
+                    <div className="mb-3">
+                      <p className="text-xs text-white/40 font-semibold mb-1">{t.explanation}</p>
+                      <p className="text-white/70 text-sm">{t.verdictErrorNote}</p>
+                    </div>
+                  ) : claim.explanation && (
                     <div className="mb-3">
                       <p className="text-xs text-white/40 font-semibold mb-1">{t.explanation}</p>
                       <p className="text-white/70 text-sm">{claim.explanation}</p>
@@ -278,6 +292,7 @@ function VerdictDot({ verdict }) {
     MISLEADING: 'bg-orange-500',
     FALSE: 'bg-red-500',
     UNVERIFIABLE: 'bg-gray-500',
+    ERROR: 'bg-transparent border border-dashed border-white/40',
   }[verdict] || 'bg-gray-500'
 
   return <div className={`w-2.5 h-2.5 rounded-full ${color} flex-shrink-0`} />
@@ -290,6 +305,7 @@ function VerdictBadge({ verdict, t }) {
     MISLEADING: 'bg-orange-500/20 text-orange-400',
     FALSE: 'bg-red-500/20 text-red-400',
     UNVERIFIABLE: 'bg-white/10 text-white/40',
+    ERROR: 'border border-dashed border-white/40 text-white/50',
   }
 
   return (

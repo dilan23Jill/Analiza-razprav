@@ -45,7 +45,7 @@ from database import (
     ensure_admin_user, init_db, save_debate, get_debate, list_debates, count_debates, search_debates,
     create_user, authenticate_user, get_user_by_id,
     create_session, validate_session, delete_session,
-    get_credits, set_credits, use_credit, set_admin, list_users,
+    set_admin, list_users,
 )
 
 ADMIN_SECRET = os.getenv("ADMIN_SECRET", "")
@@ -279,7 +279,6 @@ async def register(body: RegisterRequest):
             "id": user["id"],
             "username": user["username"],
             "email": user["email"],
-            "credits": user["credits"],
             "is_admin": user["is_admin"],
         },
         "token": token,
@@ -308,7 +307,6 @@ async def login(body: LoginRequest, request: Request):
             "id": user["id"],
             "username": user["username"],
             "email": user["email"],
-            "credits": user["credits"],
             "is_admin": user["is_admin"],
         },
         "token": token,
@@ -326,10 +324,8 @@ async def logout(request: Request):
 
 @app.get("/auth/me")
 async def get_me(request: Request):
-    """Get current user info including credits (or 401)."""
+    """Get current user info (or 401)."""
     user = _require_user(request)
-    credits = get_credits(user["id"])
-    user["credits"] = credits
     return {"user": user}
 
 
@@ -348,31 +344,9 @@ def _require_admin(request: Request) -> None:
 
 @app.get("/admin/users")
 async def admin_list_users(request: Request):
-    """List all users with credits."""
+    """List all users."""
     _require_admin(request)
     return {"users": list_users()}
-
-
-@app.post("/admin/credits")
-async def admin_set_credits(request: Request):
-    """Set credits for a user."""
-    _require_admin(request)
-    body = await request.json()
-    user_id = body.get("user_id")
-    credits_val = body.get("credits")
-    if user_id is None or credits_val is None:
-        raise HTTPException(status_code=422, detail="user_id and credits required")
-    try:
-        user_id = int(user_id)
-        credits_val = int(credits_val)
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=422, detail="user_id and credits must be integers")
-    if credits_val < 0:
-        raise HTTPException(status_code=422, detail="credits must be non-negative")
-    if not set_credits(user_id, credits_val):
-        raise HTTPException(status_code=404, detail="User not found")
-    logger.info("Admin: set %d credits for user %d", credits_val, user_id)
-    return {"ok": True, "user_id": user_id, "credits": credits_val}
 
 
 @app.post("/admin/set-admin")
@@ -494,7 +468,7 @@ def _effective_duration_seconds(url: str, start_time: str, end_time: str) -> flo
 
 
 def _assert_duration_analysable(seconds: float) -> None:
-    """Reject an over-long recording BEFORE any credit or API call is spent."""
+    """Reject an over-long recording BEFORE any API call is made."""
     limit = _max_analysable_seconds()
     if seconds and seconds > limit:
         raise HTTPException(
@@ -513,7 +487,7 @@ def _assert_duration_analysable(seconds: float) -> None:
 
 
 def _reserve_quota(request: Request, user: Dict) -> Tuple[str, str, int]:
-    """Pre-flight: enforce rate limit + atomically reserve 1 credit."""
+    """Pre-flight: enforce the rate limit."""
     ip = _get_client_ip(request)
     key = _rate_key(request, user)
 
@@ -528,13 +502,6 @@ def _reserve_quota(request: Request, user: Dict) -> Tuple[str, str, int]:
                 "window": "24h",
                 "message": f"Najvec {RATE_LIMIT_MAX} analiz na 24 ur.",
             },
-        )
-
-    if not use_credit(user["id"]):
-        raise HTTPException(
-            status_code=403,
-            detail={"error": "No credits", "credits": 0,
-                    "message": "Nimaš kreditov za analizo. Kontaktiraj administratorja."},
         )
 
     return ip, key, remaining
@@ -579,13 +546,11 @@ def _start_job(request: Request, user: Dict, youtube_url: str, mode: str,
             "ip": ip,
         }
 
-    is_admin = bool(user.get("is_admin"))
-
     thread = threading.Thread(
         target=_run_pipeline,
         args=(job_id, youtube_url, mode, language,
               ip, user["id"], speaker_names, title, uploaded_file_path,
-              start_time, end_time, is_admin, transcript_override),
+              start_time, end_time, transcript_override),
         daemon=True,
     )
     thread.start()
@@ -691,18 +656,12 @@ async def submit_upload_analysis(
     upload_dir.mkdir(parents=True, exist_ok=True)
     upload_path = upload_dir / f"uploaded{ext}"
 
-    def _refund_and_cleanup():
-        """Roll back the quota reservation + remove the partial job dir."""
+    def _cleanup():
+        """Remove the partial job dir."""
         try:
             shutil.rmtree(Path(f"jobs/{job_id}"), ignore_errors=True)
         except OSError:
             pass
-        if not user.get("is_admin"):
-            try:
-                from database import refund_credit
-                refund_credit(user["id"])
-            except Exception:
-                pass
 
     total = 0
     chunk_size = 1024 * 1024
@@ -715,19 +674,19 @@ async def submit_upload_analysis(
                 total += len(chunk)
                 if total > max_bytes:
                     out.close()
-                    _refund_and_cleanup()
+                    _cleanup()
                     raise HTTPException(status_code=413, detail="Datoteka je prevelika (max 500MB)")
                 out.write(chunk)
     except HTTPException:
         raise
     except Exception:
-        _refund_and_cleanup()
+        _cleanup()
         raise
     finally:
         await file.close()
 
     if total <= 1024:
-        _refund_and_cleanup()
+        _cleanup()
         raise HTTPException(status_code=422, detail="Datoteka je prazna ali poškodovana")
     logger.info("Uploaded file saved: %s (%.1f MB)", upload_path, total / 1024 / 1024)
 
@@ -755,7 +714,6 @@ def _run_pipeline(job_id: str, youtube_url: str, mode: str, language: str,
                   ip: str, user_id: int, speaker_names: str,
                   title: str = "", uploaded_file_path: str = "",
                   start_time: str = "", end_time: str = "",
-                  is_admin: bool = False,
                   transcript_override: str = "") -> None:
     """Run the full pipeline in a background thread, then save to DB."""
 
@@ -943,12 +901,6 @@ def _run_pipeline(job_id: str, youtube_url: str, mode: str, language: str,
             job_id, status="failed",
             error="Predolg posnetek. Z drsnikom izberi krajši odsek in poskusi znova.",
         )
-        if not is_admin:
-            try:
-                from database import refund_credit
-                refund_credit(user_id)
-            except Exception as refund_err:
-                logger.error("Refund after too-long recording failed: %s", refund_err)
         return
 
       except UnsupportedDebateFormatError as e:
@@ -971,25 +923,11 @@ def _run_pipeline(job_id: str, youtube_url: str, mode: str, language: str,
                      "Za posnetek z enim govorcem uporabi način \u201esolo\u201c.")
         logger.info("Job %s stopped — unsupported format: %s", job_id, e)
         _update_job(job_id, status="failed", error=msg)
-        if not is_admin:
-            try:
-                from database import refund_credit
-                refund_credit(user_id)
-            except Exception as refund_err:
-                logger.error("Refund after unsupported format failed: %s", refund_err)
         return
 
       except Exception as e:
         logger.error("Job %s failed: %s\n%s", job_id, e, traceback.format_exc())
         _update_job(job_id, status="failed", error=str(e))
-
-        if not is_admin:
-            try:
-                from database import refund_credit
-                refund_credit(user_id)
-                logger.info("Refunded 1 credit to user %d (job %s failed)", user_id, job_id)
-            except Exception as ref_e:
-                logger.warning("Credit refund failed for user %d: %s", user_id, ref_e)
 
 
 def _update_job(job_id: str, **kwargs) -> None:
@@ -1092,7 +1030,7 @@ class RerunRequest(BaseModel):
 
 
 def _run_recheck(job_id: str, debate_id: str, language: str,
-                 user_id: int, is_admin: bool) -> None:
+                 user_id: int) -> None:
     """Re-run only the fact-checking over an analysis that is already saved."""
     try:
         _update_job(job_id, status="processing", progress="Loading saved analysis...")
@@ -1133,12 +1071,6 @@ def _run_recheck(job_id: str, debate_id: str, language: str,
     except Exception as e:
         logger.error("Recheck %s failed: %s", debate_id, e, exc_info=True)
         _update_job(job_id, status="failed", error=str(e))
-        if not is_admin:
-            try:
-                from database import refund_credit
-                refund_credit(user_id)
-            except Exception as refund_err:
-                logger.error("Refund after failed recheck failed: %s", refund_err)
 
 
 @app.post("/debates/{debate_id}/recheck", response_model=JobStatus)
@@ -1175,7 +1107,7 @@ async def recheck_debate(debate_id: str, request: Request):
     threading.Thread(
         target=_run_recheck,
         args=(job_id, debate_id, (debate.get("language") or "sl"),
-              user["id"], bool(user.get("is_admin"))),
+              user["id"]),
         daemon=True,
     ).start()
     logger.info("Recheck of %s submitted by %s (%d remaining)",

@@ -20,6 +20,8 @@ const VERDICT_DOT = {
   MISLEADING: 'bg-orange-400',
   FALSE: 'bg-red-400',
   UNVERIFIABLE: 'bg-white/30',
+  // Razsodba ni uspela: prazen krog s črtkano obrobo, da se loči od nepreverljivo.
+  ERROR: 'bg-transparent border border-dashed border-white/40',
 }
 
 const VERDICT_TEXT = {
@@ -28,6 +30,7 @@ const VERDICT_TEXT = {
   MISLEADING: 'text-orange-400',
   FALSE: 'text-red-400',
   UNVERIFIABLE: 'text-white/40',
+  ERROR: 'text-white/40',
 }
 
 const VERDICT_ORDER = ['TRUE', 'PARTIALLY_TRUE', 'MISLEADING', 'FALSE', 'UNVERIFIABLE']
@@ -105,7 +108,9 @@ function ClaimSourcesModal({ claim, onClose }) {
           </span>
         </div>
 
-        {claim.explanation && (
+        {verdict === 'ERROR' ? (
+          <p className="text-white/50 text-xs leading-relaxed mb-3">{t.verdictErrorNote}</p>
+        ) : claim.explanation && (
           <p className="text-white/50 text-xs leading-relaxed mb-3">{claim.explanation}</p>
         )}
 
@@ -688,6 +693,7 @@ function ArgLabel({ argument, onClick, align = 'left' }) {
 }
 
 function FactClaimMini({ claim }) {
+  const { t } = useLanguage()
   const verdict = claim.verdict || 'UNVERIFIABLE'
   const verdictColors = {
     TRUE: 'text-green-400 bg-green-500/20',
@@ -695,6 +701,7 @@ function FactClaimMini({ claim }) {
     MISLEADING: 'text-orange-400 bg-orange-500/20',
     FALSE: 'text-red-400 bg-red-500/20',
     UNVERIFIABLE: 'text-white/40 bg-white/10',
+    ERROR: 'text-white/50 border border-dashed border-white/40',
   }
 
   const sources = claim.sources || claim.evidence?.sources || []
@@ -708,10 +715,12 @@ function FactClaimMini({ claim }) {
         <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
           verdictColors[verdict] || verdictColors.UNVERIFIABLE
         }`}>
-          {verdict}
+          {t[verdict] || verdict}
         </span>
       </div>
-      {claim.explanation && (
+      {verdict === 'ERROR' ? (
+        <p className="text-white/40 text-[0.6875rem] mt-1">{t.verdictErrorNote}</p>
+      ) : claim.explanation && (
         <p className="text-white/40 text-[0.6875rem] mt-1">{claim.explanation}</p>
       )}
       {sources.length > 0 && (

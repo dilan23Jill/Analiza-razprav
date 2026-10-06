@@ -84,9 +84,9 @@ Aplikacija je nato dosegljiva na `http://localhost:5173`. Odjemalec zahteve na `
 
 Za zagon brez razvojnega strežnika Vite odjemalca zgradi z `npm run build` in vsebino mape `frontend/dist` skopiraj v mapo `static/` v korenu projekta. Zaledni sistem jo nato streže sam.
 
-## Uporabniki in krediti
+## Uporabniki
 
-Ob prvi uporabi se je treba registrirati v vmesniku. Uporabnik z oznako 1, torej prvi registrirani, ob vsakem zagonu strežnika dobi skrbniške pravice in 100 kreditov. Vsak nov uporabnik ima en kredit, ena analiza pa porabi en kredit. Kredite dodeli skrbnik prek končne točke `POST /admin/credits`.
+Ob prvi uporabi se je treba registrirati v vmesniku. Uporabnik z oznako 1, torej prvi registrirani, ob vsakem zagonu strežnika dobi skrbniške pravice.
 
 ## Nastavitve
 

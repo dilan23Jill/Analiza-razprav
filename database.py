@@ -48,7 +48,6 @@ def init_db() -> None:
                     username      TEXT NOT NULL UNIQUE,
                     email         TEXT NOT NULL UNIQUE,
                     password_hash TEXT NOT NULL,
-                    credits       INTEGER NOT NULL DEFAULT 1,
                     is_admin      INTEGER NOT NULL DEFAULT 0,
                     created_at    TEXT NOT NULL
                 );
@@ -145,16 +144,13 @@ def _run_migrations(conn) -> None:
         logger.info("Migration: purged transcript_text for %d debate(s)", purged)
 
     user_cols = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
-    if "credits" not in user_cols:
-        conn.execute("ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 1")
-        logger.info("Migration: added credits column to users")
     if "is_admin" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
         logger.info("Migration: added is_admin column to users")
 
 
 def ensure_admin_user() -> None:
-    """Ob zagonu aplikacije zagotovi, da ima user_id=1 admin pravice in 100 kreditov."""
+    """Ob zagonu aplikacije zagotovi, da ima user_id=1 admin pravice."""
     try:
         with _write_lock:
             conn = _connect()
@@ -162,12 +158,9 @@ def ensure_admin_user() -> None:
                 admin_changed = conn.execute(
                     "UPDATE users SET is_admin = 1 WHERE id = 1"
                 ).rowcount
-                credits_changed = conn.execute(
-                    "UPDATE users SET credits = 100 WHERE id = 1"
-                ).rowcount
                 conn.commit()
-                if admin_changed > 0 or credits_changed > 0:
-                    logger.info("Initial admin setup: user_id=1 is now ADMIN with 100 credits")
+                if admin_changed > 0:
+                    logger.info("Initial admin setup: user_id=1 is now ADMIN")
                 else:
                     logger.info("user_id=1 does not exist yet (will be set on first registration)")
             finally:
@@ -211,7 +204,7 @@ def create_user(username: str, email: str, password: str) -> Optional[Dict]:
                 "SELECT id FROM users WHERE username = ?", (username.strip(),)
             ).fetchone()["id"]
             return {"id": user_id, "username": username.strip(), "email": email.strip().lower(),
-                    "credits": 1, "is_admin": False}
+                    "is_admin": False}
         except sqlite3.IntegrityError:
             return None
         finally:
@@ -234,75 +227,7 @@ def authenticate_user(login: str, password: str) -> Optional[Dict]:
     if not _verify_password(password, row["password_hash"]):
         return None
     return {"id": row["id"], "username": row["username"], "email": row["email"],
-            "credits": row["credits"], "is_admin": bool(row["is_admin"])}
-
-
-# CREDITS
-
-def get_credits(user_id: int) -> int:
-    conn = _connect()
-    try:
-        row = conn.execute("SELECT credits FROM users WHERE id = ?", (user_id,)).fetchone()
-    finally:
-        conn.close()
-    return row["credits"] if row else 0
-
-
-def set_credits(user_id: int, credits: int) -> bool:
-    """Set exact credit amount."""
-    with _write_lock:
-        conn = _connect()
-        try:
-            changed = conn.execute(
-                "UPDATE users SET credits = ? WHERE id = ?", (max(0, credits), user_id)
-            ).rowcount
-            conn.commit()
-        finally:
-            conn.close()
-    return changed > 0
-
-
-def use_credit(user_id: int) -> bool:
-    """Atomically deduct 1 credit."""
-    with _write_lock:
-        conn = _connect()
-        try:
-            row = conn.execute(
-                "SELECT credits, is_admin FROM users WHERE id = ?", (user_id,)
-            ).fetchone()
-            if not row:
-                return False
-            if row["is_admin"]:
-                return True
-            cur = conn.execute(
-                "UPDATE users SET credits = credits - 1 WHERE id = ? AND credits > 0",
-                (user_id,),
-            )
-            conn.commit()
-            return cur.rowcount > 0
-        finally:
-            conn.close()
-
-
-def refund_credit(user_id: int) -> bool:
-    """Return 1 credit to a user."""
-    with _write_lock:
-        conn = _connect()
-        try:
-            row = conn.execute(
-                "SELECT is_admin FROM users WHERE id = ?", (user_id,)
-            ).fetchone()
-            if not row:
-                return False
-            if row["is_admin"]:
-                return True
-            conn.execute(
-                "UPDATE users SET credits = credits + 1 WHERE id = ?", (user_id,)
-            )
-            conn.commit()
-            return True
-        finally:
-            conn.close()
+            "is_admin": bool(row["is_admin"])}
 
 
 def set_admin(user_id: int, is_admin: bool = True) -> bool:
@@ -320,23 +245,23 @@ def set_admin(user_id: int, is_admin: bool = True) -> bool:
 
 
 def list_users() -> List[Dict]:
-    """List all users with credits info (for admin panel)."""
+    """List all users (for admin panel)."""
     conn = _connect()
     try:
         rows = conn.execute(
-            "SELECT id, username, email, credits, is_admin, created_at FROM users ORDER BY id"
+            "SELECT id, username, email, is_admin, created_at FROM users ORDER BY id"
         ).fetchall()
     finally:
         conn.close()
     return [{"id": r["id"], "username": r["username"], "email": r["email"],
-             "credits": r["credits"], "is_admin": bool(r["is_admin"]),
+             "is_admin": bool(r["is_admin"]),
              "created_at": r["created_at"]} for r in rows]
 
 
 def get_user_by_id(user_id: int) -> Optional[Dict]:
     conn = _connect()
     try:
-        row = conn.execute("SELECT id, username, email, credits, is_admin, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+        row = conn.execute("SELECT id, username, email, is_admin, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
     finally:
         conn.close()
     if not row:
