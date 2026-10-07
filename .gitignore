@@ -78,3 +78,6 @@ _stara_koda*/
 
 # Neuporabljena privzeta Vite ikona
 frontend/public/vite.svg
+
+# Lokalni pomožni izdelki
+Claude outputs/

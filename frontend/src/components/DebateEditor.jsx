@@ -215,7 +215,7 @@ export default function DebateEditor({ debateId, analysis, debateTitle = '', onC
   }
 
   function deleteRebuttal(idx) {
-    if (!confirm(t('Izbriši rebuttal?', 'Delete rebuttal?'))) return
+    if (!confirm(t('Izbriši zavrnitev?', 'Delete rebuttal?'))) return
     setRebuttals(prev => prev.filter((_, i) => i !== idx))
   }
 
@@ -676,18 +676,18 @@ function ArgumentCard({
       <div className="rounded-lg border border-orange-500/15 bg-orange-500/[0.03] p-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs uppercase tracking-wider font-bold text-orange-200">
-            {t('Odbitja na ta argument', 'Rebuttals to this argument')} ({linkedRebuttals.length})
+            {t('Zavrnitve tega argumenta', 'Rebuttals to this argument')} ({linkedRebuttals.length})
           </span>
           <button
             onClick={onAddRebuttal}
             className="text-xs font-semibold text-pure-white px-2.5 py-1 rounded bg-orange-600 hover:bg-orange-500"
           >
-            + {t('Napiši rebuttal', 'Write rebuttal')}
+            + {t('Napiši zavrnitev', 'Write rebuttal')}
           </button>
         </div>
         {linkedRebuttals.length === 0 && (
           <div className="text-xs text-white/60 italic py-1">
-            {t('Brez rebuttal-a. Klikni "Napiši rebuttal" za nov vnos.', 'No rebuttals. Click "Write rebuttal" to add one.')}
+            {t('Brez zavrnitev. Klikni "Napiši zavrnitev" za nov vnos.', 'No rebuttals. Click "Write rebuttal" to add one.')}
           </div>
         )}
         <div className="space-y-2">
@@ -714,7 +714,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
     <div className="bg-dark-900/40 border border-orange-500/20 rounded-lg p-3 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs uppercase tracking-wider font-bold text-orange-200">
-          {t('Rebuttal pisca:', 'Rebuttal by:')}
+          {t('Zavrnitev govorca:', 'Rebuttal by:')}
         </span>
         <select
           value={rebuttal.by || ''}
@@ -731,12 +731,12 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
           value={rebuttal.rebuttal_type || 'direct_contradiction'}
           onChange={(e) => onChangeField('rebuttal_type', e.target.value)}
           className="bg-dark-900/60 border border-white/10 rounded px-2 py-0.5 text-xs text-white/85"
-          title={t('Tip rebuttala', 'Rebuttal type')}
+          title={t('Vrsta zavrnitve', 'Rebuttal type')}
         >
-          <option value="direct_contradiction">direct contradiction</option>
-          <option value="undermining_premise">undermining premise</option>
-          <option value="alternative_explanation">alternative explanation</option>
-          <option value="questioning_warrant">questioning warrant</option>
+          <option value="direct_contradiction">{t('neposredno nasprotovanje', 'direct contradiction')}</option>
+          <option value="undermining_premise">{t('rušenje premise', 'undermining premise')}</option>
+          <option value="alternative_explanation">{t('druga razlaga', 'alternative explanation')}</option>
+          <option value="questioning_warrant">{t('izpodbijanje sklepanja', 'questioning warrant')}</option>
         </select>
         <button
           onClick={onDelete}
@@ -751,7 +751,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
         rows={3}
         value={rebuttal.rebuttal_content || ''}
         onChange={(e) => onChangeField('rebuttal_content', e.target.value)}
-        placeholder={t('Vsebina rebuttala...', 'Rebuttal content...')}
+        placeholder={t('Vsebina zavrnitve...', 'Rebuttal content...')}
         className="w-full bg-dark-900/60 border border-white/25 font-medium rounded-lg px-2.5 py-1.5 text-sm text-white/90 focus:border-orange-400/40 focus:outline-none resize-y"
       />
 
@@ -759,7 +759,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-purple-200 text-base leading-none">↳</span>
           <span className="text-xs uppercase tracking-wider font-bold text-purple-200">
-            {t('Counter-rebuttal', 'Counter-rebuttal')}
+            {t('Odziv izvirnega govorca', 'Counter-rebuttal')}
           </span>
           {originalArgumentSpeaker && (
             <span className="text-xs text-white/70">
@@ -771,7 +771,7 @@ function RebuttalCard({ rebuttal, allSpeakers, originalArgumentSpeaker, onChange
           rows={2}
           value={rebuttal.response || ''}
           onChange={(e) => onChangeField('response', e.target.value)}
-          placeholder={t('Kako se je originalni govorec odzval na ta rebuttal? (opcijsko)', "How did the original speaker respond to this rebuttal? (optional)")}
+          placeholder={t('Kako se je izvirni govorec odzval na to zavrnitev? (neobvezno)', "How did the original speaker respond to this rebuttal? (optional)")}
           className="w-full bg-dark-900/60 border border-white/25 font-medium rounded px-2.5 py-1.5 text-sm text-white/95 focus:border-purple-400/40 focus:outline-none resize-y"
         />
       </div>

@@ -252,7 +252,7 @@ const translations = {
     argNotAddressed: 'Nasprotnik ni odgovoril na ta argument',
     argOpponentResponse: 'Odziv nasprotnika',
     argDefense: 'Obramba argumenta',
-    argRebuttalBy: 'Odbitev',
+    argRebuttalBy: 'Zavrnitev',
     argUserAdded: 'ročno dodano',
     argDebatablePoints: 'Sporne točke',
     fallacyAdd: 'Dodaj spregledano zmoto',
