@@ -467,6 +467,35 @@ def _effective_duration_seconds(url: str, start_time: str, end_time: str) -> flo
     return full
 
 
+def _probe_file_seconds(path: Path) -> float:
+    """Trajanje naložene datoteke po ffprobe; 0, če ga ni mogoče prebrati."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        return float((result.stdout or "").strip() or 0)
+    except (OSError, ValueError, subprocess.SubprocessError) as e:
+        logger.warning("ffprobe could not read the duration of %s: %s", path, e)
+        return 0.0
+
+
+def _effective_upload_seconds(path: Path, start_time: str, end_time: str) -> float:
+    """Dolžina odseka naložene datoteke, ki bo dejansko analiziran."""
+    start = _hhmmss_to_seconds(start_time)
+    end = _hhmmss_to_seconds(end_time)
+    if start is not None and end is not None and end > start:
+        return end - start
+    full = _probe_file_seconds(path)
+    if start is not None and full > start:
+        return full - start
+    if end is not None and 0 < end < full:
+        return end
+    return full
+
+
 def _assert_duration_analysable(seconds: float) -> None:
     """Reject an over-long recording BEFORE any API call is made."""
     limit = _max_analysable_seconds()
@@ -690,6 +719,16 @@ async def submit_upload_analysis(
         raise HTTPException(status_code=422, detail="Datoteka je prazna ali poškodovana")
     logger.info("Uploaded file saved: %s (%.1f MB)", upload_path, total / 1024 / 1024)
 
+    # Enaka meja trajanja kot pri povezavi, preden se kliče katera koli storitev.
+    import asyncio
+    seconds = await asyncio.to_thread(_effective_upload_seconds, upload_path,
+                                      start_time or "", end_time or "")
+    try:
+        _assert_duration_analysable(seconds)
+    except HTTPException:
+        _cleanup()
+        raise
+
     if not title:
         title = Path(file.filename or "").stem or ""
 
@@ -840,6 +879,7 @@ def _run_pipeline(job_id: str, youtube_url: str, mode: str, language: str,
             _update_job(job_id, progress="Fact-checking claims...")
             fact_check_results = fact_checker.fact_check_arguments(
                 speakers, transcript=transcript_text)
+            _update_job(job_id, progress="Finishing analysis...")
             return fact_check_results
 
         analysis = analyzer.analyze_multi_pass(transcript_text, None,

@@ -4,24 +4,16 @@ import { getJobStatus } from '../services/api'
 import { useLanguage } from '../utils/LanguageContext'
 import { chimeOnceFor } from '../utils/sound'
 
-const STEP_KEYS = [
-  'jobStepLoading',
-  'jobStepDownloading',
-  'jobStepUsing',
-  'jobStepTranscribing',
-  'jobStepAnalyzing',
-  'jobStepFactChecking',
-  'jobStepDone',
-]
-
-const STEP_MATCH_KEYS = [
-  'Loading',
-  'Downloading',
-  'Using',
-  'Transcribing',
-  'Analyzing',
-  'Fact-checking',
-  'Done',
+// Koraki v vrstnem redu cevovoda. Vsak korak prepozna enega ali več zapisov
+// stanja, ki jih strežnik zapiše v polje progress.
+const STEPS = [
+  { label: 'jobStepLoading', match: ['Loading'] },
+  { label: 'jobStepAudio', match: ['Downloading', 'Using', 'Trimming', 'Reusing'] },
+  { label: 'jobStepTranscribing', match: ['Transcribing'] },
+  { label: 'jobStepAnalyzing', match: ['Analyzing'] },
+  { label: 'jobStepFactChecking', match: ['Fact-checking'] },
+  { label: 'jobStepFinishing', match: ['Finishing'] },
+  { label: 'jobStepDone', match: ['Done'] },
 ]
 
 const BASE_INTERVAL = 2000
@@ -40,7 +32,7 @@ export default function JobStatusPage() {
   const intervalRef = useRef(BASE_INTERVAL)
 
   const steps = useMemo(
-    () => STEP_KEYS.map((key, i) => ({ key: STEP_MATCH_KEYS[i], label: t[key] })),
+    () => STEPS.map((s) => ({ key: s.label, match: s.match, label: t[s.label] })),
     [t],
   )
 
@@ -99,7 +91,7 @@ export default function JobStatusPage() {
   }
 
   const currentStepIdx = job?.progress
-    ? steps.findIndex((s) => job.progress.includes(s.key))
+    ? Math.max(0, steps.findIndex((s) => s.match.some((m) => job.progress.includes(m))))
     : 0
 
   return (

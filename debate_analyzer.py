@@ -788,21 +788,21 @@ class DebateAnalyzer:
 
         # Pass 5: Synthesis
         logger.info("   Pass 5: Synthesis (%s)...", mode_label)
-        fact_context = self._format_fact_checks(fact_check_data)
+        fact_context = self._format_fact_checks(fact_check_data, limit=6000)
 
         is_single_speaker = is_solo
         if is_single_speaker:
             synthesis_prompt = PASS_PROMPTS["synthesis_single_speaker"].format(
                 claims_pass      = _fit_compact_json(claims_result, 8000),
                 fallacy_pass     = _fit_compact_json(fallacy_result, 4000),
-                fact_check_data  = fact_context[:6000],
+                fact_check_data  = fact_context,
             )
         else:
             synthesis_prompt = PASS_PROMPTS["synthesis"].format(
                 claims_pass    = _fit_compact_json(claims_result, 8000),
                 rebuttal_pass  = _fit_compact_json(rebuttal_result, 6000),
                 fallacy_pass   = _fit_compact_json(fallacy_result, 4000),
-                fact_check_data= fact_context[:6000],
+                fact_check_data= fact_context,
             )
         synthesis_result: Dict = {}
         try:
@@ -867,27 +867,60 @@ class DebateAnalyzer:
         return final
 
     @staticmethod
-    def _format_fact_checks(fact_check_data: Optional[Dict]) -> str:
+    def _format_fact_checks(fact_check_data: Optional[Dict], limit: int = 6000) -> str:
+        """Razsodbe za sintezo: najprej seštevki po govorcih, nato trditve
+        izmenično po govorcih, da rez pri ``limit`` znakih ne izpusti govorca."""
         if not fact_check_data:
             return "\n\n[No fact-check data available]"
         checks = fact_check_data.get("fact_checks", [])
         if not checks:
             return "\n\n[No claims were fact-checked]"
 
-        lines = ["\n\n=== FACT-CHECK RESULTS ===\n"]
-        for i, fc in enumerate(checks, 1):
-            lines.append(f"{i}. [{fc.get('speaker', '?')}] {fc.get('verdict', '?')}: \"{fc.get('exact_claim', '')}\"")
-            if fc.get('explanation'):
-                lines.append(f"   Finding: {fc['explanation']}")
-            if fc.get('correction'):
-                lines.append(f"   Correction: {fc['correction']}")
-            lines.append("")
+        order = ["TRUE", "PARTIALLY_TRUE", "MISLEADING", "FALSE", "UNVERIFIABLE", "ERROR"]
+        by_speaker: Dict[str, List[Dict]] = {}
+        for fc in checks:
+            by_speaker.setdefault(str(fc.get("speaker") or "?"), []).append(fc)
 
-        summary = fact_check_data.get("summary", {})
-        if summary:
-            v = summary.get('verdict_breakdown', {})
-            lines.append(f"SUMMARY: TRUE={v.get('TRUE',0)} FALSE={v.get('FALSE',0)} "
-                         f"MISLEADING={v.get('MISLEADING',0)}")
+        lines = ["\n\n=== FACT-CHECK RESULTS ===",
+                 "Verdict counts per speaker (counted by the system, complete):"]
+        for speaker, items in by_speaker.items():
+            counts: Dict[str, int] = {}
+            for fc in items:
+                v = str(fc.get("verdict") or "ERROR").upper()
+                counts[v] = counts.get(v, 0) + 1
+            parts = [f"{v}={counts[v]}" for v in order if counts.get(v)]
+            parts += [f"{v}={n}" for v, n in counts.items() if v not in order]
+            lines.append(f"- {speaker}: {len(items)} claims; " + ", ".join(parts))
+        lines.append("")
+        lines.append("Checked claims, alternating between speakers "
+                     "(the list may be cut short; the counts above are complete):")
+
+        def _first_sentence(text: str, cap: int = 160) -> str:
+            text = " ".join(str(text or "").split())
+            m = re.match(r"(.+?[.!?])(\s|$)", text)
+            text = m.group(1) if m else text
+            return text if len(text) <= cap else text[:cap - 1].rstrip() + "…"
+
+        queues = [list(items) for items in by_speaker.values()]
+        n = 0
+        while any(queues):
+            for queue in queues:
+                if not queue:
+                    continue
+                fc = queue.pop(0)
+                if str(fc.get("verdict") or "").upper() in ("", "ERROR"):
+                    continue
+                n += 1
+                entry = [f"{n}. [{fc.get('speaker', '?')}] {fc.get('verdict', '?')}: "
+                         f"\"{fc.get('exact_claim', '')}\""]
+                if fc.get("correction"):
+                    entry.append(f"   Correction: {_first_sentence(fc['correction'])}")
+                elif fc.get("explanation"):
+                    entry.append(f"   Finding: {_first_sentence(fc['explanation'])}")
+                block = "\n".join(entry)
+                if len("\n".join(lines)) + len(block) + 1 > limit:
+                    return "\n".join(lines)
+                lines.append(block)
         return "\n".join(lines)
 
 

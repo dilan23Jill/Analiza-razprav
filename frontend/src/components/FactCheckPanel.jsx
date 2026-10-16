@@ -250,8 +250,8 @@ export default function FactCheckPanel({ factCheck }) {
                       {claim.evidence_metrics.source_count != null && (
                         <span>{t.sourceCount}: {claim.evidence_metrics.source_count}</span>
                       )}
-                      {claim.evidence_metrics.independent_domain_count != null && (
-                        <span>{t.independentDomains}: {claim.evidence_metrics.independent_domain_count}</span>
+                      {(claim.evidence_metrics.domain_count ?? claim.evidence_metrics.independent_domain_count) != null && (
+                        <span>{t.domainCount}: {claim.evidence_metrics.domain_count ?? claim.evidence_metrics.independent_domain_count}</span>
                       )}
                     </div>
                   )}

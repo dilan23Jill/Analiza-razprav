@@ -936,7 +936,7 @@ class FactChecker:
                 unique_domains.add(domain)
         return {
             "source_count": len(sources),
-            "independent_domain_count": len(unique_domains),
+            "domain_count": len(unique_domains),
         }
 
     def _finalise_result(self, result: Dict) -> Dict:

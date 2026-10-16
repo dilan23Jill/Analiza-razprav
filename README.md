@@ -19,13 +19,12 @@ Sistem sprejme povezavo do posnetka na YouTubu ali naloženo datoteko in izdela 
 | nastavitve | `config.yaml`, `config_loader.py` | modeli, iskalni moduli, omejitve |
 | pozivi | `prompts/` | vsi pozivi, razvrščeni po korakih (glej `prompts/README.md`) |
 | odjemalec | `frontend/` | spletni vmesnik v ogrodju React (Vite) |
-| testi | `tests/test_core.py` | enotski testi |
 
 ## Zahteve
 
 - Python 3.10 ali novejši (razvito na 3.10.11)
 - Node.js 18 ali novejši in npm
-- ffmpeg, dosegljiv v sistemski poti (`PATH`)
+- ffmpeg in ffprobe, dosegljiva v sistemski poti (`PATH`)
 - ključi API za OpenAI in Anthropic, neobvezno še za Perplexity, xAI in Google Fact Check
 
 ## Namestitev
@@ -107,15 +106,8 @@ Način (en govorec ali razprava) in jezik analize uporabnik izbere v vmesniku ob
 
 - `data/debates.db`: baza SQLite z uporabniki, sejami in analizami
 - `transcripts/`: prepisi končanih analiz, iz katerih bere ponovna analiza
-- `jobs/<oznaka opravila>/`: delovne mape opravil; zvok in vmesne datoteke se izbrišejo eno uro po koncu opravila
+- `jobs/<oznaka opravila>/`: delovne mape opravil; zvok in vmesne datoteke končanih opravil se izbrišejo, ko je od začetka opravila minila več kot ura
 - `.cache/fact_check/`: predpomnilnik preverjanja dejstev
-
-## Testi
-
-```bash
-pip install pytest
-pytest -q
-```
 
 ## Licenca
 

@@ -25,6 +25,8 @@ export default function SpeakerTimeline({
   const _tok = (s) => new Set(String(s || '').toLowerCase().split(/\s+/).filter(w => w.length > 4))
   const _argTok = args.map(a => _tok(a.argument))
   const unsupportedByArg = args.map(() => [])
+  // Trditev brez argumenta z vsaj dvema skupnima besedama se prikaže na koncu časovnice.
+  const unsupportedUnattached = []
   unsupportedClaims.forEach((claim) => {
     const ct = _tok(claim)
     let best = -1
@@ -35,6 +37,7 @@ export default function SpeakerTimeline({
       if (overlap > bestScore) { bestScore = overlap; best = idx }
     })
     if (best >= 0) unsupportedByArg[best].push(claim)
+    else unsupportedUnattached.push(claim)
   })
 
   return (
@@ -99,6 +102,19 @@ export default function SpeakerTimeline({
           )
         })}
       </div>
+
+      {!isDebateMode && unsupportedUnattached.length > 0 && (
+        <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+          <h4 className="text-yellow-400 font-semibold text-sm mb-2">
+            {t.stUnsupportedClaims} ({unsupportedUnattached.length})
+          </h4>
+          <ul className="space-y-1">
+            {unsupportedUnattached.map((claim, claimIndex) => (
+              <li key={claimIndex} className="text-sm text-white/60">- {claim}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {isDebateMode && evasions.length > 0 && (
         <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">

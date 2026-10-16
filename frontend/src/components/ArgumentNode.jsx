@@ -460,6 +460,11 @@ function CritiqueSection({ critique, rebuttals, falseClaims, relatedFallacies, r
                   <span className="text-[0.625rem] text-accent-blue/60 font-semibold uppercase tracking-wider">
                     {t.argRebuttalBy} ({rebuttal.by})
                   </span>
+                  {rebuttal.rebuttal_type && (
+                    <span className="text-[0.625rem] text-white/50 border border-white/10 rounded px-1.5 py-0.5">
+                      {tv('rebuttal_type', rebuttal.rebuttal_type)}
+                    </span>
+                  )}
                   {rebuttal.user_added && (
                     <span className="text-[0.625rem] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
                       {t.argUserAdded}
